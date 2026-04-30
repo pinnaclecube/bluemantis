@@ -1,0 +1,96 @@
+Create /server/src/stack/stackDetector.ts
+
+This service auto-detects the technology stack of a connected
+repository by inspecting file paths returned from the Git API.
+
+export async function detectStack(filePaths: string[]): Promise<StackProfile> {
+  const has = (pattern: string) =>
+    filePaths.some(f => f.toLowerCase().includes(pattern));
+
+  return {
+    frontend:
+      has('angular.json')              ? 'angular'
+      : has('vue.config')              ? 'vue'
+      : has('package.json')            ? 'react' : 'none',
+
+    backend:
+      has('.csproj')                   ? 'dotnet'
+      : has('pom.xml')                 ? 'java-spring'
+      : has('build.gradle')            ? 'java-spring'
+      : has('requirements.txt')        ? 'python' : 'nodejs',
+
+    database:
+      has('oracle') || has('tns')      ? 'oracle'
+      : has('sqlserver') ||
+        has('mssql')                   ? 'sqlserver'
+      : has('mysql')                   ? 'mysql' : 'postgresql',
+
+    language:
+      has('.csproj')                   ? 'csharp'
+      : has('pom.xml') ||
+        has('build.gradle')            ? 'java'
+      : has('requirements.txt')        ? 'python'
+      : has('tsconfig.json')           ? 'typescript' : 'javascript',
+
+    testFramework:
+      has('.spec.ts')                  ? 'jasmine'
+      : has('.test.ts') ||
+        has('jest.config')             ? 'jest'
+      : has('xunit')                   ? 'xunit'
+      : has('junit')                   ? 'junit'
+      : has('pytest')                  ? 'pytest' : 'none',
+
+    packageManager:
+      has('.csproj')                   ? 'nuget'
+      : has('pom.xml')                 ? 'maven'
+      : has('build.gradle')            ? 'gradle'
+      : has('requirements.txt')        ? 'pip'
+      : has('yarn.lock')               ? 'yarn' : 'npm',
+  };
+}
+
+Create /server/src/stack/promptTemplates.ts
+
+Build a buildPrompt(task, codeContext, stack) function that
+returns a stack-aware AI prompt string. Include these templates:
+
+  react:        "Generate a React 18 functional component with
+                 TypeScript. Use hooks, no class components."
+
+  angular:      "Generate an Angular 17 standalone component
+                 with TypeScript. Use signals and inject()."
+
+  vue:          "Generate a Vue 3 SFC with <script setup> and
+                 TypeScript composition API."
+
+  nodejs:       "Generate a Node.js/Express route handler
+                 with TypeScript and async/await."
+
+  dotnet:       "Generate a C# .NET 8 controller or minimal API
+                 endpoint following REST conventions."
+
+  java-spring:  "Generate a Java Spring Boot 3 REST controller
+                 or service class with appropriate annotations."
+
+  python:       "Generate a Python FastAPI or Django REST
+                 endpoint with type hints."
+
+  postgresql:   "Use standard SQL / Prisma syntax."
+  sqlserver:    "Use T-SQL syntax. Avoid PostgreSQL-specific functions."
+  oracle:       "Use Oracle SQL / PL-SQL syntax. Use ROWNUM not LIMIT."
+  mysql:        "Use MySQL 8 syntax."
+
+Every prompt must append:
+  - The task title, description and acceptance criteria
+  - The fetched code context from the repo
+  - The full StackProfile as a JSON block
+  - Instruction to return JSON: { code, explanation, filePath }
+
+Add a GET /api/repositories/:repoId/stack endpoint that:
+  - Fetches the repo file list via GitService
+  - Runs detectStack()
+  - Saves the result to the Repository.stackProfile field
+  - Returns the StackProfile
+
+Add a stack profile display to the DevCopilot UI sidebar showing
+the detected frontend, backend and database for the active repo.

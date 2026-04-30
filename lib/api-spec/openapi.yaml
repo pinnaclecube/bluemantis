@@ -1,22 +1,27 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: DevCopilot API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: repositories
+    description: Repository management
+  - name: tasks
+    description: Task management
+  - name: stats
+    description: Dashboard statistics
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +29,268 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /repositories:
+    get:
+      operationId: listRepositories
+      tags: [repositories]
+      summary: List all repositories
+      responses:
+        "200":
+          description: List of repositories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Repository"
+    post:
+      operationId: createRepository
+      tags: [repositories]
+      summary: Create a repository
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRepositoryBody"
+      responses:
+        "201":
+          description: Created repository
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repository"
+
+  /repositories/{id}:
+    get:
+      operationId: getRepository
+      tags: [repositories]
+      summary: Get a repository by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Repository
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repository"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateRepository
+      tags: [repositories]
+      summary: Update a repository
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRepositoryBody"
+      responses:
+        "200":
+          description: Updated repository
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repository"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteRepository
+      tags: [repositories]
+      summary: Delete a repository
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List tasks with optional filters
+      parameters:
+        - name: repositoryId
+          in: query
+          required: false
+          schema:
+            type: ["integer", "null"]
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: ["string", "null"]
+        - name: source
+          in: query
+          required: false
+          schema:
+            type: ["string", "null"]
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskBody"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: Get a task by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskBody"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: Delete a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /stats/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [stats]
+      summary: Get dashboard summary statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /stats/tasks-by-status:
+    get:
+      operationId: getTasksByStatus
+      tags: [stats]
+      summary: Get task counts grouped by status
+      responses:
+        "200":
+          description: Tasks by status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StatusCount"
+
+  /stats/tasks-by-source:
+    get:
+      operationId: getTasksBySource
+      tags: [stats]
+      summary: Get task counts grouped by source
+      responses:
+        "200":
+          description: Tasks by source
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SourceCount"
+
+  /stats/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [stats]
+      summary: Get recent task activity feed
+      responses:
+        "200":
+          description: Recent tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +301,232 @@ components:
       required:
         - status
 
+    StackProfile:
+      type: object
+      properties:
+        frontend:
+          type: string
+          enum: [react, angular, vue, none]
+        backend:
+          type: string
+          enum: [nodejs, dotnet, java-spring, python]
+        database:
+          type: string
+          enum: [postgresql, sqlserver, oracle, mysql]
+        language:
+          type: string
+          enum: [typescript, javascript, csharp, java, python]
+        testFramework:
+          type: string
+          enum: [jest, jasmine, xunit, junit, pytest, none]
+        packageManager:
+          type: string
+          enum: [npm, yarn, maven, gradle, nuget, pip]
+      required:
+        - frontend
+        - backend
+        - database
+        - language
+        - testFramework
+        - packageManager
+
+    Repository:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        provider:
+          type: string
+        url:
+          type: string
+        defaultBranch:
+          type: string
+        stackProfile:
+          $ref: "#/components/schemas/StackProfile"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - provider
+        - url
+        - defaultBranch
+        - stackProfile
+        - createdAt
+
+    CreateRepositoryBody:
+      type: object
+      properties:
+        name:
+          type: string
+        provider:
+          type: string
+        url:
+          type: string
+        defaultBranch:
+          type: string
+        stackProfile:
+          $ref: "#/components/schemas/StackProfile"
+      required:
+        - name
+        - provider
+        - url
+        - defaultBranch
+        - stackProfile
+
+    UpdateRepositoryBody:
+      type: object
+      properties:
+        name:
+          type: string
+        provider:
+          type: string
+        url:
+          type: string
+        defaultBranch:
+          type: string
+        stackProfile:
+          $ref: "#/components/schemas/StackProfile"
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        externalId:
+          type: ["string", "null"]
+        source:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        acceptanceCriteria:
+          type: ["string", "null"]
+        priority:
+          type: string
+        status:
+          type: string
+        linkedCommit:
+          type: ["string", "null"]
+        repositoryId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - source
+        - type
+        - title
+        - priority
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateTaskBody:
+      type: object
+      properties:
+        externalId:
+          type: ["string", "null"]
+        source:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        acceptanceCriteria:
+          type: ["string", "null"]
+        priority:
+          type: string
+        status:
+          type: string
+        linkedCommit:
+          type: ["string", "null"]
+        repositoryId:
+          type: ["integer", "null"]
+      required:
+        - source
+        - type
+        - title
+        - priority
+        - status
+
+    UpdateTaskBody:
+      type: object
+      properties:
+        externalId:
+          type: ["string", "null"]
+        source:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        acceptanceCriteria:
+          type: ["string", "null"]
+        priority:
+          type: string
+        status:
+          type: string
+        linkedCommit:
+          type: ["string", "null"]
+        repositoryId:
+          type: ["integer", "null"]
+
+    DashboardStats:
+      type: object
+      properties:
+        totalRepositories:
+          type: integer
+        totalTasks:
+          type: integer
+        openTasks:
+          type: integer
+        inProgressTasks:
+          type: integer
+        completedTasks:
+          type: integer
+        linkedCommits:
+          type: integer
+      required:
+        - totalRepositories
+        - totalTasks
+        - openTasks
+        - inProgressTasks
+        - completedTasks
+        - linkedCommits
+
+    StatusCount:
+      type: object
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+      required:
+        - status
+        - count
+
+    SourceCount:
+      type: object
+      properties:
+        source:
+          type: string
+        count:
+          type: integer
+      required:
+        - source
+        - count

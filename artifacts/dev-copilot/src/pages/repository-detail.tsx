@@ -1,0 +1,259 @@
+import { useGetRepository, useUpdateRepository, useDeleteRepository, getListRepositoriesQueryKey, useListTasks } from "@workspace/api-client-react";
+import { useParams, useLocation, Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Database, Edit, Trash2, ArrowLeft, Layout as LayoutIcon, Server, FileCode, Clock, GitBranch, Github, Link as LinkIcon, CheckSquare } from "lucide-react";
+import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SiGithub } from "react-icons/si";
+import { Cloud } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+
+const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  defaultBranch: z.string().min(1, "Default branch is required"),
+});
+
+export default function RepositoryDetail() {
+  const params = useParams();
+  const id = parseInt(params.id || "0", 10);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: repo, isLoading } = useGetRepository(id);
+  const { data: tasks, isLoading: tasksLoading } = useListTasks({ repositoryId: id });
+  
+  const deleteRepo = useDeleteRepository();
+  const updateRepo = useUpdateRepository();
+
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    values: {
+      name: repo?.name || "",
+      defaultBranch: repo?.defaultBranch || ""
+    }
+  });
+
+  const onEdit = (values: z.infer<typeof formSchema>) => {
+    updateRepo.mutate({ id, data: values }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListRepositoriesQueryKey() });
+        queryClient.invalidateQueries({ queryKey: [`/api/repositories/${id}`] });
+        setIsEditOpen(false);
+        toast({ title: "Repository updated" });
+      }
+    });
+  };
+
+  const onDelete = () => {
+    deleteRepo.mutate({ id }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListRepositoriesQueryKey() });
+        toast({ title: "Repository deleted" });
+        setLocation("/repositories");
+      }
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-32" />
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  if (!repo) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+        <Database className="h-12 w-12 opacity-20 mb-4" />
+        <h2 className="text-xl font-bold mb-2">Repository Not Found</h2>
+        <Button variant="link" onClick={() => setLocation("/repositories")}>Back to Repositories</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6 animate-in fade-in duration-500 pb-8">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => setLocation("/repositories")}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            {repo.provider === 'github' ? <SiGithub className="h-5 w-5 text-muted-foreground" /> : <Cloud className="h-5 w-5 text-blue-500" />}
+            <h1 className="text-2xl font-bold tracking-tight">{repo.name}</h1>
+          </div>
+          <a href={repo.url} target="_blank" rel="noreferrer" className="text-sm font-mono text-primary hover:underline flex items-center gap-1 mt-1 w-fit">
+            <LinkIcon className="h-3 w-3" />
+            {repo.url}
+          </a>
+        </div>
+        <div className="flex gap-2">
+          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="font-mono text-xs uppercase tracking-wider">
+                <Edit className="mr-2 h-4 w-4" /> Edit
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="border-primary/20 bg-background/95 backdrop-blur-xl">
+              <DialogHeader><DialogTitle className="font-mono uppercase tracking-wider">Edit Repository</DialogTitle></DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onEdit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Name</FormLabel>
+                        <FormControl><Input {...field} className="font-mono" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="defaultBranch"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Default Branch</FormLabel>
+                        <FormControl><Input {...field} className="font-mono" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)} className="font-mono text-xs">Cancel</Button>
+                    <Button type="submit" disabled={updateRepo.isPending} className="font-mono text-xs">Save</Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+            <DialogTrigger asChild>
+              <Button variant="destructive" size="sm" className="font-mono text-xs uppercase tracking-wider">
+                <Trash2 className="mr-2 h-4 w-4" /> Delete
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="border-destructive/50 bg-background/95 backdrop-blur-xl">
+              <DialogHeader><DialogTitle className="font-mono uppercase tracking-wider text-destructive">Delete Repository</DialogTitle></DialogHeader>
+              <p className="text-sm text-muted-foreground">Are you sure you want to delete this repository? This action cannot be undone.</p>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDeleteOpen(false)} className="font-mono text-xs">Cancel</Button>
+                <Button variant="destructive" onClick={onDelete} disabled={deleteRepo.isPending} className="font-mono text-xs">Delete</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-sm font-mono text-muted-foreground uppercase tracking-wider">Stack Profile</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <StackDetail icon={LayoutIcon} label="Frontend" value={repo.stackProfile.frontend} />
+              <StackDetail icon={Server} label="Backend" value={repo.stackProfile.backend} />
+              <StackDetail icon={Database} label="Database" value={repo.stackProfile.database} />
+              <StackDetail icon={FileCode} label="Language" value={repo.stackProfile.language} />
+              <StackDetail icon={CheckSquare} label="Tests" value={repo.stackProfile.testFramework} />
+              <StackDetail icon={FileCode} label="Package Mgr" value={repo.stackProfile.packageManager} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-mono text-muted-foreground uppercase tracking-wider">Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3 text-sm">
+              <GitBranch className="h-4 w-4 text-muted-foreground" />
+              <span className="font-mono text-muted-foreground">Default Branch:</span>
+              <span className="font-mono font-medium">{repo.defaultBranch}</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="font-mono text-muted-foreground">Added:</span>
+              <span className="font-mono font-medium">{format(new Date(repo.createdAt), 'MMM d, yyyy')}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold tracking-tight">Linked Tasks</h2>
+          <Button variant="outline" size="sm" asChild className="font-mono text-xs uppercase tracking-wider">
+            <Link href={`/tasks/new?repositoryId=${repo.id}`}>Create Task</Link>
+          </Button>
+        </div>
+
+        <div className="border rounded-md bg-card overflow-hidden">
+          {tasksLoading ? (
+            <div className="p-4 space-y-4"><Skeleton className="h-16" /><Skeleton className="h-16" /></div>
+          ) : !tasks || tasks.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm font-mono">No tasks linked to this repository.</div>
+          ) : (
+            <div className="divide-y">
+              {tasks.map(task => (
+                <Link key={task.id} href={`/tasks/${task.id}`}>
+                  <div className="p-4 hover:bg-muted/50 transition-colors flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-mono font-bold text-muted-foreground">{task.externalId || `TASK-${task.id}`}</span>
+                        <h4 className="text-sm font-medium truncate">{task.title}</h4>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs">
+                        <Badge variant="outline" className="font-mono uppercase text-[10px]">{task.status}</Badge>
+                        <span className={task.priority === 'high' || task.priority === 'critical' ? 'text-destructive font-mono font-bold' : 'text-muted-foreground font-mono'}>{task.priority}</span>
+                      </div>
+                    </div>
+                    {task.linkedCommit && (
+                      <div className="flex items-center gap-1 text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground shrink-0">
+                        <GitBranch className="h-3 w-3" />
+                        {task.linkedCommit.substring(0, 7)}
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StackDetail({ icon: Icon, label, value }: { icon: any, label: string, value: string }) {
+  return (
+    <div className="flex flex-col gap-1 p-3 border rounded-md bg-muted/20">
+      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+        <Icon className="h-3.5 w-3.5" />
+        <span className="text-[10px] font-mono uppercase tracking-wider font-bold">{label}</span>
+      </div>
+      <span className="text-sm font-medium capitalize">{value}</span>
+    </div>
+  );
+}
