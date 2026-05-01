@@ -80,6 +80,31 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
         break;
       }
 
+      case "gemini": {
+        const key = (req.body?.GOOGLE_GEMINI_API_KEY as string | undefined) ?? process.env.GOOGLE_GEMINI_API_KEY ?? "";
+        if (!key) { res.status(400).json({ ok: false, message: "API key not set" }); return; }
+        const r = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`,
+        );
+        if (r.status === 400) throw new Error("Invalid API key format — check you copied the full key from Google AI Studio");
+        if (r.status === 403) throw new Error("API key is valid but access is denied — ensure the Generative Language API is enabled in your Google Cloud project");
+        if (!r.ok) throw new Error(`Google Gemini returned ${r.status} — check your API key`);
+        const data = (await r.json()) as { models?: { name: string }[] };
+        const count = Array.isArray(data.models) ? data.models.length : 0;
+        res.json({ ok: true, message: `Connected to Google AI — ${count} model${count === 1 ? "" : "s"} available` });
+        break;
+      }
+
+      case "copilot": {
+        const token = (req.body?.GITHUB_COPILOT_TOKEN as string | undefined) ?? process.env.GITHUB_COPILOT_TOKEN ?? "";
+        if (!token) { res.status(400).json({ ok: false, message: "Token not set" }); return; }
+        res.json({
+          ok: false,
+          message: "GitHub Copilot does not expose a public code-generation API — your token is saved and ready for when access becomes available",
+        });
+        break;
+      }
+
       case "github": {
         const token = (req.body?.GITHUB_TOKEN as string | undefined) ?? process.env.GITHUB_TOKEN ?? "";
         if (!token) { res.status(400).json({ ok: false, message: "Token not set" }); return; }

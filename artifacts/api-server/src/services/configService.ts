@@ -10,6 +10,8 @@ import { logger } from "../lib/logger";
 export const CONFIG_KEYS = [
   "ANTHROPIC_API_KEY",
   "OPENAI_API_KEY",
+  "GOOGLE_GEMINI_API_KEY",
+  "GITHUB_COPILOT_TOKEN",
   "GITHUB_TOKEN",
   "AZURE_REPOS_ORG",
   "AZURE_REPOS_TOKEN",
