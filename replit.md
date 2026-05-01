@@ -34,7 +34,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ## Shared Types
 
 - `shared/types/stack.ts` — `StackProfile` type
-- `shared/types/task.ts` — Task-related types
+- `shared/types/task.ts` — DB `Task` type, `DevCopilotTask` interface (PLM canonical shape), `PLMAdapter` interface
 
 ## Database Schema
 
@@ -47,6 +47,9 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `artifacts/api-server/src/stack/detector.ts` — Stack detection logic; exports `StackProfile` type inline
 - `artifacts/api-server/src/stack/prompts.ts` — AI prompt builder per framework stack
 - `artifacts/api-server/src/adapters/gitService.ts` — Fetches repo file trees from GitHub or Azure Repos
+- `artifacts/api-server/src/adapters/azureDevOpsAdapter.ts` — PLM adapter: WIQL fetch, HTML-strip, PAT auth, closeTask via PATCH
+- `artifacts/api-server/src/adapters/jiraAdapter.ts` — PLM adapter: JQL sprint fetch, ADF→text parsing, AC field discovery, transition-based close
+- `artifacts/api-server/src/services/plmService.ts` — Merges & deduplicates tasks from both PLM adapters with per-adapter error isolation
 
 ## API Endpoints (key)
 

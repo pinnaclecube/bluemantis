@@ -18,3 +18,20 @@ export type Task = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export interface DevCopilotTask {
+  id: string;
+  source: 'azure-devops' | 'jira';
+  type: 'epic' | 'feature' | 'story' | 'task' | 'bug';
+  title: string;
+  description: string;
+  acceptanceCriteria: string[];
+  priority: 1 | 2 | 3 | 4;
+  parentId?: string;
+  rawSource: object;
+}
+
+export interface PLMAdapter {
+  fetchIncompleteTasks(): Promise<DevCopilotTask[]>;
+  closeTask(taskId: string, commitHash: string): Promise<void>;
+}
