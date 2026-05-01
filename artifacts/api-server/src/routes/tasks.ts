@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, type SQL } from "drizzle-orm";
-import { db, tasksTable } from "@workspace/db";
+import { db, tasksTable, repositoriesTable } from "@workspace/db";
 import {
   CreateTaskBody,
   UpdateTaskBody,
@@ -136,6 +136,16 @@ router.post("/tasks", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  if (parsed.data.repositoryId != null) {
+    const [repo] = await db
+      .select({ id: repositoriesTable.id })
+      .from(repositoriesTable)
+      .where(and(eq(repositoriesTable.id, parsed.data.repositoryId), eq(repositoriesTable.userId, req.userId)));
+    if (!repo) {
+      res.status(403).json({ error: "Repository access denied" });
+      return;
+    }
+  }
   const [task] = await db
     .insert(tasksTable)
     .values({ ...parsed.data, userId: req.userId })
@@ -170,6 +180,16 @@ router.patch("/tasks/:id", async (req, res): Promise<void> => {
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
+  }
+  if (parsed.data.repositoryId != null) {
+    const [repo] = await db
+      .select({ id: repositoriesTable.id })
+      .from(repositoriesTable)
+      .where(and(eq(repositoriesTable.id, parsed.data.repositoryId), eq(repositoriesTable.userId, req.userId)));
+    if (!repo) {
+      res.status(403).json({ error: "Repository access denied" });
+      return;
+    }
   }
   const [task] = await db
     .update(tasksTable)

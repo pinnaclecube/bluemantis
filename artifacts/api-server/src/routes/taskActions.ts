@@ -211,6 +211,17 @@ router.post("/tasks/:taskId/commit", async (req, res): Promise<void> => {
     return;
   }
 
+  // Verify the repository belongs to this user (prevent IDOR via repositoryId)
+  const [commitRepo] = await db
+    .select()
+    .from(repositoriesTable)
+    .where(and(eq(repositoriesTable.id, task.repositoryId), eq(repositoriesTable.userId, req.userId)));
+
+  if (!commitRepo) {
+    res.status(403).json({ error: "Repository access denied" });
+    return;
+  }
+
   const gitCredsCommit = await getConfigs(req.userId, ["GITHUB_TOKEN", "AZURE_REPOS_TOKEN"]);
   const gitService = await GitService.forRepo(task.repositoryId, {
     githubToken: gitCredsCommit.GITHUB_TOKEN,

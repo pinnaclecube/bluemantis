@@ -40,7 +40,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ## Authentication
 
 Multi-tenant auth via **Clerk** (`@clerk/express` on the backend, `@clerk/react` on the frontend):
-- Backend: `clerkMiddleware` + `requireAuth` middleware applied to all `/api` routes except `/api/healthz`
+- Backend: `clerkMiddleware` + `requireAuth` middleware applied to ALL `/api` routes (including `/api/healthz`)
 - Frontend: `ClerkProvider` wraps the entire app; unauthenticated users are redirected to `/sign-in`
 - Sidebar shows real user avatar/name from `useUser()`; sign-out via `useClerk().signOut()`
 - Secret env vars: `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_PUBLISHABLE_KEY`
