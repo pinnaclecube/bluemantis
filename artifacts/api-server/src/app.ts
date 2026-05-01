@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import rateLimit from "express-rate-limit";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -28,6 +29,23 @@ app.use(
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ---------------------------------------------------------------------------
+// Rate limiting — AI suggestion routes are expensive; cap at 20 req/min
+// ---------------------------------------------------------------------------
+const suggestionsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many suggestion requests — please wait a moment before retrying" },
+  handler(req, res, _next, options) {
+    logger.warn({ ip: req.ip, url: req.url }, "Rate limit exceeded on suggestions endpoint");
+    res.status(options.statusCode).json(options.message);
+  },
+});
+
+app.use("/api/tasks/:taskId/suggestions", suggestionsLimiter);
 
 app.use("/api", router);
 

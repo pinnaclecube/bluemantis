@@ -75,25 +75,51 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 Global error middleware in `app.ts` catches all unhandled errors and returns `{ error: message }` with appropriate HTTP status. Express 5 async errors propagate automatically.
 
+React `ErrorBoundary` component (`artifacts/dev-copilot/src/components/ErrorBoundary.tsx`) wraps the entire app — shows a styled fallback with "Try again" (resets state) and "Go home" buttons. Shows full stack trace in dev mode only.
+
+## Rate Limiting
+
+`express-rate-limit` applied to `POST /api/tasks/:taskId/suggestions` only (expensive AI calls):
+- **20 requests per minute** per IP
+- Returns HTTP 429 with `{ error: "Too many suggestion requests…" }` when exceeded
+- Logs a warning via pino on each violation
+
+## Environment Validation
+
+`artifacts/api-server/src/lib/env.ts` validates all known env vars at startup:
+- **Critical** (`PORT`, `DATABASE_URL`): server exits with `logger.fatal` if missing
+- **Optional** (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, git/PLM tokens): logs info-level warning listing which are absent; related features degrade gracefully
+
 ## Sidebar Stack Profile
 
 When navigating to `/repositories/:id`, the sidebar automatically shows a **Stack** panel reading from `repo.stackProfile`. The refresh button re-calls `GET /api/repositories/:repoId/stack` to re-detect.
 
+## Frontend Pages
+
+- `/` → `TasksPage` — task list with PLM source/type/priority badges, "Generate code" button
+- `/workspace/:taskId` → `WorkspacePage` — 3-column: task details + checklist, code suggestions (react-syntax-highlighter), action panel (commit + complete + workflow stepper)
+- `/dashboard`, `/repositories/*`, `/tasks/*` — legacy views still accessible via sidebar
+
 ## Environment Variables
 
-See `.env.example` for all required environment variables:
-- `DATABASE_URL`
-- `AZURE_DEVOPS_ORG`, `AZURE_DEVOPS_PAT`
-- `JIRA_DOMAIN`, `JIRA_EMAIL`, `JIRA_API_TOKEN`
-- `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`
-- `GITHUB_TOKEN`, `AZURE_REPOS_TOKEN`
-- `GIT_PROVIDER` (github | azure-repos)
+| Variable | Critical | Description |
+|----------|----------|-------------|
+| `PORT` | ✅ | API server port (set by Replit) |
+| `DATABASE_URL` | ✅ | PostgreSQL connection URL (set by Replit) |
+| `SESSION_SECRET` | ⚠️ | Session signing secret |
+| `ANTHROPIC_API_KEY` | ❌ | Claude API key |
+| `OPENAI_API_KEY` | ❌ | OpenAI API key |
+| `GITHUB_TOKEN` | ❌ | GitHub PAT |
+| `AZURE_REPOS_TOKEN` | ❌ | Azure Repos PAT |
+| `ADO_ORG` + `ADO_TOKEN` | ❌ | Azure DevOps PLM sync |
+| `JIRA_DOMAIN` + `JIRA_EMAIL` + `JIRA_TOKEN` | ❌ | Jira PLM sync |
 
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
+- `pnpm run db:migrate` — apply DB schema via Drizzle Kit push
+- `pnpm run db:studio` — open Drizzle Studio UI
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
