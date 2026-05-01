@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   ClerkProvider,
@@ -12,7 +12,7 @@ import { dark } from "@clerk/themes";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppShell } from "@/components/layout/AppShell";
 import { RepoProvider } from "@/context/RepoContext";
-import TasksPage from "@/pages/TasksPage";
+import LandingPage from "@/pages/LandingPage";
 import WorkspacePage from "@/pages/WorkspacePage";
 import Dashboard from "@/pages/dashboard";
 import Repositories from "@/pages/repositories";
@@ -92,41 +92,53 @@ function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
         <SignIn
           appearance={clerkAppearance}
           signUpUrl={`${basePath}/sign-up`}
-          forceRedirectUrl={`${basePath}/`}
+          forceRedirectUrl={`${basePath}/tasks`}
         />
       ) : (
         <SignUp
           appearance={clerkAppearance}
           signInUrl={`${basePath}/sign-in`}
-          forceRedirectUrl={`${basePath}/`}
+          forceRedirectUrl={`${basePath}/tasks`}
         />
       )}
     </div>
   );
 }
 
-function ProtectedApp() {
+/** Public root: LandingPage for guests, redirect to /tasks for signed-in users */
+function RootRoute() {
   const { isSignedIn, isLoaded } = useAuth();
+  if (!isLoaded) return <LoadingScreen />;
+  if (isSignedIn) return <Redirect to="/tasks" />;
+  return <LandingPage />;
+}
 
+/** Wraps any route that requires authentication */
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { isSignedIn, isLoaded } = useAuth();
   if (!isLoaded) return <LoadingScreen />;
   if (!isSignedIn) return <RedirectToSignIn />;
+  return <>{children}</>;
+}
 
+function ProtectedApp() {
   return (
-    <AppShell>
-      <Switch>
-        <Route path="/" component={TasksPage} />
-        <Route path="/workspace/:taskId" component={WorkspacePage} />
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/repositories" component={Repositories} />
-        <Route path="/repositories/:id" component={RepositoryDetail} />
-        <Route path="/tasks" component={Tasks} />
-        <Route path="/tasks/new" component={NewTask} />
-        <Route path="/tasks/:id" component={TaskDetail} />
-        <Route path="/history" component={HistoryPage} />
-        <Route path="/settings" component={SettingsPage} />
-        <Route component={NotFound} />
-      </Switch>
-    </AppShell>
+    <RequireAuth>
+      <AppShell>
+        <Switch>
+          <Route path="/workspace/:taskId" component={WorkspacePage} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/repositories" component={Repositories} />
+          <Route path="/repositories/:id" component={RepositoryDetail} />
+          <Route path="/tasks" component={Tasks} />
+          <Route path="/tasks/new" component={NewTask} />
+          <Route path="/tasks/:id" component={TaskDetail} />
+          <Route path="/history" component={HistoryPage} />
+          <Route path="/settings" component={SettingsPage} />
+          <Route component={NotFound} />
+        </Switch>
+      </AppShell>
+    </RequireAuth>
   );
 }
 
@@ -137,6 +149,7 @@ function Router() {
         <LoadingScreen />
       </ClerkLoading>
       <Switch>
+        <Route path="/" component={RootRoute} />
         <Route path="/sign-in" component={() => <AuthPage mode="sign-in" />} />
         <Route path="/sign-up" component={() => <AuthPage mode="sign-up" />} />
         <Route component={ProtectedApp} />
@@ -152,7 +165,7 @@ function App() {
         publishableKey={CLERK_PUBLISHABLE_KEY}
         signInUrl={`${basePath}/sign-in`}
         signUpUrl={`${basePath}/sign-up`}
-        afterSignOutUrl={`${basePath}/sign-in`}
+        afterSignOutUrl={`${basePath}/`}
       >
         <QueryClientProvider client={queryClient}>
           <RepoProvider>

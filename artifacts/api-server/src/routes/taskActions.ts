@@ -127,7 +127,7 @@ router.post("/tasks/:taskId/suggestions", async (req, res): Promise<void> => {
   const [repo] = await db
     .select()
     .from(repositoriesTable)
-    .where(eq(repositoriesTable.id, task.repositoryId));
+    .where(and(eq(repositoriesTable.id, task.repositoryId), eq(repositoriesTable.userId, userId)));
 
   if (!repo) {
     res.status(404).json({ error: "Repository not found" });

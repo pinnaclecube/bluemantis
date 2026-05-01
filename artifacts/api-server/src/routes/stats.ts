@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { sql, isNotNull } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
 import { db, tasksTable, repositoriesTable } from "@workspace/db";
 import {
   GetDashboardStatsResponse,
@@ -11,9 +11,12 @@ import {
 const router: IRouter = Router();
 
 router.get("/stats/dashboard", async (req, res): Promise<void> => {
+  const userId = req.userId;
+
   const [repoCount] = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(repositoriesTable);
+    .from(repositoriesTable)
+    .where(eq(repositoriesTable.userId, userId));
 
   const [taskStats] = await db
     .select({
@@ -23,7 +26,8 @@ router.get("/stats/dashboard", async (req, res): Promise<void> => {
       completed: sql<number>`count(*) filter (where status = 'done')::int`,
       linkedCommits: sql<number>`count(*) filter (where linked_commit is not null)::int`,
     })
-    .from(tasksTable);
+    .from(tasksTable)
+    .where(eq(tasksTable.userId, userId));
 
   res.json(
     GetDashboardStatsResponse.parse({
@@ -44,6 +48,7 @@ router.get("/stats/tasks-by-status", async (req, res): Promise<void> => {
       count: sql<number>`count(*)::int`,
     })
     .from(tasksTable)
+    .where(eq(tasksTable.userId, req.userId))
     .groupBy(tasksTable.status);
 
   res.json(GetTasksByStatusResponse.parse(rows));
@@ -56,6 +61,7 @@ router.get("/stats/tasks-by-source", async (req, res): Promise<void> => {
       count: sql<number>`count(*)::int`,
     })
     .from(tasksTable)
+    .where(eq(tasksTable.userId, req.userId))
     .groupBy(tasksTable.source);
 
   res.json(GetTasksBySourceResponse.parse(rows));
@@ -65,6 +71,7 @@ router.get("/stats/recent-activity", async (req, res): Promise<void> => {
   const tasks = await db
     .select()
     .from(tasksTable)
+    .where(eq(tasksTable.userId, req.userId))
     .orderBy(sql`${tasksTable.updatedAt} desc`)
     .limit(10);
 

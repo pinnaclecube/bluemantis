@@ -53,7 +53,7 @@ function SignOutIcon() {
 }
 
 const NAV_ITEMS = [
-  { href: '/', label: 'Tasks', Icon: TasksIcon, match: (l: string) => l === '/' || l.startsWith('/workspace') },
+  { href: '/tasks', label: 'Tasks', Icon: TasksIcon, match: (l: string) => l === '/tasks' || l.startsWith('/workspace') || l.startsWith('/tasks/') },
   { href: '/history', label: 'History', Icon: HistoryIcon, match: (l: string) => l === '/history' },
   { href: '/settings', label: 'Settings', Icon: SettingsIcon, match: (l: string) => l === '/settings' },
 ];
