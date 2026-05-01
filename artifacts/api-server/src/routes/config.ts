@@ -126,6 +126,28 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
         break;
       }
 
+      case "azurerepos": {
+        const token = (req.body?.AZURE_REPOS_TOKEN as string | undefined) ?? process.env.AZURE_REPOS_TOKEN ?? "";
+        const org = (req.body?.AZURE_REPOS_ORG as string | undefined) ?? "";
+        if (!token) {
+          res.status(400).json({ ok: false, message: "Personal Access Token is required" });
+          return;
+        }
+        const creds = Buffer.from(`:${token}`).toString("base64");
+        const url = org
+          ? `https://dev.azure.com/${org}/_apis/projects?api-version=7.1`
+          : `https://app.vssps.visualstudio.com/_apis/accounts?memberId=me&api-version=7.1`;
+        const r = await fetch(url, {
+          headers: { Authorization: `Basic ${creds}`, Accept: "application/json" },
+        });
+        if (!r.ok) throw new Error(`Azure Repos returned ${r.status} — check your PAT and ensure Code (read) scope is granted`);
+        const data = (await r.json()) as { value?: unknown[] };
+        const count = Array.isArray(data.value) ? data.value.length : "?";
+        const msg = org ? `Connected to ${org} — ${count} project(s) found` : "PAT is valid";
+        res.json({ ok: true, message: msg });
+        break;
+      }
+
       default:
         res.status(404).json({ ok: false, message: "Unknown integration" });
     }

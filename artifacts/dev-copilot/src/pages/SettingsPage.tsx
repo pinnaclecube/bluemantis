@@ -70,6 +70,34 @@ const INTEGRATIONS: Integration[] = [
     ],
   },
   {
+    id: "azurerepos",
+    title: "Azure Repos",
+    subtitle: "Azure Git repositories — file context + PR creation",
+    icon: <AzureReposIcon />,
+    testKey: "azurerepos",
+    fields: [
+      {
+        key: "AZURE_REPOS_TOKEN",
+        label: "Personal Access Token",
+        placeholder: "Paste your PAT here",
+        hint: "Needs Code → Read & Write scope",
+      },
+    ],
+    steps: [
+      { label: "Open dev.azure.com and sign in to your organisation" },
+      {
+        label: "Click your avatar → Personal Access Tokens",
+        link: { text: "Open ADO", url: "https://dev.azure.com" },
+      },
+      {
+        label: "Click New Token — set scope to Code → Read & Write (do NOT use Full access)",
+      },
+      {
+        label: "Copy the token and paste it below. The organisation, project and repo are read from the repository URL you connect in the app — you only need the token here.",
+      },
+    ],
+  },
+  {
     id: "jira",
     title: "JIRA",
     subtitle: "Sync tasks from your JIRA project board",
@@ -146,6 +174,15 @@ function AzureIcon() {
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <rect width="24" height="24" rx="6" fill="#0078D4" />
       <text x="12" y="16" textAnchor="middle" fill="white" fontSize="9" fontWeight="700">ADO</text>
+    </svg>
+  );
+}
+function AzureReposIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#0078D4" />
+      <path d="M17 7H13L7 12L13 17H17L11 12L17 7Z" fill="white" />
+      <rect x="7" y="11" width="2" height="2" rx="1" fill="white" />
     </svg>
   );
 }
