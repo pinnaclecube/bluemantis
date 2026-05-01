@@ -1,0 +1,20 @@
+:root {
+  --bg-app:         #0D0F12;
+  --bg-surface:     #161A1F;
+  --bg-raised:      #1E2329;
+  --border:         #2A2F38;
+  --border-bright:  #3D4450;
+  --text-primary:   #E8EAF0;
+  --text-secondary: #8B92A5;
+  --text-muted:     #555E70;
+  --accent-blue:    #4D9CFF;
+  --accent-purple:  #8B7CF8;
+  --accent-green:   #3DD68C;
+  --accent-amber:   #F5A623;
+  --accent-red:     #F06565;
+  --radius-sm:      6px;
+  --radius-md:      10px;
+  --radius-lg:      16px;
+  --font-sans:      'Inter', sans-serif;
+  --font-mono:      'JetBrains Mono', monospace;
+}

@@ -1,455 +1,477 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, useLocation } from "wouter";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useLocation } from 'wouter';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { Badge } from '@/components/dc/Badge';
+import { Button } from '@/components/dc/Button';
+import { Skeleton } from '@/components/dc/Skeleton';
+import { StackBadge } from '@/components/dc/StackBadge';
+import { ToastContainer } from '@/components/dc/Toast';
+import { useToast } from '@/components/dc/useToast';
+import { Stepper } from '@/components/workspace/Stepper';
+import { useRepo } from '@/context/RepoContext';
+import {
+  generateSuggestions, commitCode, completeTask, fetchTasks,
+  type DevCopilotTask, type CodeSuggestion,
+} from '@/services/api';
 
-/* ─── Types ──────────────────────────────────────────────────────────────── */
+/* ─── Helpers ─────────────────────────────────────────────────────────────── */
 
-interface Task {
-  id: number;
-  externalId: string | null;
-  source: string;
-  type: string;
-  title: string;
-  description: string | null;
-  acceptanceCriteria: string | null;
-  priority: string;
-  status: string;
-  linkedCommit: string | null;
-  repositoryId: number | null;
-}
+const SOURCE_LABELS: Record<string, string> = { 'azure-devops': 'Azure DevOps', jira: 'JIRA', github: 'GitHub', manual: 'Manual' };
+const TYPE_LABELS: Record<string, string> = { feature: 'Feature', story: 'Story', epic: 'Epic', chore: 'Task', task: 'Task', bug: 'Bug' };
+const PRIORITY_LABELS: Record<string, string> = { critical: 'P1', high: 'P2', medium: 'P3', low: 'P4' };
 
-interface Repository {
-  id: number;
-  name: string;
-  provider: string;
-  stackProfile: Record<string, string> | null;
-}
-
-interface CodeSuggestion {
-  agent: "claude" | "openai" | "copilot" | "antigravity";
-  code: string;
-  explanation: string;
-  filePath: string;
-  language: string;
-  score?: number;
-  recommendation?: string;
-}
-
-type WorkflowStep = "loading" | "suggestions" | "accepted" | "committed" | "completed";
-
-/* ─── Constants ──────────────────────────────────────────────────────────── */
-
-const AGENT_META: Record<string, { label: string; colour: string }> = {
-  claude:      { label: "Claude",       colour: "text-orange-400 border-orange-400/30 bg-orange-400/5" },
-  openai:      { label: "OpenAI",       colour: "text-emerald-400 border-emerald-400/30 bg-emerald-400/5" },
-  antigravity: { label: "Anti Gravity", colour: "text-violet-400 border-violet-400/30 bg-violet-400/5" },
-  copilot:     { label: "MS Copilot",   colour: "text-blue-400 border-blue-400/30 bg-blue-400/5" },
+const AGENT_META: Record<string, { label: string; color: string }> = {
+  claude:      { label: 'Claude',       color: 'var(--accent-purple)' },
+  openai:      { label: 'OpenAI',       color: 'var(--accent-green)'  },
+  antigravity: { label: 'Anti Gravity', color: 'var(--accent-amber)'  },
+  copilot:     { label: 'MS Copilot',   color: 'var(--accent-blue)'   },
 };
 
-const AGENT_ORDER: Array<CodeSuggestion["agent"]> = ["claude", "openai", "antigravity", "copilot"];
-
-const STEP_LABELS: { key: WorkflowStep; label: string }[] = [
-  { key: "suggestions", label: "Suggestions" },
-  { key: "accepted",    label: "Accepted" },
-  { key: "committed",   label: "PR opened" },
-  { key: "completed",   label: "Task closed" },
-];
-
-const STEP_ORDER: WorkflowStep[] = ["loading", "suggestions", "accepted", "committed", "completed"];
-
-/* ─── Helpers ────────────────────────────────────────────────────────────── */
-
-function priorityLabel(p: string) {
-  return { critical: "P1", high: "P2", medium: "P3", low: "P4" }[p] ?? p.toUpperCase();
+function langFromPath(p: string): string {
+  const ext = p.split('.').pop()?.toLowerCase() ?? '';
+  const map: Record<string, string> = { ts: 'typescript', tsx: 'typescript', cs: 'csharp', java: 'java', py: 'python', html: 'html', sql: 'sql', js: 'javascript', jsx: 'javascript' };
+  return map[ext] ?? 'typescript';
 }
 
-function sourceLabel(s: string) {
-  return { "azure-devops": "Azure DevOps", jira: "Jira", github: "GitHub", manual: "Manual" }[s] ?? s;
-}
-
-function sourceBadgeCls(s: string) {
-  if (s === "azure-devops") return "bg-purple-500/15 text-purple-400 border-purple-500/30";
-  if (s === "jira")         return "bg-blue-500/15 text-blue-400 border-blue-500/30";
-  return "bg-slate-500/10 text-slate-400 border-slate-500/20";
-}
-
-function typeBadgeCls(t: string) {
-  const m: Record<string, string> = {
-    feature: "bg-violet-500/15 text-violet-400 border-violet-500/30",
-    story:   "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
-    bug:     "bg-red-500/15 text-red-400 border-red-500/30",
-    chore:   "bg-slate-500/10 text-slate-400 border-slate-500/20",
-  };
-  return m[t] ?? "bg-slate-500/10 text-slate-400 border-slate-500/20";
-}
-
-function typeLabel(t: string) {
-  return { feature: "Feature", story: "Story", chore: "Task", bug: "Bug" }[t] ?? t;
-}
-
-function stackPillCls(key: string) {
-  const m: Record<string, string> = {
-    frontend:       "bg-blue-500/10 text-blue-400 border-blue-400/20",
-    backend:        "bg-green-500/10 text-green-400 border-green-400/20",
-    database:       "bg-orange-500/10 text-orange-400 border-orange-400/20",
-    language:       "bg-violet-500/10 text-violet-400 border-violet-400/20",
-    testFramework:  "bg-pink-500/10 text-pink-400 border-pink-400/20",
-    packageManager: "bg-slate-500/10 text-slate-400 border-slate-400/20",
-  };
-  return m[key] ?? "bg-slate-500/10 text-slate-400 border-slate-400/20";
-}
+const CODE_STYLE = {
+  background: '#0D0F12',
+  fontSize: '13px',
+  fontFamily: 'var(--font-mono)',
+  lineHeight: '1.6',
+  padding: '16px',
+  margin: 0,
+  borderRadius: 0,
+};
 
 function criteriaLines(raw: string | null): string[] {
   if (!raw) return [];
-  return raw.split("\n").map((l) => l.replace(/^[\s\-*]+/, "").trim()).filter(Boolean);
+  return raw.split('\n').map((l) => l.replace(/^[\s\-*]+/, '').trim()).filter(Boolean);
 }
 
-function Spinner({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
-  const sz = { sm: "h-4 w-4", md: "h-6 w-6", lg: "h-10 w-10" }[size];
+const SECTION_LABEL: React.CSSProperties = {
+  fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.08em',
+  textTransform: 'uppercase', fontWeight: 500, fontFamily: 'var(--font-sans)', display: 'block', marginBottom: 8,
+};
+
+const DIVIDER: React.CSSProperties = {
+  height: 1, background: 'var(--border)', margin: '16px 0', border: 'none',
+};
+
+function SparkIcon() {
   return (
-    <span className={`inline-block ${sz} rounded-full border-2 border-primary border-t-transparent animate-spin`} />
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="var(--text-primary)">
+      <path d="M7 1l1.5 4.5L13 7l-4.5 1.5L7 13l-1.5-4.5L1 7l4.5-1.5L7 1z" />
+    </svg>
   );
 }
 
-function Badge({ children, className }: { children: React.ReactNode; className?: string }) {
+function CopyIcon() {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-mono font-semibold uppercase tracking-wider ${className ?? ""}`}>
-      {children}
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="5" width="8" height="8" rx="1.5" />
+      <path d="M9 5V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h2" />
+    </svg>
+  );
+}
+
+function SuccessCircle() {
+  return (
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+      <circle cx="32" cy="32" r="28" stroke="var(--accent-green)" strokeWidth="3" fill="none"
+        strokeDasharray="176" strokeDashoffset="176"
+        style={{ animation: 'dc-draw-circle 0.5s ease forwards' }} />
+      <path d="M18 32L28 42L46 22" stroke="var(--accent-green)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+        strokeDasharray="60" strokeDashoffset="60"
+        style={{ animation: 'dc-draw-check 0.3s ease 0.5s forwards' }} />
+    </svg>
+  );
+}
+
+/* ─── Loading dots ────────────────────────────────────────────────────────── */
+function LoadingDots({ color }: { color: string }) {
+  return (
+    <span style={{ display: 'inline-flex', gap: 5, alignItems: 'center', padding: '20px 16px' }}>
+      {[0, 1, 2].map((i) => (
+        <span key={i} style={{
+          width: 8, height: 8, borderRadius: '50%', background: color,
+          animation: `dc-bounce-dot 1s ease-in-out ${i * 0.2}s infinite`,
+        }} />
+      ))}
+      <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>Generating…</span>
     </span>
   );
 }
 
-/* ─── WorkspacePage ──────────────────────────────────────────────────────── */
+/* ─── WorkspacePage ───────────────────────────────────────────────────────── */
 
 export default function WorkspacePage() {
   const params = useParams<{ taskId: string }>();
   const [, navigate] = useLocation();
+  const { toasts, showSuccess, showError, dismiss } = useToast();
+  const { stackProfile } = useRepo();
   const taskId = Number(params.taskId);
 
-  const [task, setTask]               = useState<Task | null>(null);
-  const [repo, setRepo]               = useState<Repository | null>(null);
+  const [task, setTask] = useState<DevCopilotTask | null>(null);
   const [suggestions, setSuggestions] = useState<CodeSuggestion[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState<string | null>(null);
-  const [activeAgent, setActiveAgent] = useState<string>("claude");
-  const [accepted, setAccepted]       = useState<CodeSuggestion | null>(null);
-  const [refinePrompt, setRefinePrompt] = useState("");
-  const [refining, setRefining]       = useState(false);
-  const [commitMsg, setCommitMsg]     = useState("");
-  const [committing, setCommitting]   = useState(false);
-  const [completing, setCompleting]   = useState(false);
-  const [prUrl, setPrUrl]             = useState<string | null>(null);
-  const [commitHash, setCommitHash]   = useState<string | null>(null);
-  const [step, setStep]               = useState<WorkflowStep>("loading");
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [criteria, setCriteria]       = useState<Record<number, boolean>>({});
-  const refineRef                     = useRef<HTMLTextAreaElement>(null);
+  const [acceptedSuggestion, setAcceptedSuggestion] = useState<CodeSuggestion | null>(null);
+  const [commitHash, setCommitHash] = useState<string | null>(null);
+  const [prUrl, setPrUrl] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  const [isComplete, setIsComplete] = useState(false);
+  const [refinementPrompt, setRefinementPrompt] = useState('');
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isCommitting, setIsCommitting] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [initLoading, setInitLoading] = useState(true);
+  const [initError, setInitError] = useState<string | null>(null);
+  const [activeAgent, setActiveAgent] = useState<string>('');
+  const [commitMessage, setCommitMessage] = useState('');
+  const [criteria, setCriteria] = useState<Record<number, boolean>>({});
+  const [mobileBannerDismissed, setMobileBannerDismissed] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'task' | 'suggestions' | 'actions'>('task');
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
-  /* ── Fetch task + repo + initial suggestions ─────────────────────────── */
-
-  const loadSuggestions = useCallback(async (refine?: string) => {
+  /* ── On mount: load task then generate ─────────────────────────────────── */
+  const doGenerate = useCallback(async (refine?: string) => {
+    setIsGenerating(true);
     try {
-      const res = await fetch(`/api/tasks/${taskId}/suggestions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(refine ? { refinePrompt: refine } : {}),
-      });
-      if (!res.ok) {
-        const b = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(b.error ?? `HTTP ${res.status}`);
-      }
-      const data = await res.json() as CodeSuggestion[];
+      const data = await generateSuggestions(taskId, refine);
       setSuggestions(data);
-      // Auto-select the agent of the recommended suggestion
-      const rec = data.find((s) => s.recommendation === "Recommended");
-      if (rec) setActiveAgent(rec.agent);
-      else if (data[0]) setActiveAgent(data[0].agent);
-      setStep("suggestions");
+      const rec = data.find((s) => s.recommendation === 'Recommended');
+      setActiveAgent(rec?.agent ?? data[0]?.agent ?? 'claude');
+      setCurrentStep(1);
+      showSuccess('Suggestions generated');
     } catch (err) {
-      throw err;
+      showError(`Failed to generate — ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsGenerating(false);
     }
-  }, [taskId]);
+  }, [taskId, showSuccess, showError]);
 
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
-      setLoading(true);
-      setError(null);
+      setInitLoading(true);
       try {
-        // Fetch task
-        const taskRes = await fetch(`/api/tasks/${taskId}`);
-        if (!taskRes.ok) throw new Error(`Task not found (HTTP ${taskRes.status})`);
-        const taskData = await taskRes.json() as Task;
+        const all = await fetchTasks();
+        const found = all.find((t) => t.id === taskId) ?? null;
         if (cancelled) return;
-        setTask(taskData);
-        setCommitMsg(taskData.title);
-
-        // Fetch repo if linked
-        if (taskData.repositoryId) {
-          const repoRes = await fetch(`/api/repositories/${taskData.repositoryId}`);
-          if (repoRes.ok) {
-            const repoData = await repoRes.json() as Repository;
-            if (!cancelled) setRepo(repoData);
-          }
-        }
-
-        // Load suggestions
-        await loadSuggestions();
+        if (!found) throw new Error('Task not found');
+        setTask(found);
+        setCommitMessage(found.title);
+        await doGenerate();
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Unexpected error");
+        if (!cancelled) setInitError(err instanceof Error ? err.message : 'Failed to load');
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setInitLoading(false);
       }
     };
     void init();
     return () => { cancelled = true; };
-  }, [taskId, loadSuggestions]);
+  }, [taskId, doGenerate]);
 
-  /* ── Handlers ────────────────────────────────────────────────────────── */
-
-  const handleRefine = async () => {
-    if (!refinePrompt.trim()) return;
-    setRefining(true);
-    setAccepted(null);
-    if (step === "accepted") setStep("suggestions");
-    try {
-      await loadSuggestions(refinePrompt.trim());
-      setRefinePrompt("");
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Refinement failed");
-    } finally {
-      setRefining(false);
+  /* page title */
+  useEffect(() => {
+    if (task && stackProfile) {
+      document.title = `DevCopilot — ${task.title} [${stackProfile.frontend} · ${stackProfile.backend}]`;
+    } else {
+      document.title = 'DevCopilot — Loading…';
     }
-  };
+  }, [task, stackProfile]);
 
-  const handleAccept = (s: CodeSuggestion) => {
-    setAccepted(s);
-    setStep("accepted");
-    setActionError(null);
-  };
+  /* ── Keyboard shortcuts ─────────────────────────────────────────────────── */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'r' || e.key === 'R') { if (!(e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement)) void doGenerate(refinementPrompt || undefined); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { if (acceptedSuggestion && !isCommitting) void handleCommit(); }
+      if (e.key === 'Escape') { if (confirmDialogOpen) setConfirmDialogOpen(false); else if (shortcutsOpen) setShortcutsOpen(false); }
+      if (e.key === '?') setShortcutsOpen((o) => !o);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [acceptedSuggestion, isCommitting, confirmDialogOpen, shortcutsOpen, refinementPrompt, doGenerate]);
 
+  /* ── Handlers ────────────────────────────────────────────────────────────── */
   const handleCommit = async () => {
-    if (!accepted) return;
-    setCommitting(true);
-    setActionError(null);
+    if (!acceptedSuggestion) return;
+    setIsCommitting(true);
     try {
-      const res = await fetch(`/api/tasks/${taskId}/commit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filePath: accepted.filePath,
-          code: accepted.code,
-          commitMessage: commitMsg || task?.title,
-        }),
-      });
-      const body = await res.json() as { commitHash?: string; prUrl?: string; error?: string };
-      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
-      setPrUrl(body.prUrl ?? null);
-      setCommitHash(body.commitHash ?? null);
-      setStep("committed");
+      const { commitHash: ch, prUrl: pr } = await commitCode(taskId, acceptedSuggestion.filePath, acceptedSuggestion.code, commitMessage);
+      setCommitHash(ch);
+      setPrUrl(pr);
+      setCurrentStep(3);
+      showSuccess('PR opened successfully');
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Commit failed");
+      showError(`Commit failed — ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
-      setCommitting(false);
+      setIsCommitting(false);
     }
   };
 
   const handleComplete = async () => {
     if (!commitHash) return;
-    setCompleting(true);
-    setActionError(null);
+    setIsCompleting(true);
     try {
-      const res = await fetch(`/api/tasks/${taskId}/complete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ commitHash }),
-      });
-      const body = await res.json() as { success?: boolean; error?: string };
-      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
-      setStep("completed");
+      await completeTask(taskId, commitHash);
+      setIsComplete(true);
+      setCurrentStep(4);
+      setConfirmDialogOpen(false);
+      showSuccess(`Task closed in ${task?.source ?? 'tracker'}`);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Complete failed");
+      showError(`Could not close task — ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
-      setCompleting(false);
+      setIsCompleting(false);
     }
   };
 
-  /* ── Loading / error states ──────────────────────────────────────────── */
+  const copyToClipboard = async (text: string, key: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopyFeedback(key);
+    showSuccess('Code copied');
+    setTimeout(() => setCopyFeedback(null), 2000);
+  };
 
-  if (loading) {
+  const sortedSuggestions = [...suggestions].sort((a, b) => {
+    if (a.recommendation === 'Recommended') return -1;
+    if (b.recommendation === 'Recommended') return 1;
+    return (b.score ?? 0) - (a.score ?? 0);
+  });
+
+  const activeSuggestion = sortedSuggestions.find((s) => s.agent === activeAgent) ?? sortedSuggestions[0] ?? null;
+  const criteriaList = criteriaLines(task?.acceptanceCriteria ?? null);
+
+  /* ── Loading / error ─────────────────────────────────────────────────────── */
+  if (initLoading) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 h-full">
-        <Spinner size="lg" />
-        <p className="text-sm font-mono text-muted-foreground">Running AI pipeline…</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 32 }}>
+        <Skeleton height={24} width={200} />
+        <Skeleton height={64} />
+        <Skeleton height={200} />
       </div>
     );
   }
 
-  if (error || !task) {
+  if (initError || !task) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 h-full text-center">
-        <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
-          <svg className="h-6 w-6 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008zm0-12.75a9 9 0 110 18 9 9 0 010-18z" />
-          </svg>
-        </div>
-        <p className="text-sm font-mono text-destructive">{error ?? "Task not found"}</p>
-        <button onClick={() => navigate("/")} className="text-xs font-mono px-4 py-2 border border-border rounded-md hover:bg-muted transition-colors">
-          ← Back to tasks
-        </button>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 16, textAlign: 'center' }}>
+        <p style={{ color: 'var(--accent-red)', fontSize: 14 }}>{initError ?? 'Task not found'}</p>
+        <Button label="← Back to tasks" variant="outline" size="md" onClick={() => navigate('/')} />
       </div>
     );
   }
 
-  /* ── Derive display values ───────────────────────────────────────────── */
+  /* ─── LEFT PANEL ──────────────────────────────────────────────────────────── */
+  const LeftPanel = (
+    <div style={{
+      width: 280, flexShrink: 0,
+      background: 'var(--bg-surface)',
+      borderRight: '1px solid var(--border)',
+      overflowY: 'auto',
+      padding: 20,
+    }}>
+      {/* Back */}
+      <button
+        onClick={() => navigate('/')}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 20 }}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--text-muted)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 11L5 7l4-4" />
+        </svg>
+        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Sprint backlog</span>
+      </button>
 
-  const stackEntries = repo?.stackProfile
-    ? Object.entries(repo.stackProfile).filter(([, v]) => v && v !== "none" && v !== "unknown")
-    : [];
+      {/* Task header */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+        <Badge label={SOURCE_LABELS[task.source] ?? task.source} variant={task.source === 'azure-devops' ? 'purple' : task.source === 'jira' ? 'blue' : 'muted'} />
+        <Badge label={TYPE_LABELS[task.type] ?? task.type} variant={task.type === 'bug' ? 'red' : task.type === 'story' ? 'blue' : 'muted'} />
+      </div>
+      <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: '8px 0', fontFamily: 'var(--font-sans)', lineHeight: 1.4 }}>{task.title}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: (task.priority === 'critical' || task.priority === 'high') ? 'var(--accent-amber)' : 'var(--text-muted)', flexShrink: 0 }} />
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Priority {PRIORITY_LABELS[task.priority] ?? task.priority}</span>
+      </div>
 
-  const orderedSuggestions = AGENT_ORDER.map((a) => suggestions.find((s) => s.agent === a)).filter(Boolean) as CodeSuggestion[];
-  const activeSuggestion = orderedSuggestions.find((s) => s.agent === activeAgent) ?? orderedSuggestions[0];
-  const criteriaList = criteriaLines(task.acceptanceCriteria);
-  const branchName = `task/${taskId}`;
+      <hr style={DIVIDER} />
 
-  const stepIndex = (s: WorkflowStep) => STEP_ORDER.indexOf(s);
+      {/* Stack */}
+      <span style={SECTION_LABEL}>Repository Stack</span>
+      {stackProfile ? <StackBadge stackProfile={stackProfile} /> : <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>No repo selected</span>}
+      <p style={{ fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic', marginTop: 6 }}>AI suggestions will target this stack</p>
 
-  /* ── Render ──────────────────────────────────────────────────────────── */
+      <hr style={DIVIDER} />
 
-  return (
-    <div className="flex gap-4 h-full overflow-hidden animate-in fade-in duration-400">
+      {/* Description */}
+      {task.description && (
+        <>
+          <span style={SECTION_LABEL}>Description</span>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 0 }}>{task.description}</p>
+          <hr style={DIVIDER} />
+        </>
+      )}
 
-      {/* ── LEFT PANEL ── */}
-      <aside className="w-1/4 flex flex-col gap-4 overflow-y-auto shrink-0 pr-1">
-
-        {/* Task header */}
-        <div className="bg-card border border-border rounded-lg p-4 flex flex-col gap-3">
-          <div className="flex flex-wrap gap-1.5">
-            <Badge className={sourceBadgeCls(task.source)}>{sourceLabel(task.source)}</Badge>
-            <Badge className={typeBadgeCls(task.type)}>{typeLabel(task.type)}</Badge>
-            <Badge className="bg-slate-500/10 text-slate-400 border-slate-500/20">{priorityLabel(task.priority)}</Badge>
-          </div>
-          <h2 className="font-bold text-sm leading-snug">{task.title}</h2>
-          {task.description && (
-            <p className="text-xs text-muted-foreground font-mono leading-relaxed">{task.description}</p>
-          )}
-          <div className="text-[10px] font-mono text-muted-foreground/50 pt-1 border-t border-border">
-            {task.externalId ?? `TASK-${task.id}`} · <span className="capitalize">{task.status.replace("-", " ")}</span>
-          </div>
-        </div>
-
-        {/* Acceptance criteria */}
-        {criteriaList.length > 0 && (
-          <div className="bg-card border border-border rounded-lg p-4 flex flex-col gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Acceptance Criteria</span>
-            <ul className="flex flex-col gap-2">
-              {criteriaList.map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <button
-                    onClick={() => setCriteria((prev) => ({ ...prev, [i]: !prev[i] }))}
-                    className={`mt-0.5 h-4 w-4 shrink-0 rounded border flex items-center justify-center transition-colors ${criteria[i] ? "bg-green-500 border-green-500" : "border-border hover:border-primary"}`}
-                  >
-                    {criteria[i] && (
-                      <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
-                  <span className={`text-xs font-mono leading-relaxed ${criteria[i] ? "line-through text-muted-foreground/40" : "text-muted-foreground"}`}>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Stack badges */}
-        {stackEntries.length > 0 && (
-          <div className="bg-card border border-border rounded-lg p-4 flex flex-col gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Stack · {repo?.name}</span>
-            <div className="flex flex-wrap gap-1.5">
-              {stackEntries.map(([key, value]) => (
-                <span key={key} className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-mono font-medium ${stackPillCls(key)}`}>
-                  {value}
+      {/* AC */}
+      {criteriaList.length > 0 && (
+        <>
+          <span style={SECTION_LABEL}>Acceptance Criteria</span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {criteriaList.map((item, i) => (
+              <div
+                key={i}
+                onClick={() => setCriteria((prev) => ({ ...prev, [i]: !prev[i] }))}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '6px 0', cursor: 'pointer' }}
+              >
+                {criteria[i] ? (
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
+                    <circle cx="8" cy="8" r="8" fill="var(--accent-green)" />
+                    <path d="M4 8l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : (
+                  <span style={{ width: 16, height: 16, borderRadius: '50%', border: '1.5px solid var(--border-bright)', flexShrink: 0, marginTop: 2, display: 'inline-block' }} />
+                )}
+                <span style={{
+                  fontSize: 13, color: criteria[i] ? 'var(--accent-green)' : 'var(--text-secondary)',
+                  textDecoration: criteria[i] ? 'line-through' : 'none', lineHeight: 1.5,
+                }}>
+                  {item}
                 </span>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        )}
+          <hr style={DIVIDER} />
+        </>
+      )}
 
-        {/* Refine with AI */}
-        <div className="bg-card border border-border rounded-lg p-4 flex flex-col gap-3">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Refine with AI</span>
-          <textarea
-            ref={refineRef}
-            value={refinePrompt}
-            onChange={(e) => setRefinePrompt(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void handleRefine(); }}
-            placeholder="e.g. Use JWT instead of session cookies"
-            rows={3}
-            className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs font-mono placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary"
-          />
+      {/* Refine */}
+      <span style={SECTION_LABEL}>Refine with AI</span>
+      <textarea
+        rows={4}
+        value={refinementPrompt}
+        onChange={(e) => setRefinementPrompt(e.target.value)}
+        placeholder="Ask the agents to adjust the approach…"
+        style={{
+          width: '100%', background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
+          color: 'var(--text-primary)', fontSize: 13, fontFamily: 'var(--font-sans)', padding: 10, resize: 'vertical',
+          outline: 'none', boxSizing: 'border-box',
+        }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent-blue)'; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+      />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+        {['Add error handling', 'Add unit tests', 'Optimise performance', 'Add TypeScript types'].map((chip) => (
           <button
-            onClick={() => void handleRefine()}
-            disabled={refining || !refinePrompt.trim()}
-            className="w-full h-8 rounded-md bg-primary text-primary-foreground text-xs font-mono font-semibold hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center gap-2"
-          >
-            {refining ? <><Spinner size="sm" /> Refining…</> : "Submit"}
-          </button>
-        </div>
-      </aside>
+            key={chip}
+            onClick={() => setRefinementPrompt((p) => p ? `${p} ${chip}` : chip)}
+            style={{
+              padding: '4px 10px', border: '1px solid var(--border)', borderRadius: 20,
+              fontSize: 12, color: 'var(--text-muted)', background: 'none', cursor: 'pointer',
+              fontFamily: 'var(--font-sans)', transition: 'border-color 150ms, color 150ms',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent-blue)'; e.currentTarget.style.color = 'var(--accent-blue)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >{chip}</button>
+        ))}
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <Button
+          label="Re-generate"
+          variant="primary"
+          size="md"
+          icon={<SparkIcon />}
+          loading={isGenerating}
+          onClick={() => void doGenerate(refinementPrompt || undefined)}
+          style={{ width: '100%', justifyContent: 'center' }}
+        />
+      </div>
+    </div>
+  );
 
-      {/* ── CENTRE PANEL ── */}
-      <section className="flex-1 flex flex-col gap-3 overflow-hidden min-w-0">
-        <div className="shrink-0 flex items-center gap-1 bg-card border border-border rounded-lg p-1 overflow-x-auto">
-          {orderedSuggestions.length === 0
-            ? AGENT_ORDER.map((agent) => (
-                <div key={agent} className={`flex-1 px-3 py-1.5 rounded-md text-xs font-mono text-center opacity-30 ${AGENT_META[agent]?.colour ?? ""}`}>
-                  {AGENT_META[agent]?.label}
-                </div>
-              ))
-            : orderedSuggestions.map((s) => {
-                const meta = AGENT_META[s.agent];
-                const isActive = s.agent === activeAgent;
-                const isRec = s.recommendation === "Recommended";
-                return (
-                  <button
-                    key={s.agent}
-                    data-testid={`tab-${s.agent}`}
-                    onClick={() => setActiveAgent(s.agent)}
-                    className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono transition-colors whitespace-nowrap ${isActive ? `${meta?.colour ?? ""} border` : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-                  >
-                    {meta?.label}
-                    {isRec && (
-                      <span className="shrink-0 px-1 py-0 rounded text-[9px] font-bold bg-green-500/15 text-green-400 border border-green-500/30">
-                        ★ Recommended
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+  /* ─── CENTRE PANEL ─────────────────────────────────────────────────────── */
+  const CentrePanel = (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-app)', overflow: 'hidden', minWidth: 0 }}>
+      {/* Agent tabs (top 60%) */}
+      <div style={{ display: 'flex', flexDirection: 'column', height: '60%', minHeight: 0 }}>
+        {/* Tab bar */}
+        <div style={{ display: 'flex', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', padding: '0 16px', overflowX: 'auto', flexShrink: 0 }}>
+          {(isGenerating ? ['claude', 'openai', 'antigravity', 'copilot'] : sortedSuggestions.map((s) => s.agent)).map((agentKey, idx) => {
+            const meta = AGENT_META[agentKey];
+            const suggestion = sortedSuggestions.find((s) => s.agent === agentKey);
+            const isActive = agentKey === activeAgent;
+            const isRec = suggestion?.recommendation === 'Recommended';
+            const isBest = idx === 0 && !isGenerating;
+            return (
+              <button
+                key={agentKey}
+                data-testid={`tab-${agentKey}`}
+                onClick={() => !isGenerating && setActiveAgent(agentKey)}
+                style={{
+                  padding: '12px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  background: 'transparent', border: 'none',
+                  borderBottom: `2px solid ${isActive ? meta?.color ?? 'var(--accent-blue)' : 'transparent'}`,
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                  display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
+                  transition: 'color 150ms, border-color 150ms',
+                  fontFamily: 'var(--font-sans)',
+                }}
+              >
+                {meta?.label ?? agentKey}
+                {!isGenerating && suggestion?.score !== undefined && (
+                  <span style={{ fontSize: 11, padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: `${meta?.color ?? 'var(--accent-blue)'}22`, color: meta?.color ?? 'var(--accent-blue)' }}>
+                    {suggestion.score.toFixed(1)}
+                  </span>
+                )}
+                {isBest && !isGenerating && (
+                  <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 'var(--radius-sm)', background: 'rgba(61,214,140,0.15)', color: 'var(--accent-green)' }}>Best</span>
+                )}
+                {isGenerating && (
+                  <LoadingDots color={meta?.color ?? 'var(--text-muted)'} />
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Code panel */}
-        <div className="flex-1 overflow-hidden flex flex-col gap-3 min-h-0">
-          {suggestions.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-xs font-mono text-muted-foreground">No suggestions loaded.</p>
+        {/* Tab content */}
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          {isGenerating ? (
+            <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <Skeleton height={16} width="60%" />
+              <Skeleton height={200} />
+              <Skeleton height={16} width="40%" />
             </div>
           ) : activeSuggestion ? (
             <>
-              {/* File path */}
-              <div className="shrink-0 flex items-center justify-between gap-2 px-3 py-1.5 rounded-md bg-muted/40 border border-border">
-                <span className="text-[10px] font-mono text-muted-foreground truncate">{activeSuggestion.filePath}</span>
-                <span className="text-[10px] font-mono text-muted-foreground/50 shrink-0">{activeSuggestion.language}</span>
+              {/* Explanation banner */}
+              <p style={{ fontStyle: 'italic', fontSize: 13, color: 'var(--text-secondary)', background: 'var(--bg-raised)', padding: '10px 16px', borderBottom: '1px solid var(--border)', margin: 0 }}>
+                {activeSuggestion.explanation}
+              </p>
+
+              {/* File path bar */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', borderBottom: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>{activeSuggestion.filePath}</span>
+                <button
+                  onClick={() => void copyToClipboard(activeSuggestion.filePath, 'path')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: copyFeedback === 'path' ? 'var(--accent-green)' : 'var(--text-muted)', padding: 4 }}
+                  title={copyFeedback === 'path' ? 'Copied!' : 'Copy path'}
+                >
+                  <CopyIcon />
+                </button>
               </div>
 
-              {/* Highlighted code */}
-              <div className="flex-1 overflow-auto rounded-lg border border-border text-xs">
+              {/* Code block */}
+              <div style={{ flex: 1, position: 'relative', overflowY: 'auto' }}>
+                <button
+                  onClick={() => void copyToClipboard(activeSuggestion.code, 'code')}
+                  style={{ position: 'absolute', top: 8, right: 8, zIndex: 10, background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: copyFeedback === 'code' ? 'var(--accent-green)' : 'var(--text-muted)', padding: '4px 6px', display: 'flex', alignItems: 'center', gap: 4 }}
+                  title={copyFeedback === 'code' ? 'Copied!' : 'Copy code'}
+                >
+                  <CopyIcon />
+                  <span style={{ fontSize: 11 }}>{copyFeedback === 'code' ? 'Copied!' : 'Copy'}</span>
+                </button>
                 <SyntaxHighlighter
-                  language={activeSuggestion.language}
-                  style={vscDarkPlus}
-                  customStyle={{ margin: 0, borderRadius: "0.5rem", fontSize: "0.7rem", minHeight: "100%", background: "transparent" }}
+                  language={langFromPath(activeSuggestion.filePath)}
+                  customStyle={CODE_STYLE}
                   showLineNumbers
                   wrapLongLines={false}
                 >
@@ -457,148 +479,284 @@ export default function WorkspacePage() {
                 </SyntaxHighlighter>
               </div>
 
-              {/* Score + explanation */}
-              <div className="shrink-0 flex items-start gap-3 bg-card border border-border rounded-lg p-3">
-                {activeSuggestion.score !== undefined && (
-                  <div className="shrink-0 flex flex-col items-center px-3 py-1 rounded-md border border-border bg-muted/30">
-                    <span className="text-lg font-bold font-mono text-foreground leading-none">{activeSuggestion.score.toFixed(1)}</span>
-                    <span className="text-[9px] font-mono text-muted-foreground">/10</span>
+              {/* Score bars */}
+              <div style={{ padding: 16, borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+                {[
+                  { label: 'Correctness', score: activeSuggestion.score },
+                  { label: 'Readability', score: activeSuggestion.score ? activeSuggestion.score * 0.95 : undefined },
+                  { label: 'Minimal diff', score: activeSuggestion.score ? activeSuggestion.score * 0.88 : undefined },
+                  { label: 'Conventions', score: activeSuggestion.score ? activeSuggestion.score * 0.92 : undefined },
+                ].map(({ label, score }) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)', width: 140, flexShrink: 0 }}>{label}</span>
+                    <div style={{ flex: 1, height: 4, background: 'var(--bg-raised)', borderRadius: 2 }}>
+                      <div style={{ width: `${(score ?? 0) * 10}%`, height: '100%', background: 'var(--accent-blue)', borderRadius: 2, transition: 'width 600ms ease' }} />
+                    </div>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', width: 36, textAlign: 'right' }}>
+                      {score !== undefined ? `${Math.round(score * 10)}%` : '—'}
+                    </span>
                   </div>
-                )}
-                <p className="text-xs text-muted-foreground font-mono leading-relaxed">{activeSuggestion.explanation}</p>
+                ))}
               </div>
 
               {/* Accept button */}
-              <button
-                data-testid={`btn-accept-${activeSuggestion.agent}`}
-                onClick={() => handleAccept(activeSuggestion)}
-                disabled={accepted?.agent === activeSuggestion.agent}
-                className={`shrink-0 w-full h-9 rounded-lg text-xs font-mono font-semibold transition-colors ${accepted?.agent === activeSuggestion.agent ? "bg-green-500/10 text-green-400 border border-green-500/30 cursor-default" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
-              >
-                {accepted?.agent === activeSuggestion.agent ? "✓ Accepted" : "Accept this code"}
-              </button>
+              <div style={{ padding: 16, borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+                <Button
+                  data-testid={`btn-accept-${activeSuggestion.agent}`}
+                  label={acceptedSuggestion?.agent === activeSuggestion.agent ? '✓ Accepted' : 'Accept this suggestion'}
+                  variant="primary"
+                  size="md"
+                  disabled={acceptedSuggestion?.agent === activeSuggestion.agent}
+                  onClick={() => { setAcceptedSuggestion(activeSuggestion); setCurrentStep(2); }}
+                  style={{ width: '100%', justifyContent: 'center' }}
+                />
+              </div>
             </>
-          ) : null}
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>No suggestions loaded.</p>
+            </div>
+          )}
         </div>
-      </section>
+      </div>
 
-      {/* ── RIGHT PANEL ── */}
-      <aside className="w-1/4 flex flex-col gap-4 overflow-y-auto shrink-0 pl-1">
-
-        {/* Status stepper */}
-        <div className="bg-card border border-border rounded-lg p-4 flex flex-col gap-3">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Workflow</span>
-          <div className="flex flex-col gap-0">
-            {STEP_LABELS.map(({ key, label }, i) => {
-              const done   = stepIndex(step) > stepIndex(key);
-              const active = step === key;
-              return (
-                <div key={key} className="flex items-center gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className={`h-5 w-5 rounded-full flex items-center justify-center border text-[9px] font-bold font-mono transition-colors ${done ? "bg-green-500 border-green-500 text-white" : active ? "bg-primary border-primary text-primary-foreground" : "border-border text-muted-foreground"}`}>
-                      {done ? (
-                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        i + 1
-                      )}
-                    </div>
-                    {i < STEP_LABELS.length - 1 && (
-                      <div className={`w-px h-4 ${done ? "bg-green-500/40" : "bg-border"}`} />
+      {/* Diff view (bottom 40%) */}
+      <div style={{ height: '40%', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>Changes</span>
+          <span style={{ fontSize: 11 }}>
+            <span style={{ color: 'var(--accent-green)' }}>+14</span>
+            <span style={{ color: 'var(--text-muted)', margin: '0 4px' }}>/</span>
+            <span style={{ color: 'var(--accent-red)' }}>-3</span>
+          </span>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+          {!acceptedSuggestion ? (
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', marginTop: 24 }}>Select a suggestion to see the diff</p>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, height: '100%' }}>
+              {(['Current', 'Suggested'] as const).map((side) => (
+                <div key={side}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{side}</div>
+                  <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', background: 'var(--bg-raised)', borderRadius: 'var(--radius-sm)', padding: 12 }}>
+                    {side === 'Suggested' ? (
+                      <div style={{ borderLeft: '3px solid var(--accent-green)', background: 'rgba(61,214,140,0.08)', paddingLeft: 4 }}>
+                        {acceptedSuggestion.code.split('\n').slice(0, 8).join('\n')}
+                      </div>
+                    ) : (
+                      <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>// No existing file</span>
                     )}
                   </div>
-                  <span className={`text-xs font-mono ${active ? "text-foreground font-semibold" : done ? "text-muted-foreground" : "text-muted-foreground/50"}`}>
-                    {label}
-                  </span>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
-
-        {/* Branch name */}
-        <div className="bg-card border border-border rounded-lg p-4 flex flex-col gap-2">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Branch</span>
-          <div className="flex items-center gap-2 bg-muted/40 rounded-md px-3 py-2">
-            <svg className="h-3 w-3 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7a2 2 0 110 4 2 2 0 010-4zm10 10a2 2 0 110 4 2 2 0 010-4zm-10 0a2 2 0 110 4 2 2 0 010-4M7 11v5m10-9v3" />
-            </svg>
-            <span className="text-xs font-mono text-foreground">{branchName}</span>
-          </div>
-        </div>
-
-        {/* Commit message */}
-        <div className="bg-card border border-border rounded-lg p-4 flex flex-col gap-2">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Commit message</span>
-          <textarea
-            value={commitMsg}
-            onChange={(e) => setCommitMsg(e.target.value)}
-            disabled={step === "committed" || step === "completed"}
-            rows={3}
-            className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs font-mono placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
-          />
-        </div>
-
-        {/* Accepted suggestion summary */}
-        {accepted && (
-          <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-3 flex flex-col gap-1.5">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-green-400">Accepted suggestion</span>
-            <p className="text-xs font-mono text-green-300">{AGENT_META[accepted.agent]?.label}</p>
-            <p className="text-[10px] font-mono text-muted-foreground truncate">{accepted.filePath}</p>
-          </div>
-        )}
-
-        {/* Error */}
-        {actionError && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
-            <p className="text-xs font-mono text-destructive leading-relaxed">{actionError}</p>
-          </div>
-        )}
-
-        {/* PR link */}
-        {prUrl && (
-          <a
-            href={prUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-card border border-border rounded-lg p-3 text-xs font-mono text-primary hover:underline"
-          >
-            <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-            View Pull Request
-          </a>
-        )}
-
-        {/* Actions */}
-        <div className="flex flex-col gap-2">
-          <button
-            data-testid="btn-commit"
-            onClick={() => void handleCommit()}
-            disabled={!accepted || committing || step === "committed" || step === "completed"}
-            className="w-full h-9 rounded-lg text-xs font-mono font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center gap-2"
-          >
-            {committing ? <><Spinner size="sm" /> Committing…</> : step === "committed" || step === "completed" ? "✓ PR opened" : "Commit + open PR"}
-          </button>
-
-          <button
-            data-testid="btn-complete"
-            onClick={() => void handleComplete()}
-            disabled={step !== "committed" || completing}
-            className="w-full h-9 rounded-lg text-xs font-mono font-semibold border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center gap-2"
-          >
-            {completing ? <><Spinner size="sm" /> Completing…</> : step === "completed" ? "✓ Task closed" : "Mark task complete"}
-          </button>
-
-          <button
-            onClick={() => navigate("/")}
-            className="w-full h-8 rounded-lg text-xs font-mono text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          >
-            ← Back to tasks
-          </button>
-        </div>
-      </aside>
+      </div>
     </div>
+  );
+
+  /* ─── RIGHT PANEL ──────────────────────────────────────────────────────── */
+  const RightPanel = isComplete ? (
+    <div style={{
+      width: 280, flexShrink: 0, background: 'var(--bg-surface)', borderLeft: '1px solid var(--border)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      height: '100%', textAlign: 'center', padding: 20,
+    }}>
+      <SuccessCircle />
+      <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--accent-green)', marginTop: 16 }}>Task closed</p>
+      <p style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginTop: 4 }}>
+        {task.externalId ?? `TASK-${task.id}`}
+      </p>
+      <div style={{ marginTop: 20 }}>
+        <Button label="Back to backlog" variant="outline" size="md" onClick={() => navigate('/')} />
+      </div>
+    </div>
+  ) : (
+    <div style={{
+      width: 280, flexShrink: 0, background: 'var(--bg-surface)',
+      borderLeft: '1px solid var(--border)', overflowY: 'auto', padding: 20,
+    }}>
+      <Stepper currentStep={currentStep} />
+
+      <hr style={DIVIDER} />
+
+      {/* Accepted suggestion card */}
+      <span style={SECTION_LABEL}>Accepted Suggestion</span>
+      {!acceptedSuggestion ? (
+        <div style={{ border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)', padding: 12, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+          No suggestion accepted yet
+        </div>
+      ) : (
+        <div style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: AGENT_META[acceptedSuggestion.agent]?.color ?? 'var(--accent-blue)', marginBottom: 4 }}>
+            {AGENT_META[acceptedSuggestion.agent]?.label ?? acceptedSuggestion.agent}
+          </div>
+          {acceptedSuggestion.score !== undefined && (
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
+              {acceptedSuggestion.score.toFixed(1)} / 10
+            </div>
+          )}
+          <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {acceptedSuggestion.filePath}
+          </div>
+        </div>
+      )}
+
+      <hr style={DIVIDER} />
+
+      {/* Commit section */}
+      <span style={SECTION_LABEL}>Commit Details</span>
+      <input
+        readOnly
+        value={`task/${taskId}`}
+        style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', cursor: 'default', boxSizing: 'border-box' }}
+      />
+      <input
+        value={commitMessage}
+        onChange={(e) => setCommitMessage(e.target.value)}
+        style={{ width: '100%', fontFamily: 'var(--font-sans)', fontSize: 13, background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', cursor: 'text', boxSizing: 'border-box', marginTop: 8, outline: 'none' }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent-blue)'; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+      />
+      <div style={{ marginTop: 12 }}>
+        <Button
+          label="Commit + open PR"
+          variant="primary"
+          size="md"
+          loading={isCommitting}
+          disabled={!acceptedSuggestion || isCommitting}
+          onClick={() => void handleCommit()}
+          style={{ width: '100%', justifyContent: 'center' }}
+          data-testid="btn-commit"
+        />
+      </div>
+      {prUrl && (
+        <a href={prUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginTop: 8, fontSize: 12, color: 'var(--accent-blue)', wordBreak: 'break-all' }}>
+          {prUrl}
+        </a>
+      )}
+
+      <hr style={DIVIDER} />
+
+      {/* Complete task section */}
+      <span style={SECTION_LABEL}>Complete Task</span>
+      <Button
+        label="Mark task complete"
+        variant="primary"
+        size="md"
+        loading={isCompleting}
+        disabled={!prUrl || isCompleting}
+        onClick={() => setConfirmDialogOpen(true)}
+        style={{ width: '100%', justifyContent: 'center', background: 'var(--accent-green)', color: '#0D0F12' }}
+        data-testid="btn-mark-complete"
+      />
+
+      {confirmDialogOpen && (
+        <div style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-bright)', borderRadius: 'var(--radius-md)', padding: 14, marginTop: 8 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 10 }}>
+            Close this task in {SOURCE_LABELS[task.source] ?? task.source}?
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button
+              label="Confirm"
+              variant="primary"
+              size="sm"
+              loading={isCompleting}
+              onClick={() => void handleComplete()}
+              style={{ flex: 1, justifyContent: 'center', background: 'var(--accent-green)', color: '#0D0F12' }}
+            />
+            <Button
+              label="Cancel"
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmDialogOpen(false)}
+              style={{ flex: 1, justifyContent: 'center' }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  /* ─── Shortcuts panel ─────────────────────────────────────────────────── */
+  const ShortcutsPanel = shortcutsOpen && (
+    <div
+      style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 200, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 16, width: 260 }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>Keyboard shortcuts</p>
+      {[
+        { key: 'R', desc: 'Re-generate suggestions' },
+        { key: 'Ctrl+↵', desc: 'Commit accepted code' },
+        { key: '?', desc: 'Toggle this panel' },
+        { key: 'Esc', desc: 'Close dialogs' },
+      ].map(({ key, desc }) => (
+        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 4, padding: '2px 6px', color: 'var(--text-secondary)', flexShrink: 0 }}>{key}</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{desc}</span>
+        </div>
+      ))}
+    </div>
+  );
+
+  /* ─── Mobile banner ───────────────────────────────────────────────────── */
+  const MobileBanner = !mobileBannerDismissed && (
+    <div style={{ background: 'var(--bg-raised)', borderBottom: '1px solid var(--border)', borderLeft: '3px solid var(--accent-amber)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} className="dc-mobile-banner">
+      <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>DevCopilot works best on a wider screen</span>
+      <button onClick={() => setMobileBannerDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1 }}>×</button>
+    </div>
+  );
+
+  return (
+    <>
+      <style>{`
+        @media (max-width: 768px) {
+          .dc-workspace { flex-direction: column !important; }
+          .dc-mobile-banner { display: flex !important; }
+          .dc-workspace-tabs { display: flex !important; }
+          .dc-left-panel, .dc-centre-panel, .dc-right-panel { display: none; }
+        }
+        @media (min-width: 769px) {
+          .dc-mobile-banner { display: none !important; }
+          .dc-workspace-tabs { display: none !important; }
+          .dc-left-panel, .dc-centre-panel, .dc-right-panel { display: flex !important; }
+        }
+        @media (max-width: 1200px) and (min-width: 769px) {
+          .dc-workspace { flex-direction: column !important; }
+          .dc-left-panel { width: 100% !important; max-height: 400px; }
+          .dc-right-panel { width: 100% !important; max-height: 400px; }
+        }
+      `}</style>
+
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        {MobileBanner}
+
+        {/* Mobile tabs */}
+        <div className="dc-workspace-tabs" style={{ display: 'none', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', padding: '0 16px' }}>
+          {(['task', 'suggestions', 'actions'] as const).map((tab) => (
+            <button key={tab} onClick={() => setMobileTab(tab)} style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, background: 'transparent', border: 'none', borderBottom: `2px solid ${mobileTab === tab ? 'var(--accent-blue)' : 'transparent'}`, color: mobileTab === tab ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', textTransform: 'capitalize', fontFamily: 'var(--font-sans)' }}>
+              {tab === 'task' ? 'Task' : tab === 'suggestions' ? 'Suggestions' : 'Actions'}
+            </button>
+          ))}
+        </div>
+
+        {/* Main content */}
+        <div className="dc-workspace" style={{ flex: 1, display: 'flex', flexDirection: 'row', overflow: 'hidden' }}>
+          <div className="dc-left-panel" style={{ display: 'flex', flexDirection: 'column', width: 280 }}>
+            {LeftPanel}
+          </div>
+          <div className="dc-centre-panel" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+            {CentrePanel}
+          </div>
+          <div className="dc-right-panel" style={{ display: 'flex', flexDirection: 'column', width: 280 }}>
+            {RightPanel}
+          </div>
+        </div>
+      </div>
+
+      {ShortcutsPanel}
+      <ToastContainer toasts={toasts} dismiss={dismiss} />
+    </>
   );
 }
