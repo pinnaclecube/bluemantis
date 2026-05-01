@@ -77,6 +77,12 @@ const INTEGRATIONS: Integration[] = [
     testKey: "azurerepos",
     fields: [
       {
+        key: "AZURE_REPOS_ORG",
+        label: "Organisation",
+        placeholder: "mycompany",
+        hint: "The part after dev.azure.com/ in your browser URL",
+      },
+      {
         key: "AZURE_REPOS_TOKEN",
         label: "Personal Access Token",
         placeholder: "Paste your PAT here",
@@ -84,16 +90,16 @@ const INTEGRATIONS: Integration[] = [
       },
     ],
     steps: [
-      { label: "Open dev.azure.com and sign in to your organisation" },
+      { label: "Open dev.azure.com and note your organisation name from the URL (dev.azure.com/{org})" },
       {
         label: "Click your avatar → Personal Access Tokens",
         link: { text: "Open ADO", url: "https://dev.azure.com" },
       },
       {
-        label: "Click New Token — set scope to Code → Read & Write (do NOT use Full access)",
+        label: "Click New Token — set scope to Code → Read & Write only (do NOT use Full access)",
       },
       {
-        label: "Copy the token and paste it below. The organisation, project and repo are read from the repository URL you connect in the app — you only need the token here.",
+        label: "Enter your organisation name above, paste the token, then click Test connection.",
       },
     ],
   },
@@ -407,7 +413,7 @@ function IntegrationCard({
                     <span style={{ fontWeight: 400, color: "var(--dc-text-muted)", marginLeft: 6 }}>— {field.hint}</span>
                   )}
                 </label>
-                {configMap[field.key]?.set && !values[field.key] ? (
+                {configMap[field.key]?.set && !(field.key in values) ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{
                       flex: 1, padding: "9px 12px",

@@ -133,33 +133,28 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
 
       case "azurerepos": {
         const token = (req.body?.AZURE_REPOS_TOKEN as string | undefined) ?? process.env.AZURE_REPOS_TOKEN ?? "";
-        const org = (req.body?.AZURE_REPOS_ORG as string | undefined) ?? "";
+        const org = ((req.body?.AZURE_REPOS_ORG as string | undefined) ?? process.env.AZURE_REPOS_ORG ?? "").trim();
         if (!token) {
           res.status(400).json({ ok: false, message: "Personal Access Token is required" });
           return;
         }
-        const creds = Buffer.from(`:${token}`).toString("base64");
-        if (org) {
-          // If an org is provided, list its projects to confirm access
-          const r = await fetch(
-            `https://dev.azure.com/${org}/_apis/projects?api-version=7.1`,
-            { headers: { Authorization: `Basic ${creds}`, Accept: "application/json" } },
-          );
-          if (!r.ok) throw new Error(`Azure Repos returned ${r.status} — verify your org name and PAT scope (Code → Read & Write)`);
-          const data = (await r.json()) as { value?: unknown[] };
-          const count = Array.isArray(data.value) ? data.value.length : "?";
-          res.json({ ok: true, message: `Connected to ${org} — ${count} project(s) found` });
-        } else {
-          // Without an org, use the VSTS profile endpoint to validate the PAT
-          const r = await fetch(
-            "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=7.1",
-            { headers: { Authorization: `Basic ${creds}`, Accept: "application/json" } },
-          );
-          if (!r.ok) throw new Error(`Invalid PAT (got ${r.status}) — ensure the token has Code → Read & Write scope and has not expired`);
-          const data = (await r.json()) as { displayName?: string; emailAddress?: string };
-          const name = data.displayName ?? data.emailAddress ?? "unknown user";
-          res.json({ ok: true, message: `PAT is valid — authenticated as ${name}` });
+        if (!org) {
+          res.status(400).json({ ok: false, message: "Organisation name is required to test — enter it in the field above" });
+          return;
         }
+        // Use the Git repositories endpoint — only requires Code (read) scope
+        const creds = Buffer.from(`:${token}`).toString("base64");
+        const r = await fetch(
+          `https://dev.azure.com/${org}/_apis/git/repositories?api-version=7.1`,
+          { headers: { Authorization: `Basic ${creds}`, Accept: "application/json" } },
+        );
+        if (r.status === 401) throw new Error("Invalid PAT or expired — ensure it has Code → Read & Write scope");
+        if (r.status === 403) throw new Error("PAT is valid but lacks permission — ensure it has Code → Read scope for this organisation");
+        if (r.status === 404) throw new Error(`Organisation "${org}" not found — check the spelling (it's case-sensitive)`);
+        if (!r.ok) throw new Error(`Azure Repos returned ${r.status} — check your organisation name and PAT`);
+        const data = (await r.json()) as { value?: { name: string }[] };
+        const count = Array.isArray(data.value) ? data.value.length : 0;
+        res.json({ ok: true, message: `Connected to ${org} — ${count} repositor${count === 1 ? "y" : "ies"} found` });
         break;
       }
 
