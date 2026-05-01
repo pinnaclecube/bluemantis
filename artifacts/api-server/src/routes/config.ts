@@ -47,6 +47,11 @@ router.delete("/config/:key", async (req, res): Promise<void> => {
   res.json({ ok: true });
 });
 
+// GET /api/config/test/:integration — friendly error for browser navigation
+router.get("/config/test/:integration", (_req, res): void => {
+  res.status(405).json({ error: "Use POST to test a connection" });
+});
+
 // POST /api/config/test/:integration — live connection test
 router.post("/config/test/:integration", async (req, res): Promise<void> => {
   const integration = req.params.integration;
@@ -134,17 +139,27 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
           return;
         }
         const creds = Buffer.from(`:${token}`).toString("base64");
-        const url = org
-          ? `https://dev.azure.com/${org}/_apis/projects?api-version=7.1`
-          : `https://app.vssps.visualstudio.com/_apis/accounts?memberId=me&api-version=7.1`;
-        const r = await fetch(url, {
-          headers: { Authorization: `Basic ${creds}`, Accept: "application/json" },
-        });
-        if (!r.ok) throw new Error(`Azure Repos returned ${r.status} — check your PAT and ensure Code (read) scope is granted`);
-        const data = (await r.json()) as { value?: unknown[] };
-        const count = Array.isArray(data.value) ? data.value.length : "?";
-        const msg = org ? `Connected to ${org} — ${count} project(s) found` : "PAT is valid";
-        res.json({ ok: true, message: msg });
+        if (org) {
+          // If an org is provided, list its projects to confirm access
+          const r = await fetch(
+            `https://dev.azure.com/${org}/_apis/projects?api-version=7.1`,
+            { headers: { Authorization: `Basic ${creds}`, Accept: "application/json" } },
+          );
+          if (!r.ok) throw new Error(`Azure Repos returned ${r.status} — verify your org name and PAT scope (Code → Read & Write)`);
+          const data = (await r.json()) as { value?: unknown[] };
+          const count = Array.isArray(data.value) ? data.value.length : "?";
+          res.json({ ok: true, message: `Connected to ${org} — ${count} project(s) found` });
+        } else {
+          // Without an org, use the VSTS profile endpoint to validate the PAT
+          const r = await fetch(
+            "https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=7.1",
+            { headers: { Authorization: `Basic ${creds}`, Accept: "application/json" } },
+          );
+          if (!r.ok) throw new Error(`Invalid PAT (got ${r.status}) — ensure the token has Code → Read & Write scope and has not expired`);
+          const data = (await r.json()) as { displayName?: string; emailAddress?: string };
+          const name = data.displayName ?? data.emailAddress ?? "unknown user";
+          res.json({ ok: true, message: `PAT is valid — authenticated as ${name}` });
+        }
         break;
       }
 
