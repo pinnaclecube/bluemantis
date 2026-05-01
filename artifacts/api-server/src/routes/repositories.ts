@@ -15,6 +15,7 @@ import {
 } from "@workspace/api-zod";
 import { detectStack } from "../stack/detector";
 import { fetchFilePaths } from "../adapters/gitService";
+import { GitService } from "../services/gitService";
 
 const router: IRouter = Router();
 
@@ -64,11 +65,31 @@ router.post("/repositories", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+
+  // Insert with a placeholder stackProfile — GitService will fill it in
   const [repo] = await db
     .insert(repositoriesTable)
-    .values(parsed.data as typeof repositoriesTable.$inferInsert)
+    .values({
+      ...(parsed.data as typeof repositoriesTable.$inferInsert),
+      stackProfile: {},
+    })
     .returning();
-  res.status(201).json(GetRepositoryResponse.parse(repo));
+
+  // Run first-connection stack detection via GitService
+  try {
+    const gitService = await GitService.forRepo(repo.id);
+    req.log.info({ repoId: repo.id, stackProfile: gitService.stackProfile }, "Stack detected on connect");
+  } catch (err) {
+    req.log.warn({ repoId: repo.id, err }, "GitService stack detection failed — repo saved without profile");
+  }
+
+  // Return repo with the (possibly updated) stackProfile
+  const [updated] = await db
+    .select()
+    .from(repositoriesTable)
+    .where(eq(repositoriesTable.id, repo.id));
+
+  res.status(201).json(GetRepositoryResponse.parse(updated));
 });
 
 router.get("/repositories/:id", async (req, res): Promise<void> => {

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, isNotNull, type SQL } from "drizzle-orm";
+import { eq, and, type SQL } from "drizzle-orm";
 import { db, tasksTable } from "@workspace/db";
 import {
   CreateTaskBody,
@@ -12,8 +12,47 @@ import {
   GetTaskResponse,
   UpdateTaskResponse,
 } from "@workspace/api-zod";
+import { plmService } from "../services/plmService";
+import type { DevCopilotTask } from "../../../../shared/types/task";
 
 const router: IRouter = Router();
+
+// ---------------------------------------------------------------------------
+// PLM task → DB row mapping
+// ---------------------------------------------------------------------------
+
+const PLM_TYPE_MAP: Record<string, string> = {
+  epic: "feature",
+  feature: "feature",
+  story: "story",
+  task: "chore",
+  bug: "bug",
+};
+
+const PLM_PRIORITY_MAP: Record<number, string> = {
+  1: "critical",
+  2: "high",
+  3: "medium",
+  4: "low",
+};
+
+function plmTaskToInsert(task: DevCopilotTask): typeof tasksTable.$inferInsert {
+  return {
+    externalId: task.id,
+    source: task.source,
+    type: PLM_TYPE_MAP[task.type] ?? "chore",
+    title: task.title,
+    description: task.description || null,
+    acceptanceCriteria:
+      task.acceptanceCriteria.length > 0 ? task.acceptanceCriteria.join("\n") : null,
+    priority: PLM_PRIORITY_MAP[task.priority] ?? "medium",
+    status: "open",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// GET /tasks — sync from PLM then return DB tasks
+// ---------------------------------------------------------------------------
 
 router.get("/tasks", async (req, res): Promise<void> => {
   const parsed = ListTasksQueryParams.safeParse(req.query);
@@ -22,6 +61,34 @@ router.get("/tasks", async (req, res): Promise<void> => {
     return;
   }
   const { repositoryId, status, source, type } = parsed.data;
+
+  // PLM sync: fetch, find new tasks, batch-insert
+  try {
+    const plmTasks = await plmService.fetchAllTasks();
+
+    if (plmTasks.length > 0) {
+      const existing = await db
+        .select({ externalId: tasksTable.externalId, source: tasksTable.source })
+        .from(tasksTable);
+
+      const existingSet = new Set(
+        existing
+          .filter((r) => r.externalId)
+          .map((r) => `${r.source}:${r.externalId}`),
+      );
+
+      const newTasks = plmTasks
+        .filter((t) => !existingSet.has(`${t.source}:${t.id}`))
+        .map(plmTaskToInsert);
+
+      if (newTasks.length > 0) {
+        await db.insert(tasksTable).values(newTasks);
+        req.log.info({ count: newTasks.length }, "PLM tasks synced to DB");
+      }
+    }
+  } catch (err) {
+    req.log.warn({ err }, "PLM sync failed — returning DB tasks only");
+  }
 
   const conditions: SQL[] = [];
   if (repositoryId != null) conditions.push(eq(tasksTable.repositoryId, repositoryId));

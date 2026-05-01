@@ -1,0 +1,243 @@
+import { Router, type IRouter } from "express";
+import { z } from "zod";
+import { eq } from "drizzle-orm";
+import { db, tasksTable, repositoriesTable } from "@workspace/db";
+import { GitService } from "../services/gitService";
+import { aiOrchestrator, synthesisEngine } from "../services/aiService";
+import { plmService } from "../services/plmService";
+import type { StackProfile } from "../stack/detector";
+import type { DevCopilotTask } from "../../../../shared/types/task";
+
+const router: IRouter = Router();
+
+// ---------------------------------------------------------------------------
+// Inline Zod schemas for action endpoints
+// ---------------------------------------------------------------------------
+
+const TaskIdParams = z.object({
+  taskId: z.coerce.number().int().positive(),
+});
+
+const CommitBody = z.object({
+  filePath: z.string().min(1),
+  code: z.string().min(1),
+  commitMessage: z.string().min(1),
+});
+
+const CompleteBody = z.object({
+  commitHash: z.string().min(1),
+});
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const STOPWORDS = new Set([
+  "the", "a", "an", "in", "on", "at", "for", "of", "to", "is", "are",
+  "was", "be", "and", "or", "with", "from", "by", "as", "it", "this",
+  "that", "api", "the", "not", "add", "new", "via",
+]);
+
+function extractKeywords(title: string, description?: string | null): string[] {
+  const text = [title, description].filter(Boolean).join(" ");
+  return [
+    ...new Set(
+      text
+        .toLowerCase()
+        .split(/[\s\-_/.,;:!?()[\]{}]+/)
+        .filter((w) => w.length > 2 && !STOPWORDS.has(w))
+        .slice(0, 12),
+    ),
+  ];
+}
+
+function dbTaskToDevCopilotTask(task: typeof tasksTable.$inferSelect): DevCopilotTask {
+  const sourceMap: Record<string, DevCopilotTask["source"]> = {
+    "azure-devops": "azure-devops",
+    jira: "jira",
+  };
+  const typeMap: Record<string, DevCopilotTask["type"]> = {
+    feature: "feature",
+    bug: "bug",
+    story: "story",
+    chore: "task",
+    epic: "epic",
+    task: "task",
+  };
+  const priorityMap: Record<string, DevCopilotTask["priority"]> = {
+    critical: 1,
+    high: 2,
+    medium: 3,
+    low: 4,
+  };
+
+  return {
+    id: task.externalId ?? String(task.id),
+    source: sourceMap[task.source] ?? "azure-devops",
+    type: typeMap[task.type] ?? "task",
+    title: task.title,
+    description: task.description ?? "",
+    acceptanceCriteria: task.acceptanceCriteria
+      ? task.acceptanceCriteria.split(/\n|;/).map((s) => s.trim()).filter(Boolean)
+      : [],
+    priority: priorityMap[task.priority] ?? 3,
+    rawSource: {},
+  };
+}
+
+// ---------------------------------------------------------------------------
+// POST /tasks/:taskId/suggestions
+// ---------------------------------------------------------------------------
+
+router.post("/tasks/:taskId/suggestions", async (req, res): Promise<void> => {
+  const params = TaskIdParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [task] = await db
+    .select()
+    .from(tasksTable)
+    .where(eq(tasksTable.id, params.data.taskId));
+
+  if (!task) {
+    res.status(404).json({ error: "Task not found" });
+    return;
+  }
+
+  if (!task.repositoryId) {
+    res.status(422).json({ error: "Task has no linked repository — cannot fetch file context" });
+    return;
+  }
+
+  const [repo] = await db
+    .select()
+    .from(repositoriesTable)
+    .where(eq(repositoriesTable.id, task.repositoryId));
+
+  if (!repo) {
+    res.status(404).json({ error: "Repository not found" });
+    return;
+  }
+
+  const stack = repo.stackProfile as StackProfile;
+  const keywords = extractKeywords(task.title, task.description);
+
+  req.log.info({ taskId: task.id, repoId: repo.id, keywords }, "Generating AI suggestions");
+
+  const gitService = await GitService.forRepo(repo.id);
+  const codeContext = await gitService.fetchFileContext(String(task.id), keywords, stack);
+
+  const devCopilotTask = dbTaskToDevCopilotTask(task);
+  const suggestions = await aiOrchestrator.generateSuggestions(devCopilotTask, codeContext, stack);
+  const ranked = await synthesisEngine.synthesize(suggestions, stack);
+
+  req.log.info({ taskId: task.id, count: ranked.length }, "Suggestions generated");
+  res.json(ranked);
+});
+
+// ---------------------------------------------------------------------------
+// POST /tasks/:taskId/commit
+// ---------------------------------------------------------------------------
+
+router.post("/tasks/:taskId/commit", async (req, res): Promise<void> => {
+  const params = TaskIdParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const body = CommitBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+
+  const [task] = await db
+    .select()
+    .from(tasksTable)
+    .where(eq(tasksTable.id, params.data.taskId));
+
+  if (!task) {
+    res.status(404).json({ error: "Task not found" });
+    return;
+  }
+
+  if (!task.repositoryId) {
+    res.status(422).json({ error: "Task has no linked repository" });
+    return;
+  }
+
+  const gitService = await GitService.forRepo(task.repositoryId);
+  const branchName = `task/${task.id}`;
+
+  await gitService.createBranch(String(task.id));
+
+  const commitHash = await gitService.commitChanges({
+    branchName,
+    message: body.data.commitMessage,
+    files: [{ path: body.data.filePath, content: body.data.code }],
+  });
+
+  const prUrl = await gitService.createPullRequest({
+    title: `[DevCopilot] ${task.title}`,
+    body: `Auto-generated by DevCopilot for task #${task.id}.\n\nCommit: ${commitHash}`,
+    head: branchName,
+    base: gitService.defaultBranch,
+  });
+
+  await db
+    .update(tasksTable)
+    .set({ linkedCommit: commitHash, status: "review" })
+    .where(eq(tasksTable.id, task.id));
+
+  req.log.info({ taskId: task.id, commitHash, prUrl }, "Task committed and PR opened");
+  res.json({ commitHash, prUrl });
+});
+
+// ---------------------------------------------------------------------------
+// POST /tasks/:taskId/complete
+// ---------------------------------------------------------------------------
+
+router.post("/tasks/:taskId/complete", async (req, res): Promise<void> => {
+  const params = TaskIdParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const body = CompleteBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+
+  const [task] = await db
+    .select()
+    .from(tasksTable)
+    .where(eq(tasksTable.id, params.data.taskId));
+
+  if (!task) {
+    res.status(404).json({ error: "Task not found" });
+    return;
+  }
+
+  if ((task.source === "azure-devops" || task.source === "jira") && task.externalId) {
+    await plmService.closeTask(
+      task.source as "azure-devops" | "jira",
+      task.externalId,
+      body.data.commitHash,
+    );
+  }
+
+  await db
+    .update(tasksTable)
+    .set({ status: "done", linkedCommit: body.data.commitHash })
+    .where(eq(tasksTable.id, task.id));
+
+  req.log.info({ taskId: task.id, source: task.source }, "Task marked complete");
+  res.json({ success: true });
+});
+
+export default router;

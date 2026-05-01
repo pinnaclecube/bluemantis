@@ -54,13 +54,26 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `artifacts/api-server/src/services/gitService.ts` — Git integration service; GitHub via @octokit/rest, Azure Repos via REST; auto-detects stack on first connect
 - `artifacts/api-server/src/services/aiService.ts` — AI orchestration: AIOrchestrator (Claude + OpenAI + mocks in parallel) and SynthesisEngine (Claude scoring + ranking)
 
-## API Endpoints (key)
+## API Endpoints
 
+- `GET /api/health` / `GET /api/healthz` — health check
 - `GET /api/repositories` — list repos
+- `POST /api/repositories` — create repo; auto-runs GitService stack detection on first connect
 - `GET /api/repositories/:id` — get repo
-- `GET /api/repositories/:repoId/stack` — detect+save stack profile (calls gitService → detectStack → DB update)
-- `GET/POST/PATCH/DELETE /api/tasks` — task CRUD
+- `PATCH /api/repositories/:id` — update repo
+- `DELETE /api/repositories/:id` — delete repo
+- `GET /api/repositories/:repoId/stack` — re-detect + save stack profile
+- `GET /api/tasks` — list tasks, syncs new tasks from PLM adapters before returning
+- `POST /api/tasks` — create task manually
+- `GET /api/tasks/:id` / `PATCH /api/tasks/:id` / `DELETE /api/tasks/:id` — task CRUD
+- `POST /api/tasks/:taskId/suggestions` — fetch file context → AI suggestions → ranked CodeSuggestion[]
+- `POST /api/tasks/:taskId/commit` — create branch + commit + open PR, update task to "review"
+- `POST /api/tasks/:taskId/complete` — close in PLM + mark task "done"
 - `GET /api/dashboard/stats` — dashboard statistics
+
+## Error Handling
+
+Global error middleware in `app.ts` catches all unhandled errors and returns `{ error: message }` with appropriate HTTP status. Express 5 async errors propagate automatically.
 
 ## Sidebar Stack Profile
 
