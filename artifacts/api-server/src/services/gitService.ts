@@ -69,14 +69,19 @@ export interface PullRequestParams {
 // GitHub provider (via @octokit/rest)
 // ---------------------------------------------------------------------------
 
+export interface GitCreds {
+  githubToken?: string;
+  azureReposToken?: string;
+}
+
 class GitHubClient implements GitProviderClient {
   private readonly octokit: Octokit;
   private readonly owner: string;
   private readonly repo: string;
   private readonly defaultBranch: string;
 
-  constructor(repoUrl: string, defaultBranch: string) {
-    this.octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+  constructor(repoUrl: string, defaultBranch: string, creds?: GitCreds) {
+    this.octokit = new Octokit({ auth: creds?.githubToken ?? process.env.GITHUB_TOKEN });
     this.defaultBranch = defaultBranch;
 
     const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:\/|$)/);
@@ -206,14 +211,14 @@ class AzureReposClient implements GitProviderClient {
   private readonly defaultBranch: string;
   private readonly authHeader: string;
 
-  constructor(repoUrl: string, defaultBranch: string) {
+  constructor(repoUrl: string, defaultBranch: string, creds?: GitCreds) {
     this.defaultBranch = defaultBranch;
 
     const match = repoUrl.match(/dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+)/);
     if (!match) throw new Error(`Cannot parse Azure Repos URL: ${repoUrl}`);
     [, this.org, this.project, this.repoName] = match;
 
-    const pat = process.env.AZURE_REPOS_TOKEN ?? "";
+    const pat = creds?.azureReposToken ?? process.env.AZURE_REPOS_TOKEN ?? "";
     this.authHeader = `Basic ${Buffer.from(`:${pat}`).toString("base64")}`;
   }
 
@@ -334,7 +339,7 @@ export class GitService {
     this.client = client;
   }
 
-  static async forRepo(repoId: number): Promise<GitService> {
+  static async forRepo(repoId: number, creds?: GitCreds): Promise<GitService> {
     const [repo] = await db
       .select()
       .from(repositoriesTable)
@@ -345,8 +350,8 @@ export class GitService {
     const provider = (process.env.GIT_PROVIDER ?? repo.provider) as "github" | "azure-repos";
     const client =
       provider === "github"
-        ? new GitHubClient(repo.url, repo.defaultBranch)
-        : new AzureReposClient(repo.url, repo.defaultBranch);
+        ? new GitHubClient(repo.url, repo.defaultBranch, creds)
+        : new AzureReposClient(repo.url, repo.defaultBranch, creds);
 
     const service = new GitService(repo, client);
 

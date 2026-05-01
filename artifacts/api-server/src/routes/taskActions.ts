@@ -146,9 +146,14 @@ router.post("/tasks/:taskId/suggestions", async (req, res): Promise<void> => {
 
   req.log.info({ taskId: task.id, repoId: repo.id, keywords, refine: !!refinePrompt }, "Generating AI suggestions");
 
+  const gitCreds = await getConfigs(userId, ["GITHUB_TOKEN", "AZURE_REPOS_TOKEN"]);
+
   let codeContext = "";
   try {
-    const gitService = await GitService.forRepo(repo.id);
+    const gitService = await GitService.forRepo(repo.id, {
+      githubToken: gitCreds.GITHUB_TOKEN,
+      azureReposToken: gitCreds.AZURE_REPOS_TOKEN,
+    });
     codeContext = await gitService.fetchFileContext(String(task.id), keywords, stack);
   } catch (gitErr) {
     req.log.warn({ taskId: task.id, err: gitErr }, "Git file context unavailable — proceeding without it");
@@ -206,7 +211,11 @@ router.post("/tasks/:taskId/commit", async (req, res): Promise<void> => {
     return;
   }
 
-  const gitService = await GitService.forRepo(task.repositoryId);
+  const gitCredsCommit = await getConfigs(req.userId, ["GITHUB_TOKEN", "AZURE_REPOS_TOKEN"]);
+  const gitService = await GitService.forRepo(task.repositoryId, {
+    githubToken: gitCredsCommit.GITHUB_TOKEN,
+    azureReposToken: gitCredsCommit.AZURE_REPOS_TOKEN,
+  });
   const branchName = `task/${task.id}`;
 
   await gitService.createBranch(String(task.id));

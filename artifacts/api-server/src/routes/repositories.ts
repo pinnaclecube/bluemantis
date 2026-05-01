@@ -16,6 +16,7 @@ import {
 import { detectStack } from "../stack/detector";
 import { fetchFilePaths } from "../adapters/gitService";
 import { GitService } from "../services/gitService";
+import { getConfigs } from "../services/configService";
 
 const router: IRouter = Router();
 
@@ -41,8 +42,12 @@ router.get("/repositories/:repoId/stack", async (req, res): Promise<void> => {
     return;
   }
 
+  const gitCreds = await getConfigs(req.userId, ["GITHUB_TOKEN", "AZURE_REPOS_TOKEN"]);
   req.log.info({ repoId: repo.id, provider: repo.provider }, "Fetching file list for stack detection");
-  const filePaths = await fetchFilePaths(repo.provider, repo.url, repo.defaultBranch);
+  const filePaths = await fetchFilePaths(repo.provider, repo.url, repo.defaultBranch, {
+    githubToken: gitCreds.GITHUB_TOKEN,
+    azureReposToken: gitCreds.AZURE_REPOS_TOKEN,
+  });
 
   const stackProfile = await detectStack(filePaths);
 
@@ -82,7 +87,11 @@ router.post("/repositories", async (req, res): Promise<void> => {
     .returning();
 
   try {
-    const gitService = await GitService.forRepo(repo.id);
+    const gitCredsConnect = await getConfigs(req.userId, ["GITHUB_TOKEN", "AZURE_REPOS_TOKEN"]);
+    const gitService = await GitService.forRepo(repo.id, {
+      githubToken: gitCredsConnect.GITHUB_TOKEN,
+      azureReposToken: gitCredsConnect.AZURE_REPOS_TOKEN,
+    });
     req.log.info({ repoId: repo.id, stackProfile: gitService.stackProfile }, "Stack detected on connect");
   } catch (err) {
     req.log.warn({ repoId: repo.id, err }, "GitService stack detection failed — repo saved without profile");

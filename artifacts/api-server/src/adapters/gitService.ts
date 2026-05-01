@@ -2,22 +2,28 @@ import { logger } from "../lib/logger";
 
 type GitProvider = "github" | "azure-repos";
 
+export interface GitAdapterCreds {
+  githubToken?: string;
+  azureReposToken?: string;
+}
+
 export async function fetchFilePaths(
   provider: GitProvider | string,
   url: string,
   defaultBranch: string,
+  creds?: GitAdapterCreds,
 ): Promise<string[]> {
   if (provider === "github") {
-    return fetchGitHubFilePaths(url, defaultBranch);
+    return fetchGitHubFilePaths(url, defaultBranch, creds?.githubToken);
   }
   if (provider === "azure-repos") {
-    return fetchAzureReposFilePaths(url, defaultBranch);
+    return fetchAzureReposFilePaths(url, defaultBranch, creds?.azureReposToken);
   }
   logger.warn({ provider }, "Unknown provider, returning empty file list");
   return [];
 }
 
-async function fetchGitHubFilePaths(repoUrl: string, branch: string): Promise<string[]> {
+async function fetchGitHubFilePaths(repoUrl: string, branch: string, githubToken?: string): Promise<string[]> {
   const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:\/|$)/);
   if (!match) {
     logger.warn({ repoUrl }, "Could not parse GitHub repo URL");
@@ -26,12 +32,13 @@ async function fetchGitHubFilePaths(repoUrl: string, branch: string): Promise<st
   const [, owner, repo] = match;
   const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
 
+  const token = githubToken ?? process.env.GITHUB_TOKEN;
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
   };
-  if (process.env.GITHUB_TOKEN) {
-    headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
   const response = await fetch(apiUrl, { headers });
@@ -47,10 +54,10 @@ async function fetchGitHubFilePaths(repoUrl: string, branch: string): Promise<st
     .map((item) => item.path);
 }
 
-async function fetchAzureReposFilePaths(repoUrl: string, branch: string): Promise<string[]> {
-  const pat = process.env.AZURE_REPOS_TOKEN;
+async function fetchAzureReposFilePaths(repoUrl: string, branch: string, azureToken?: string): Promise<string[]> {
+  const pat = azureToken ?? process.env.AZURE_REPOS_TOKEN;
   if (!pat) {
-    logger.warn("AZURE_REPOS_TOKEN not set, cannot fetch Azure Repos file list");
+    logger.warn("No Azure Repos token available, cannot fetch file list");
     return [];
   }
 

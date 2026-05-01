@@ -151,7 +151,9 @@ function Router() {
       <Switch>
         <Route path="/" component={RootRoute} />
         <Route path="/sign-in" component={() => <AuthPage mode="sign-in" />} />
+        <Route path="/sign-in/:rest*" component={() => <AuthPage mode="sign-in" />} />
         <Route path="/sign-up" component={() => <AuthPage mode="sign-up" />} />
+        <Route path="/sign-up/:rest*" component={() => <AuthPage mode="sign-up" />} />
         <Route component={ProtectedApp} />
       </Switch>
     </>
