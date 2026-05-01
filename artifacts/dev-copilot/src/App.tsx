@@ -12,6 +12,8 @@ import Tasks from "@/pages/tasks";
 import TaskDetail from "@/pages/task-detail";
 import NewTask from "@/pages/new-task";
 import NotFound from "@/pages/not-found";
+import HistoryPage from "@/pages/HistoryPage";
+import SettingsPage from "@/pages/SettingsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +36,8 @@ function Router() {
         <Route path="/tasks" component={Tasks} />
         <Route path="/tasks/new" component={NewTask} />
         <Route path="/tasks/:id" component={TaskDetail} />
+        <Route path="/history" component={HistoryPage} />
+        <Route path="/settings" component={SettingsPage} />
         <Route component={NotFound} />
       </Switch>
     </AppShell>
