@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { useAuth } from '@clerk/react';
 import type { Repository } from '@/services/api';
 import type { StackProfile } from '@/components/dc';
 import { fetchRepositories } from '@/services/api';
@@ -16,8 +17,9 @@ interface RepoContextValue {
 const RepoContext = createContext<RepoContextValue | null>(null);
 
 export function RepoProvider({ children }: { children: ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
   const [repos, setRepos] = useState<Repository[]>([]);
-  const [reposLoading, setReposLoading] = useState(true);
+  const [reposLoading, setReposLoading] = useState(false);
   const [activeRepository, setActiveRepositoryState] = useState<Repository | null>(null);
   const [stackProfile, setStackProfile] = useState<StackProfile | null>(null);
 
@@ -45,7 +47,9 @@ export function RepoProvider({ children }: { children: ReactNode }) {
     finally { setReposLoading(false); }
   }, []);
 
-  useEffect(() => { void fetchRepos(); }, [fetchRepos]);
+  useEffect(() => {
+    if (isLoaded && isSignedIn) void fetchRepos();
+  }, [isLoaded, isSignedIn, fetchRepos]);
 
   return (
     <RepoContext.Provider value={{ repos, reposLoading, activeRepository, setActiveRepository, stackProfile, setStackProfile, refetchRepos: fetchRepos }}>
