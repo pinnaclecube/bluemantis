@@ -1,11 +1,14 @@
 import type { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
+import { useConfig } from '@/context/ConfigContext';
 
 interface AppShellProps {
   children: ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const { isAzureConnected, isJiraConnected } = useConfig();
+
   return (
     <>
       <style>{`
@@ -22,7 +25,7 @@ export function AppShell({ children }: AppShellProps) {
         }
       `}</style>
       <div style={{ display: 'flex', flexDirection: 'row', minHeight: '100vh' }}>
-        <Sidebar isAzureConnected={true} isJiraConnected={true} />
+        <Sidebar isAzureConnected={isAzureConnected} isJiraConnected={isJiraConnected} />
         <main className="dc-main-content">
           {children}
         </main>

@@ -12,6 +12,7 @@ import { dark } from "@clerk/themes";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppShell } from "@/components/layout/AppShell";
 import { RepoProvider } from "@/context/RepoContext";
+import { ConfigProvider } from "@/context/ConfigContext";
 import LandingPage from "@/pages/LandingPage";
 import WorkspacePage from "@/pages/WorkspacePage";
 import Dashboard from "@/pages/dashboard";
@@ -171,9 +172,11 @@ function App() {
       >
         <QueryClientProvider client={queryClient}>
           <RepoProvider>
-            <WouterRouter base={basePath}>
-              <Router />
-            </WouterRouter>
+            <ConfigProvider>
+              <WouterRouter base={basePath}>
+                <Router />
+              </WouterRouter>
+            </ConfigProvider>
           </RepoProvider>
         </QueryClientProvider>
       </ClerkProvider>

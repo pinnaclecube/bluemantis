@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
+import { useConfig, type ConfigMap } from "@/context/ConfigContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-type ConfigMap = Record<string, { set: boolean; masked: string }>;
 
 interface Field {
   key: string;
@@ -383,7 +382,7 @@ function IntegrationCard({
         if (v) payload[f.key] = v;
       }
       const res = await fetch("/api/config", {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -605,25 +604,7 @@ function ProgressBar({ configured, total }: { configured: number; total: number 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
-  const [configMap, setConfigMap] = useState<ConfigMap>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchConfig = useCallback(async () => {
-    try {
-      const res = await fetch("/api/config");
-      if (!res.ok) throw new Error("Could not load configuration");
-      const data = (await res.json()) as ConfigMap;
-      setConfigMap(data);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load config");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchConfig(); }, [fetchConfig]);
+  const { configMap, loading, error, refreshConfig } = useConfig();
 
   const configuredCount = INTEGRATIONS.filter((integ) =>
     integ.fields.every((f) => configMap[f.key]?.set)
@@ -659,7 +640,7 @@ export default function SettingsPage() {
                 key={integ.id}
                 integration={integ}
                 configMap={configMap}
-                onSaved={fetchConfig}
+                onSaved={refreshConfig}
               />
             ))}
           </div>

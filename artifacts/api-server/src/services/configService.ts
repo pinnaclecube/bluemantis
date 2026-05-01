@@ -109,6 +109,6 @@ export async function deleteConfig(userId: string, key: ConfigKey): Promise<void
 }
 
 function maskSecret(value: string): string {
-  if (value.length <= 8) return "••••••••";
-  return value.slice(0, 4) + "••••••••" + value.slice(-4);
+  if (value.length <= 4) return "••••••••";
+  return "••••••••" + value.slice(-4);
 }

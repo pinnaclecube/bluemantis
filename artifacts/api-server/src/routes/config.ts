@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod/v4";
 import {
   getAllConfigs,
@@ -26,7 +26,7 @@ const SaveConfigBody = z.object(
   >,
 );
 
-router.put("/config", async (req, res): Promise<void> => {
+async function handleSaveConfig(req: Request, res: Response): Promise<void> {
   const parsed = SaveConfigBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid config keys" });
@@ -35,7 +35,10 @@ router.put("/config", async (req, res): Promise<void> => {
   await saveConfigs(req.userId, parsed.data as Partial<Record<ConfigKey, string>>);
   req.log.info("Integration config updated");
   res.json({ ok: true });
-});
+}
+
+router.put("/config", handleSaveConfig);
+router.patch("/config", handleSaveConfig);
 
 // DELETE /api/config/:key — clear a single key
 router.delete("/config/:key", async (req, res): Promise<void> => {
