@@ -4,6 +4,7 @@ import repositoriesRouter from "./repositories";
 import tasksRouter from "./tasks";
 import taskActionsRouter from "./taskActions";
 import statsRouter from "./stats";
+import configRouter from "./config";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(repositoriesRouter);
 router.use(tasksRouter);
 router.use(taskActionsRouter);
 router.use(statsRouter);
+router.use(configRouter);
 
 export default router;
