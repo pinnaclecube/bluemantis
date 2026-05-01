@@ -3,6 +3,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
+import { RepositoryProvider } from "@/context/RepositoryContext";
+import TasksPage from "@/pages/TasksPage";
+import WorkspacePage from "@/pages/WorkspacePage";
 import Dashboard from "@/pages/dashboard";
 import Repositories from "@/pages/repositories";
 import RepositoryDetail from "@/pages/repository-detail";
@@ -24,7 +27,9 @@ function Router() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={Dashboard} />
+        <Route path="/" component={TasksPage} />
+        <Route path="/workspace/:taskId" component={WorkspacePage} />
+        <Route path="/dashboard" component={Dashboard} />
         <Route path="/repositories" component={Repositories} />
         <Route path="/repositories/:id" component={RepositoryDetail} />
         <Route path="/tasks" component={Tasks} />
@@ -40,9 +45,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
+        <RepositoryProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+        </RepositoryProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
