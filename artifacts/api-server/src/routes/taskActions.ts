@@ -18,6 +18,10 @@ const TaskIdParams = z.object({
   taskId: z.coerce.number().int().positive(),
 });
 
+const SuggestionsBody = z.object({
+  refinePrompt: z.string().optional(),
+});
+
 const CommitBody = z.object({
   filePath: z.string().min(1),
   code: z.string().min(1),
@@ -96,6 +100,12 @@ router.post("/tasks/:taskId/suggestions", async (req, res): Promise<void> => {
     return;
   }
 
+  const body = SuggestionsBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+
   const [task] = await db
     .select()
     .from(tasksTable)
@@ -122,14 +132,26 @@ router.post("/tasks/:taskId/suggestions", async (req, res): Promise<void> => {
   }
 
   const stack = repo.stackProfile as StackProfile;
-  const keywords = extractKeywords(task.title, task.description);
+  const refinePrompt = body.data.refinePrompt;
+  const effectiveDescription = refinePrompt
+    ? `${task.description ?? ""}\n\nRefinement request: ${refinePrompt}`
+    : task.description;
+  const keywords = extractKeywords(task.title, effectiveDescription);
 
-  req.log.info({ taskId: task.id, repoId: repo.id, keywords }, "Generating AI suggestions");
+  req.log.info({ taskId: task.id, repoId: repo.id, keywords, refine: !!refinePrompt }, "Generating AI suggestions");
 
-  const gitService = await GitService.forRepo(repo.id);
-  const codeContext = await gitService.fetchFileContext(String(task.id), keywords, stack);
+  let codeContext = "";
+  try {
+    const gitService = await GitService.forRepo(repo.id);
+    codeContext = await gitService.fetchFileContext(String(task.id), keywords, stack);
+  } catch (gitErr) {
+    req.log.warn({ taskId: task.id, err: gitErr }, "Git file context unavailable — proceeding without it");
+  }
 
-  const devCopilotTask = dbTaskToDevCopilotTask(task);
+  const devCopilotTask = dbTaskToDevCopilotTask({
+    ...task,
+    description: effectiveDescription ?? null,
+  });
   const suggestions = await aiOrchestrator.generateSuggestions(devCopilotTask, codeContext, stack);
   const ranked = await synthesisEngine.synthesize(suggestions, stack);
 
