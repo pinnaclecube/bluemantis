@@ -200,8 +200,8 @@ export function TaskSourceIcon({ source }: { source: string }) {
   switch (source) {
     case 'github': return <SiGithub className="h-4 w-4 text-muted-foreground" title="GitHub" />;
     case 'jira': return <SiJira className="h-4 w-4 text-[#0052CC]" title="Jira" />;
-    case 'azure-devops': return <Cloud className="h-4 w-4 text-[#0078D7]" title="Azure DevOps" />;
-    default: return <CheckSquare className="h-4 w-4 text-muted-foreground" title="Manual" />;
+    case 'azure-devops': return <span title="Azure DevOps"><Cloud className="h-4 w-4 text-[#0078D7]" /></span>;
+    default: return <span title="Manual"><CheckSquare className="h-4 w-4 text-muted-foreground" /></span>;
   }
 }
 

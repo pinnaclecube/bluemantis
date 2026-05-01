@@ -24,6 +24,7 @@ import type {
   ListTasksParams,
   Repository,
   SourceCount,
+  StackProfile,
   StatusCount,
   Task,
   UpdateRepositoryBody,
@@ -532,6 +533,95 @@ export const useDeleteRepository = <
 > => {
   return useMutation(getDeleteRepositoryMutationOptions(options));
 };
+
+/**
+ * @summary Detect and save the stack profile for a repository
+ */
+export const getDetectRepositoryStackUrl = (repoId: number) => {
+  return `/api/repositories/${repoId}/stack`;
+};
+
+export const detectRepositoryStack = async (
+  repoId: number,
+  options?: RequestInit,
+): Promise<StackProfile> => {
+  return customFetch<StackProfile>(getDetectRepositoryStackUrl(repoId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getDetectRepositoryStackQueryKey = (repoId: number) => {
+  return [`/api/repositories/${repoId}/stack`] as const;
+};
+
+export const getDetectRepositoryStackQueryOptions = <
+  TData = Awaited<ReturnType<typeof detectRepositoryStack>>,
+  TError = ErrorType<void>,
+>(
+  repoId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof detectRepositoryStack>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getDetectRepositoryStackQueryKey(repoId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof detectRepositoryStack>>
+  > = ({ signal }) =>
+    detectRepositoryStack(repoId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!repoId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof detectRepositoryStack>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type DetectRepositoryStackQueryResult = NonNullable<
+  Awaited<ReturnType<typeof detectRepositoryStack>>
+>;
+export type DetectRepositoryStackQueryError = ErrorType<void>;
+
+/**
+ * @summary Detect and save the stack profile for a repository
+ */
+
+export function useDetectRepositoryStack<
+  TData = Awaited<ReturnType<typeof detectRepositoryStack>>,
+  TError = ErrorType<void>,
+>(
+  repoId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof detectRepositoryStack>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getDetectRepositoryStackQueryOptions(repoId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary List tasks with optional filters

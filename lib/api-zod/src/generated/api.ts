@@ -226,6 +226,29 @@ export const DeleteRepositoryParams = zod.object({
 });
 
 /**
+ * @summary Detect and save the stack profile for a repository
+ */
+export const DetectRepositoryStackParams = zod.object({
+  repoId: zod.coerce.number(),
+});
+
+export const DetectRepositoryStackResponse = zod.object({
+  frontend: zod.enum(["react", "angular", "vue", "none"]),
+  backend: zod.enum(["nodejs", "dotnet", "java-spring", "python"]),
+  database: zod.enum(["postgresql", "sqlserver", "oracle", "mysql"]),
+  language: zod.enum(["typescript", "javascript", "csharp", "java", "python"]),
+  testFramework: zod.enum([
+    "jest",
+    "jasmine",
+    "xunit",
+    "junit",
+    "pytest",
+    "none",
+  ]),
+  packageManager: zod.enum(["npm", "yarn", "maven", "gradle", "nuget", "pip"]),
+});
+
+/**
  * @summary List tasks with optional filters
  */
 export const ListTasksQueryParams = zod.object({

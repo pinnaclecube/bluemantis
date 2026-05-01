@@ -7,12 +7,47 @@ import {
   GetRepositoryParams,
   UpdateRepositoryParams,
   DeleteRepositoryParams,
+  DetectRepositoryStackParams,
+  DetectRepositoryStackResponse,
   ListRepositoriesResponse,
   GetRepositoryResponse,
   UpdateRepositoryResponse,
 } from "@workspace/api-zod";
+import { detectStack } from "../stack/detector";
+import { fetchFilePaths } from "../adapters/gitService";
 
 const router: IRouter = Router();
+
+router.get("/repositories/:repoId/stack", async (req, res): Promise<void> => {
+  const params = DetectRepositoryStackParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [repo] = await db
+    .select()
+    .from(repositoriesTable)
+    .where(eq(repositoriesTable.id, params.data.repoId));
+
+  if (!repo) {
+    res.status(404).json({ error: "Repository not found" });
+    return;
+  }
+
+  req.log.info({ repoId: repo.id, provider: repo.provider }, "Fetching file list for stack detection");
+  const filePaths = await fetchFilePaths(repo.provider, repo.url, repo.defaultBranch);
+
+  const stackProfile = await detectStack(filePaths);
+
+  await db
+    .update(repositoriesTable)
+    .set({ stackProfile })
+    .where(eq(repositoriesTable.id, repo.id));
+
+  req.log.info({ repoId: repo.id, stackProfile }, "Stack profile saved");
+  res.json(DetectRepositoryStackResponse.parse(stackProfile));
+});
 
 router.get("/repositories", async (req, res): Promise<void> => {
   const repos = await db

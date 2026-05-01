@@ -44,8 +44,21 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ## Server Structure
 
 - `artifacts/api-server/src/routes/` — Express route handlers (repositories, tasks, stats, health)
-- `artifacts/api-server/src/stack/` — Stack detection and prompt templates
-- `artifacts/api-server/src/adapters/` — External service adapters (Azure DevOps, Jira, GitHub)
+- `artifacts/api-server/src/stack/detector.ts` — Stack detection logic; exports `StackProfile` type inline
+- `artifacts/api-server/src/stack/prompts.ts` — AI prompt builder per framework stack
+- `artifacts/api-server/src/adapters/gitService.ts` — Fetches repo file trees from GitHub or Azure Repos
+
+## API Endpoints (key)
+
+- `GET /api/repositories` — list repos
+- `GET /api/repositories/:id` — get repo
+- `GET /api/repositories/:repoId/stack` — detect+save stack profile (calls gitService → detectStack → DB update)
+- `GET/POST/PATCH/DELETE /api/tasks` — task CRUD
+- `GET /api/dashboard/stats` — dashboard statistics
+
+## Sidebar Stack Profile
+
+When navigating to `/repositories/:id`, the sidebar automatically shows a **Stack** panel reading from `repo.stackProfile`. The refresh button re-calls `GET /api/repositories/:repoId/stack` to re-detect.
 
 ## Environment Variables
 

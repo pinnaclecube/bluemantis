@@ -121,6 +121,27 @@ paths:
         "204":
           description: Deleted
 
+  /repositories/{repoId}/stack:
+    get:
+      operationId: detectRepositoryStack
+      tags: [repositories]
+      summary: Detect and save the stack profile for a repository
+      parameters:
+        - name: repoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Detected stack profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StackProfile"
+        "404":
+          description: Repository not found
+
   /tasks:
     get:
       operationId: listTasks
