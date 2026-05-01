@@ -35,6 +35,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 - `shared/types/stack.ts` — `StackProfile` type
 - `shared/types/task.ts` — DB `Task` type, `DevCopilotTask` interface (PLM canonical shape), `PLMAdapter` interface
+- `shared/types/codeSuggestion.ts` — `CodeSuggestion` interface (agent, code, explanation, filePath, language, score, recommendation)
 
 ## Database Schema
 
@@ -51,6 +52,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `artifacts/api-server/src/adapters/jiraAdapter.ts` — PLM adapter: JQL sprint fetch, ADF→text parsing, AC field discovery, transition-based close
 - `artifacts/api-server/src/services/plmService.ts` — Merges & deduplicates tasks from both PLM adapters with per-adapter error isolation
 - `artifacts/api-server/src/services/gitService.ts` — Git integration service; GitHub via @octokit/rest, Azure Repos via REST; auto-detects stack on first connect
+- `artifacts/api-server/src/services/aiService.ts` — AI orchestration: AIOrchestrator (Claude + OpenAI + mocks in parallel) and SynthesisEngine (Claude scoring + ranking)
 
 ## API Endpoints (key)
 
