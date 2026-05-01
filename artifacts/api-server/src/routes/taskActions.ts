@@ -100,7 +100,7 @@ router.post("/tasks/:taskId/suggestions", async (req, res): Promise<void> => {
     return;
   }
 
-  const body = SuggestionsBody.safeParse(req.body);
+  const body = SuggestionsBody.safeParse(req.body ?? {});
   if (!body.success) {
     res.status(400).json({ error: body.error.message });
     return;

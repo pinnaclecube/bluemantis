@@ -183,7 +183,11 @@ export default function TasksPage() {
   }, [fetchTasks]);
 
   const handleGenerateCode = useCallback(async (taskId: number) => {
-    const res = await fetch(`/api/tasks/${taskId}/suggestions`, { method: "POST" });
+    const res = await fetch(`/api/tasks/${taskId}/suggestions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
