@@ -12,7 +12,8 @@ import {
   GetTaskResponse,
   UpdateTaskResponse,
 } from "@workspace/api-zod";
-import { plmService } from "../services/plmService";
+import { PLMService } from "../services/plmService";
+import { getConfigs } from "../services/configService";
 import type { DevCopilotTask } from "../../../../shared/types/task";
 
 const router: IRouter = Router();
@@ -36,8 +37,12 @@ const PLM_PRIORITY_MAP: Record<number, string> = {
   4: "low",
 };
 
-function plmTaskToInsert(task: DevCopilotTask): typeof tasksTable.$inferInsert {
+function plmTaskToInsert(
+  task: DevCopilotTask,
+  userId: string,
+): typeof tasksTable.$inferInsert {
   return {
+    userId,
     externalId: task.id,
     source: task.source,
     type: PLM_TYPE_MAP[task.type] ?? "chore",
@@ -51,7 +56,7 @@ function plmTaskToInsert(task: DevCopilotTask): typeof tasksTable.$inferInsert {
 }
 
 // ---------------------------------------------------------------------------
-// GET /tasks — sync from PLM then return DB tasks
+// GET /tasks — sync from PLM then return DB tasks (scoped to user)
 // ---------------------------------------------------------------------------
 
 router.get("/tasks", async (req, res): Promise<void> => {
@@ -61,15 +66,35 @@ router.get("/tasks", async (req, res): Promise<void> => {
     return;
   }
   const { repositoryId, status, source, type } = parsed.data;
+  const userId = req.userId;
 
-  // PLM sync: fetch, find new tasks, batch-insert
+  // PLM sync: fetch with user's credentials, find new tasks, batch-insert
   try {
-    const plmTasks = await plmService.fetchAllTasks();
+    const userCreds = await getConfigs(userId, [
+      "AZURE_DEVOPS_ORG",
+      "AZURE_DEVOPS_PROJECT",
+      "AZURE_DEVOPS_PAT",
+      "JIRA_DOMAIN",
+      "JIRA_EMAIL",
+      "JIRA_API_TOKEN",
+    ]);
+
+    const plmSvc = new PLMService({
+      azureOrg: userCreds.AZURE_DEVOPS_ORG,
+      azureProject: userCreds.AZURE_DEVOPS_PROJECT,
+      azurePat: userCreds.AZURE_DEVOPS_PAT,
+      jiraDomain: userCreds.JIRA_DOMAIN,
+      jiraEmail: userCreds.JIRA_EMAIL,
+      jiraToken: userCreds.JIRA_API_TOKEN,
+    });
+
+    const plmTasks = await plmSvc.fetchAllTasks();
 
     if (plmTasks.length > 0) {
       const existing = await db
         .select({ externalId: tasksTable.externalId, source: tasksTable.source })
-        .from(tasksTable);
+        .from(tasksTable)
+        .where(eq(tasksTable.userId, userId));
 
       const existingSet = new Set(
         existing
@@ -79,7 +104,7 @@ router.get("/tasks", async (req, res): Promise<void> => {
 
       const newTasks = plmTasks
         .filter((t) => !existingSet.has(`${t.source}:${t.id}`))
-        .map(plmTaskToInsert);
+        .map((t) => plmTaskToInsert(t, userId));
 
       if (newTasks.length > 0) {
         await db.insert(tasksTable).values(newTasks);
@@ -90,7 +115,7 @@ router.get("/tasks", async (req, res): Promise<void> => {
     req.log.warn({ err }, "PLM sync failed — returning DB tasks only");
   }
 
-  const conditions: SQL[] = [];
+  const conditions: SQL[] = [eq(tasksTable.userId, userId)];
   if (repositoryId != null) conditions.push(eq(tasksTable.repositoryId, repositoryId));
   if (status != null) conditions.push(eq(tasksTable.status, status));
   if (source != null) conditions.push(eq(tasksTable.source, source));
@@ -99,7 +124,7 @@ router.get("/tasks", async (req, res): Promise<void> => {
   const tasks = await db
     .select()
     .from(tasksTable)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(tasksTable.createdAt);
   res.json(ListTasksResponse.parse(tasks));
 });
@@ -111,7 +136,10 @@ router.post("/tasks", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const [task] = await db.insert(tasksTable).values(parsed.data).returning();
+  const [task] = await db
+    .insert(tasksTable)
+    .values({ ...parsed.data, userId: req.userId })
+    .returning();
   res.status(201).json(GetTaskResponse.parse(task));
 });
 
@@ -124,7 +152,7 @@ router.get("/tasks/:id", async (req, res): Promise<void> => {
   const [task] = await db
     .select()
     .from(tasksTable)
-    .where(eq(tasksTable.id, params.data.id));
+    .where(and(eq(tasksTable.id, params.data.id), eq(tasksTable.userId, req.userId)));
   if (!task) {
     res.status(404).json({ error: "Task not found" });
     return;
@@ -146,7 +174,7 @@ router.patch("/tasks/:id", async (req, res): Promise<void> => {
   const [task] = await db
     .update(tasksTable)
     .set(parsed.data)
-    .where(eq(tasksTable.id, params.data.id))
+    .where(and(eq(tasksTable.id, params.data.id), eq(tasksTable.userId, req.userId)))
     .returning();
   if (!task) {
     res.status(404).json({ error: "Task not found" });
@@ -163,7 +191,7 @@ router.delete("/tasks/:id", async (req, res): Promise<void> => {
   }
   const [task] = await db
     .delete(tasksTable)
-    .where(eq(tasksTable.id, params.data.id))
+    .where(and(eq(tasksTable.id, params.data.id), eq(tasksTable.userId, req.userId)))
     .returning();
   if (!task) {
     res.status(404).json({ error: "Task not found" });

@@ -67,19 +67,12 @@ interface ModelOutput {
 }
 
 // ---------------------------------------------------------------------------
-// Clients (lazily evaluated so missing keys don't crash on import)
+// Credentials type
 // ---------------------------------------------------------------------------
 
-function getAnthropicClient(): Anthropic {
-  return new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  });
-}
-
-function getOpenAIClient(): OpenAI {
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
+export interface AICreds {
+  anthropicApiKey?: string;
+  openaiApiKey?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -109,6 +102,14 @@ function mockCopilot(stack: StackProfile): ModelOutput {
 // ---------------------------------------------------------------------------
 
 export class AIOrchestrator {
+  private readonly anthropicApiKey: string | undefined;
+  private readonly openaiApiKey: string | undefined;
+
+  constructor(creds?: AICreds) {
+    this.anthropicApiKey = creds?.anthropicApiKey ?? process.env.ANTHROPIC_API_KEY;
+    this.openaiApiKey = creds?.openaiApiKey ?? process.env.OPENAI_API_KEY;
+  }
+
   async generateSuggestions(
     task: DevCopilotTask,
     codeContext: string,
@@ -160,7 +161,7 @@ export class AIOrchestrator {
   }
 
   private async callClaude(prompt: string): Promise<ModelOutput> {
-    const client = getAnthropicClient();
+    const client = new Anthropic({ apiKey: this.anthropicApiKey });
     const message = await client.messages.create({
       model: "claude-sonnet-4-5",
       max_tokens: 8192,
@@ -173,7 +174,7 @@ export class AIOrchestrator {
   }
 
   private async callOpenAI(prompt: string): Promise<ModelOutput> {
-    const client = getOpenAIClient();
+    const client = new OpenAI({ apiKey: this.openaiApiKey });
     const response = await client.chat.completions.create({
       model: "gpt-4o",
       response_format: { type: "json_object" },
@@ -202,13 +203,19 @@ interface ScoredEntry {
 }
 
 export class SynthesisEngine {
+  private readonly anthropicApiKey: string | undefined;
+
+  constructor(creds?: Pick<AICreds, "anthropicApiKey">) {
+    this.anthropicApiKey = creds?.anthropicApiKey ?? process.env.ANTHROPIC_API_KEY;
+  }
+
   async synthesize(
     suggestions: CodeSuggestion[],
     stack: StackProfile,
   ): Promise<CodeSuggestion[]> {
     if (suggestions.length === 0) return [];
 
-    const client = getAnthropicClient();
+    const client = new Anthropic({ apiKey: this.anthropicApiKey });
 
     const synthesisPrompt = buildSynthesisPrompt(suggestions, stack);
 
@@ -296,9 +303,3 @@ Return a JSON array with exactly ${suggestions.length} entries — one per sugge
 Respond ONLY with the JSON array. No additional text.`;
 }
 
-// ---------------------------------------------------------------------------
-// Singleton exports
-// ---------------------------------------------------------------------------
-
-export const aiOrchestrator = new AIOrchestrator();
-export const synthesisEngine = new SynthesisEngine();

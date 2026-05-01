@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, repositoriesTable } from "@workspace/db";
 import {
   CreateRepositoryBody,
@@ -29,7 +29,12 @@ router.get("/repositories/:repoId/stack", async (req, res): Promise<void> => {
   const [repo] = await db
     .select()
     .from(repositoriesTable)
-    .where(eq(repositoriesTable.id, params.data.repoId));
+    .where(
+      and(
+        eq(repositoriesTable.id, params.data.repoId),
+        eq(repositoriesTable.userId, req.userId),
+      ),
+    );
 
   if (!repo) {
     res.status(404).json({ error: "Repository not found" });
@@ -54,6 +59,7 @@ router.get("/repositories", async (req, res): Promise<void> => {
   const repos = await db
     .select()
     .from(repositoriesTable)
+    .where(eq(repositoriesTable.userId, req.userId))
     .orderBy(repositoriesTable.createdAt);
   res.json(ListRepositoriesResponse.parse(repos));
 });
@@ -66,16 +72,15 @@ router.post("/repositories", async (req, res): Promise<void> => {
     return;
   }
 
-  // Insert with a placeholder stackProfile — GitService will fill it in
   const [repo] = await db
     .insert(repositoriesTable)
     .values({
       ...(parsed.data as typeof repositoriesTable.$inferInsert),
+      userId: req.userId,
       stackProfile: {},
     })
     .returning();
 
-  // Run first-connection stack detection via GitService
   try {
     const gitService = await GitService.forRepo(repo.id);
     req.log.info({ repoId: repo.id, stackProfile: gitService.stackProfile }, "Stack detected on connect");
@@ -83,7 +88,6 @@ router.post("/repositories", async (req, res): Promise<void> => {
     req.log.warn({ repoId: repo.id, err }, "GitService stack detection failed — repo saved without profile");
   }
 
-  // Return repo with the (possibly updated) stackProfile
   const [updated] = await db
     .select()
     .from(repositoriesTable)
@@ -101,7 +105,9 @@ router.get("/repositories/:id", async (req, res): Promise<void> => {
   const [repo] = await db
     .select()
     .from(repositoriesTable)
-    .where(eq(repositoriesTable.id, params.data.id));
+    .where(
+      and(eq(repositoriesTable.id, params.data.id), eq(repositoriesTable.userId, req.userId)),
+    );
   if (!repo) {
     res.status(404).json({ error: "Repository not found" });
     return;
@@ -123,7 +129,9 @@ router.patch("/repositories/:id", async (req, res): Promise<void> => {
   const [repo] = await db
     .update(repositoriesTable)
     .set(parsed.data as Partial<typeof repositoriesTable.$inferInsert>)
-    .where(eq(repositoriesTable.id, params.data.id))
+    .where(
+      and(eq(repositoriesTable.id, params.data.id), eq(repositoriesTable.userId, req.userId)),
+    )
     .returning();
   if (!repo) {
     res.status(404).json({ error: "Repository not found" });
@@ -140,7 +148,9 @@ router.delete("/repositories/:id", async (req, res): Promise<void> => {
   }
   const [repo] = await db
     .delete(repositoriesTable)
-    .where(eq(repositoriesTable.id, params.data.id))
+    .where(
+      and(eq(repositoriesTable.id, params.data.id), eq(repositoriesTable.userId, req.userId)),
+    )
     .returning();
   if (!repo) {
     res.status(404).json({ error: "Repository not found" });

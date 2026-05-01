@@ -37,10 +37,19 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `shared/types/task.ts` — DB `Task` type, `DevCopilotTask` interface (PLM canonical shape), `PLMAdapter` interface
 - `shared/types/codeSuggestion.ts` — `CodeSuggestion` interface (agent, code, explanation, filePath, language, score, recommendation)
 
+## Authentication
+
+Multi-tenant auth via **Clerk** (`@clerk/express` on the backend, `@clerk/react` on the frontend):
+- Backend: `clerkMiddleware` + `requireAuth` middleware applied to all `/api` routes except `/api/healthz`
+- Frontend: `ClerkProvider` wraps the entire app; unauthenticated users are redirected to `/sign-in`
+- Sidebar shows real user avatar/name from `useUser()`; sign-out via `useClerk().signOut()`
+- Secret env vars: `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_PUBLISHABLE_KEY`
+
 ## Database Schema
 
-- **repositories**: id, name, provider, url, defaultBranch, stackProfile (JSONB), createdAt
-- **tasks**: id, externalId, source, type, title, description, acceptanceCriteria, priority, status, linkedCommit, repositoryId (FK), createdAt, updatedAt
+- **integration_configs**: (user_id, key) composite PK, value, updatedAt — stores per-user API credentials
+- **repositories**: id, **user_id** (NOT NULL), name, provider, url, defaultBranch, stackProfile (JSONB), createdAt
+- **tasks**: id, **user_id** (NOT NULL), externalId, source, type, title, description, acceptanceCriteria, priority, status, linkedCommit, repositoryId (FK), createdAt, updatedAt
 
 ## Server Structure
 

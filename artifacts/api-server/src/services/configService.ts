@@ -1,11 +1,9 @@
 /**
- * Manages integration credentials stored in the `integration_configs` DB table.
- * On startup, all stored keys are hydrated into process.env so every existing
- * adapter continues to work without modification.
+ * Manages per-user integration credentials stored in the `integration_configs` DB table.
+ * All operations are scoped by userId (Clerk user ID) for multi-tenant isolation.
  */
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, integrationConfigsTable } from "@workspace/db";
-import { logger } from "../lib/logger";
 
 export const CONFIG_KEYS = [
   "ANTHROPIC_API_KEY",
@@ -25,31 +23,20 @@ export const CONFIG_KEYS = [
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number];
 
-/** Load all integration configs from DB into process.env */
-export async function loadConfigsFromDb(): Promise<void> {
-  try {
-    const rows = await db.select().from(integrationConfigsTable);
-    for (const row of rows) {
-      if (CONFIG_KEYS.includes(row.key as ConfigKey)) {
-        process.env[row.key] = row.value;
-      }
-    }
-    logger.info({ count: rows.length }, "Integration configs loaded from DB into process.env");
-  } catch (err) {
-    logger.warn({ err }, "Could not load integration configs from DB — using env vars only");
-  }
-}
+/** Get all config keys with masked values for a specific user */
+export async function getAllConfigs(
+  userId: string,
+): Promise<Record<string, { set: boolean; masked: string }>> {
+  const rows = await db
+    .select()
+    .from(integrationConfigsTable)
+    .where(eq(integrationConfigsTable.userId, userId));
 
-/** Get all config keys with masked values (for the settings UI) */
-export async function getAllConfigs(): Promise<Record<string, { set: boolean; masked: string }>> {
-  const rows = await db.select().from(integrationConfigsTable);
   const dbMap = new Map(rows.map((r) => [r.key, r.value]));
 
   const result: Record<string, { set: boolean; masked: string }> = {};
   for (const key of CONFIG_KEYS) {
-    const dbVal = dbMap.get(key);
-    const envVal = process.env[key];
-    const value = dbVal ?? envVal ?? "";
+    const value = dbMap.get(key) ?? "";
     result[key] = {
       set: value.length > 0,
       masked: value.length > 0 ? maskSecret(value) : "",
@@ -58,23 +45,67 @@ export async function getAllConfigs(): Promise<Record<string, { set: boolean; ma
   return result;
 }
 
-/** Save a batch of key→value pairs to DB and process.env */
-export async function saveConfigs(entries: Partial<Record<ConfigKey, string>>): Promise<void> {
+/** Get a single config value for a user (returns empty string if not set) */
+export async function getConfig(userId: string, key: ConfigKey): Promise<string> {
+  const [row] = await db
+    .select()
+    .from(integrationConfigsTable)
+    .where(
+      and(
+        eq(integrationConfigsTable.userId, userId),
+        eq(integrationConfigsTable.key, key),
+      ),
+    );
+  return row?.value ?? "";
+}
+
+/** Get multiple config values for a user as a key→value map */
+export async function getConfigs(
+  userId: string,
+  keys: ConfigKey[],
+): Promise<Partial<Record<ConfigKey, string>>> {
+  const rows = await db
+    .select()
+    .from(integrationConfigsTable)
+    .where(eq(integrationConfigsTable.userId, userId));
+
+  const dbMap = new Map(rows.map((r) => [r.key as ConfigKey, r.value]));
+  const result: Partial<Record<ConfigKey, string>> = {};
+  for (const key of keys) {
+    const val = dbMap.get(key);
+    if (val) result[key] = val;
+  }
+  return result;
+}
+
+/** Save a batch of key→value pairs to DB for a specific user */
+export async function saveConfigs(
+  userId: string,
+  entries: Partial<Record<ConfigKey, string>>,
+): Promise<void> {
   for (const [key, value] of Object.entries(entries) as [ConfigKey, string][]) {
     if (!value || value.trim() === "") continue;
     const trimmed = value.trim();
     await db
       .insert(integrationConfigsTable)
-      .values({ key, value: trimmed })
-      .onConflictDoUpdate({ target: integrationConfigsTable.key, set: { value: trimmed } });
-    process.env[key] = trimmed;
+      .values({ userId, key, value: trimmed })
+      .onConflictDoUpdate({
+        target: [integrationConfigsTable.userId, integrationConfigsTable.key],
+        set: { value: trimmed },
+      });
   }
 }
 
-/** Delete a config key from DB and unset from process.env */
-export async function deleteConfig(key: ConfigKey): Promise<void> {
-  await db.delete(integrationConfigsTable).where(eq(integrationConfigsTable.key, key));
-  delete process.env[key];
+/** Delete a config key for a specific user */
+export async function deleteConfig(userId: string, key: ConfigKey): Promise<void> {
+  await db
+    .delete(integrationConfigsTable)
+    .where(
+      and(
+        eq(integrationConfigsTable.userId, userId),
+        eq(integrationConfigsTable.key, key),
+      ),
+    );
 }
 
 function maskSecret(value: string): string {

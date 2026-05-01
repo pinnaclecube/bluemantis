@@ -1,4 +1,5 @@
 import { useLocation, Link } from 'wouter';
+import { useUser, useClerk } from '@clerk/react';
 import { Tooltip } from '@/components/dc/Tooltip';
 import { StackBadge } from '@/components/dc/StackBadge';
 import { useRepo } from '@/context/RepoContext';
@@ -43,6 +44,14 @@ function SettingsIcon() {
   );
 }
 
+function SignOutIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M11 11l3-3-3-3M14 8H6" />
+    </svg>
+  );
+}
+
 const NAV_ITEMS = [
   { href: '/', label: 'Tasks', Icon: TasksIcon, match: (l: string) => l === '/' || l.startsWith('/workspace') },
   { href: '/history', label: 'History', Icon: HistoryIcon, match: (l: string) => l === '/history' },
@@ -52,6 +61,16 @@ const NAV_ITEMS = [
 export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
   const [location] = useLocation();
   const { activeRepository, stackProfile, setActiveRepository } = useRepo();
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
+  const initials = user
+    ? (user.firstName?.[0] ?? '') + (user.lastName?.[0] ?? user.username?.[0] ?? '')
+    : 'DC';
+
+  const displayName = user?.firstName
+    ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}`
+    : (user?.username ?? user?.primaryEmailAddress?.emailAddress ?? 'User');
 
   return (
     <>
@@ -80,6 +99,14 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
           .dc-sidebar-bottom { align-items: center; }
           .dc-sidebar-status-text { display: none !important; }
         }
+        .dc-signout-btn {
+          display: flex; align-items: center; gap: 6px;
+          background: none; border: none; cursor: pointer;
+          color: var(--text-muted); font-size: 11px;
+          font-family: var(--font-sans); padding: 4px 0;
+          transition: color 150ms ease;
+        }
+        .dc-signout-btn:hover { color: var(--accent-red); }
       `}</style>
 
       <nav className="dc-sidebar">
@@ -150,7 +177,7 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
           </button>
         </div>
 
-        {/* Status / avatar */}
+        {/* Status / user */}
         <div style={{ padding: 16, borderTop: '1px solid var(--border)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div className="dc-sidebar-bottom" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -162,20 +189,48 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
               <span className="dc-sidebar-status-text dc-sidebar-bottom-text">JIRA</span>
             </div>
           </div>
-          <div style={{
-            marginTop: 12,
-            width: 32, height: 32,
-            borderRadius: '50%',
-            background: 'rgba(139,124,248,0.2)',
-            color: 'var(--accent-purple)',
-            fontSize: 13,
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: 'var(--font-sans)',
-          }}>
-            DC
+
+          {/* User avatar + sign out */}
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {user?.imageUrl ? (
+                <img
+                  src={user.imageUrl}
+                  alt={displayName}
+                  style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid var(--border)' }}
+                />
+              ) : (
+                <div style={{
+                  width: 28, height: 28,
+                  borderRadius: '50%',
+                  background: 'rgba(139,124,248,0.2)',
+                  color: 'var(--accent-purple)',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'var(--font-sans)',
+                  flexShrink: 0,
+                  textTransform: 'uppercase',
+                }}>
+                  {initials.toUpperCase() || 'DC'}
+                </div>
+              )}
+              <span
+                className="dc-sidebar-bottom-text"
+                style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+              >
+                {displayName}
+              </span>
+            </div>
+            <button
+              className="dc-signout-btn dc-sidebar-bottom-text"
+              onClick={() => signOut()}
+            >
+              <SignOutIcon />
+              Sign out
+            </button>
           </div>
         </div>
       </nav>

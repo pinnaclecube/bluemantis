@@ -4,6 +4,7 @@ import {
   getAllConfigs,
   saveConfigs,
   deleteConfig,
+  getConfig,
   CONFIG_KEYS,
   type ConfigKey,
 } from "../services/configService";
@@ -13,7 +14,7 @@ const router: IRouter = Router();
 
 // GET /api/config — return all keys with masked values + set status
 router.get("/config", async (req, res): Promise<void> => {
-  const configs = await getAllConfigs();
+  const configs = await getAllConfigs(req.userId);
   res.json(configs);
 });
 
@@ -31,7 +32,7 @@ router.put("/config", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Invalid config keys" });
     return;
   }
-  await saveConfigs(parsed.data as Partial<Record<ConfigKey, string>>);
+  await saveConfigs(req.userId, parsed.data as Partial<Record<ConfigKey, string>>);
   req.log.info("Integration config updated");
   res.json({ ok: true });
 });
@@ -43,7 +44,7 @@ router.delete("/config/:key", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Unknown config key" });
     return;
   }
-  await deleteConfig(key);
+  await deleteConfig(req.userId, key);
   res.json({ ok: true });
 });
 
@@ -52,14 +53,28 @@ router.get("/config/test/:integration", (_req, res): void => {
   res.status(405).json({ error: "Use POST to test a connection" });
 });
 
+// Helper: resolve a value from request body, else fall back to user's saved DB value
+async function resolve(
+  body: Record<string, unknown>,
+  bodyKey: string,
+  userId: string,
+  dbKey: ConfigKey,
+): Promise<string> {
+  const fromBody = body[bodyKey] as string | undefined;
+  if (fromBody && fromBody.trim()) return fromBody.trim();
+  return getConfig(userId, dbKey);
+}
+
 // POST /api/config/test/:integration — live connection test
 router.post("/config/test/:integration", async (req, res): Promise<void> => {
   const integration = req.params.integration;
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const uid = req.userId;
 
   try {
     switch (integration) {
       case "anthropic": {
-        const key = (req.body?.ANTHROPIC_API_KEY as string | undefined) ?? process.env.ANTHROPIC_API_KEY ?? "";
+        const key = await resolve(body, "ANTHROPIC_API_KEY", uid, "ANTHROPIC_API_KEY");
         if (!key) { res.status(400).json({ ok: false, message: "API key not set" }); return; }
         const r = await fetch("https://api.anthropic.com/v1/models", {
           headers: { "x-api-key": key, "anthropic-version": "2023-06-01" },
@@ -70,7 +85,7 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
       }
 
       case "openai": {
-        const key = (req.body?.OPENAI_API_KEY as string | undefined) ?? process.env.OPENAI_API_KEY ?? "";
+        const key = await resolve(body, "OPENAI_API_KEY", uid, "OPENAI_API_KEY");
         if (!key) { res.status(400).json({ ok: false, message: "API key not set" }); return; }
         const r = await fetch("https://api.openai.com/v1/models", {
           headers: { Authorization: `Bearer ${key}` },
@@ -81,7 +96,7 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
       }
 
       case "gemini": {
-        const key = (req.body?.GOOGLE_GEMINI_API_KEY as string | undefined) ?? process.env.GOOGLE_GEMINI_API_KEY ?? "";
+        const key = await resolve(body, "GOOGLE_GEMINI_API_KEY", uid, "GOOGLE_GEMINI_API_KEY");
         if (!key) { res.status(400).json({ ok: false, message: "API key not set" }); return; }
         const r = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`,
@@ -96,7 +111,7 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
       }
 
       case "copilot": {
-        const token = (req.body?.GITHUB_COPILOT_TOKEN as string | undefined) ?? process.env.GITHUB_COPILOT_TOKEN ?? "";
+        const token = await resolve(body, "GITHUB_COPILOT_TOKEN", uid, "GITHUB_COPILOT_TOKEN");
         if (!token) { res.status(400).json({ ok: false, message: "Token not set" }); return; }
         res.json({
           ok: false,
@@ -106,7 +121,7 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
       }
 
       case "github": {
-        const token = (req.body?.GITHUB_TOKEN as string | undefined) ?? process.env.GITHUB_TOKEN ?? "";
+        const token = await resolve(body, "GITHUB_TOKEN", uid, "GITHUB_TOKEN");
         if (!token) { res.status(400).json({ ok: false, message: "Token not set" }); return; }
         const r = await fetch("https://api.github.com/user", {
           headers: { Authorization: `Bearer ${token}`, "User-Agent": "DevCopilot" },
@@ -118,9 +133,9 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
       }
 
       case "jira": {
-        const domain = (req.body?.JIRA_DOMAIN as string | undefined) ?? process.env.JIRA_DOMAIN ?? "";
-        const email = (req.body?.JIRA_EMAIL as string | undefined) ?? process.env.JIRA_EMAIL ?? "";
-        const token = (req.body?.JIRA_API_TOKEN as string | undefined) ?? process.env.JIRA_API_TOKEN ?? "";
+        const domain = await resolve(body, "JIRA_DOMAIN", uid, "JIRA_DOMAIN");
+        const email = await resolve(body, "JIRA_EMAIL", uid, "JIRA_EMAIL");
+        const token = await resolve(body, "JIRA_API_TOKEN", uid, "JIRA_API_TOKEN");
         if (!domain || !email || !token) {
           res.status(400).json({ ok: false, message: "All three JIRA fields are required" });
           return;
@@ -137,9 +152,9 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
       }
 
       case "azuredevops": {
-        const org = (req.body?.AZURE_DEVOPS_ORG as string | undefined) ?? process.env.AZURE_DEVOPS_ORG ?? "";
-        const project = (req.body?.AZURE_DEVOPS_PROJECT as string | undefined) ?? process.env.AZURE_DEVOPS_PROJECT ?? "";
-        const pat = (req.body?.AZURE_DEVOPS_PAT as string | undefined) ?? process.env.AZURE_DEVOPS_PAT ?? "";
+        const org = await resolve(body, "AZURE_DEVOPS_ORG", uid, "AZURE_DEVOPS_ORG");
+        const project = await resolve(body, "AZURE_DEVOPS_PROJECT", uid, "AZURE_DEVOPS_PROJECT");
+        const pat = await resolve(body, "AZURE_DEVOPS_PAT", uid, "AZURE_DEVOPS_PAT");
         if (!org || !pat) {
           res.status(400).json({ ok: false, message: "Organisation and PAT are required" });
           return;
@@ -157,8 +172,8 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
       }
 
       case "azurerepos": {
-        const token = (req.body?.AZURE_REPOS_TOKEN as string | undefined) ?? process.env.AZURE_REPOS_TOKEN ?? "";
-        const org = ((req.body?.AZURE_REPOS_ORG as string | undefined) ?? process.env.AZURE_REPOS_ORG ?? "").trim();
+        const token = await resolve(body, "AZURE_REPOS_TOKEN", uid, "AZURE_REPOS_TOKEN");
+        const org = (await resolve(body, "AZURE_REPOS_ORG", uid, "AZURE_REPOS_ORG")).trim();
         if (!token) {
           res.status(400).json({ ok: false, message: "Personal Access Token is required" });
           return;
@@ -167,7 +182,6 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
           res.status(400).json({ ok: false, message: "Organisation name is required to test — enter it in the field above" });
           return;
         }
-        // Use the Git repositories endpoint — only requires Code (read) scope
         const creds = Buffer.from(`:${token}`).toString("base64");
         const r = await fetch(
           `https://dev.azure.com/${org}/_apis/git/repositories?api-version=7.1`,

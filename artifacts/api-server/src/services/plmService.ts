@@ -3,13 +3,30 @@ import { AzureDevOpsAdapter } from "../adapters/azureDevOpsAdapter";
 import { JiraAdapter } from "../adapters/jiraAdapter";
 import { logger } from "../lib/logger";
 
+interface PLMCredentials {
+  azureOrg?: string;
+  azureProject?: string;
+  azurePat?: string;
+  jiraDomain?: string;
+  jiraEmail?: string;
+  jiraToken?: string;
+}
+
 export class PLMService {
   private readonly azureAdapter: AzureDevOpsAdapter;
   private readonly jiraAdapter: JiraAdapter;
 
-  constructor() {
-    this.azureAdapter = new AzureDevOpsAdapter();
-    this.jiraAdapter = new JiraAdapter();
+  constructor(creds?: PLMCredentials) {
+    this.azureAdapter = new AzureDevOpsAdapter(
+      creds
+        ? { org: creds.azureOrg, project: creds.azureProject, pat: creds.azurePat }
+        : undefined,
+    );
+    this.jiraAdapter = new JiraAdapter(
+      creds
+        ? { domain: creds.jiraDomain, email: creds.jiraEmail, apiToken: creds.jiraToken }
+        : undefined,
+    );
   }
 
   async fetchAllTasks(): Promise<DevCopilotTask[]> {
@@ -57,5 +74,3 @@ function deduplicateTasks(tasks: DevCopilotTask[]): DevCopilotTask[] {
     return true;
   });
 }
-
-export const plmService = new PLMService();

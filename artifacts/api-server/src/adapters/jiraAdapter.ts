@@ -109,10 +109,10 @@ export class JiraAdapter implements PLMAdapter {
   private readonly authHeader: string;
   private acFieldId: string | null = null;
 
-  constructor() {
-    this.domain = (process.env.JIRA_DOMAIN ?? "").replace(/\/$/, "");
-    this.email = process.env.JIRA_EMAIL ?? "";
-    this.apiToken = process.env.JIRA_API_TOKEN ?? "";
+  constructor(creds?: { domain?: string; email?: string; apiToken?: string }) {
+    this.domain = (creds?.domain ?? process.env.JIRA_DOMAIN ?? "").replace(/\/$/, "");
+    this.email = creds?.email ?? process.env.JIRA_EMAIL ?? "";
+    this.apiToken = creds?.apiToken ?? process.env.JIRA_API_TOKEN ?? "";
     this.authHeader = `Basic ${Buffer.from(`${this.email}:${this.apiToken}`).toString("base64")}`;
 
     if (!this.domain || !this.email || !this.apiToken) {

@@ -1,10 +1,11 @@
 import { Router, type IRouter } from "express";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db, tasksTable, repositoriesTable } from "@workspace/db";
 import { GitService } from "../services/gitService";
-import { aiOrchestrator, synthesisEngine } from "../services/aiService";
-import { plmService } from "../services/plmService";
+import { AIOrchestrator, SynthesisEngine } from "../services/aiService";
+import { PLMService } from "../services/plmService";
+import { getConfigs } from "../services/configService";
 import type { StackProfile } from "../stack/detector";
 import type { DevCopilotTask } from "../../../../shared/types/task";
 
@@ -106,10 +107,12 @@ router.post("/tasks/:taskId/suggestions", async (req, res): Promise<void> => {
     return;
   }
 
+  const userId = req.userId;
+
   const [task] = await db
     .select()
     .from(tasksTable)
-    .where(eq(tasksTable.id, params.data.taskId));
+    .where(and(eq(tasksTable.id, params.data.taskId), eq(tasksTable.userId, userId)));
 
   if (!task) {
     res.status(404).json({ error: "Task not found" });
@@ -131,6 +134,9 @@ router.post("/tasks/:taskId/suggestions", async (req, res): Promise<void> => {
     return;
   }
 
+  // Fetch user's AI credentials from DB
+  const userCreds = await getConfigs(userId, ["ANTHROPIC_API_KEY", "OPENAI_API_KEY"]);
+
   const stack = repo.stackProfile as StackProfile;
   const refinePrompt = body.data.refinePrompt;
   const effectiveDescription = refinePrompt
@@ -147,6 +153,15 @@ router.post("/tasks/:taskId/suggestions", async (req, res): Promise<void> => {
   } catch (gitErr) {
     req.log.warn({ taskId: task.id, err: gitErr }, "Git file context unavailable — proceeding without it");
   }
+
+  // Instantiate per-request orchestrator with user's credentials
+  const aiOrchestrator = new AIOrchestrator({
+    anthropicApiKey: userCreds.ANTHROPIC_API_KEY,
+    openaiApiKey: userCreds.OPENAI_API_KEY,
+  });
+  const synthesisEngine = new SynthesisEngine({
+    anthropicApiKey: userCreds.ANTHROPIC_API_KEY,
+  });
 
   const devCopilotTask = dbTaskToDevCopilotTask({
     ...task,
@@ -179,7 +194,7 @@ router.post("/tasks/:taskId/commit", async (req, res): Promise<void> => {
   const [task] = await db
     .select()
     .from(tasksTable)
-    .where(eq(tasksTable.id, params.data.taskId));
+    .where(and(eq(tasksTable.id, params.data.taskId), eq(tasksTable.userId, req.userId)));
 
   if (!task) {
     res.status(404).json({ error: "Task not found" });
@@ -238,7 +253,7 @@ router.post("/tasks/:taskId/complete", async (req, res): Promise<void> => {
   const [task] = await db
     .select()
     .from(tasksTable)
-    .where(eq(tasksTable.id, params.data.taskId));
+    .where(and(eq(tasksTable.id, params.data.taskId), eq(tasksTable.userId, req.userId)));
 
   if (!task) {
     res.status(404).json({ error: "Task not found" });
@@ -246,7 +261,24 @@ router.post("/tasks/:taskId/complete", async (req, res): Promise<void> => {
   }
 
   if ((task.source === "azure-devops" || task.source === "jira") && task.externalId) {
-    await plmService.closeTask(
+    const userId = req.userId;
+    const userCreds = await getConfigs(userId, [
+      "AZURE_DEVOPS_ORG",
+      "AZURE_DEVOPS_PROJECT",
+      "AZURE_DEVOPS_PAT",
+      "JIRA_DOMAIN",
+      "JIRA_EMAIL",
+      "JIRA_API_TOKEN",
+    ]);
+    const plmSvc = new PLMService({
+      azureOrg: userCreds.AZURE_DEVOPS_ORG,
+      azureProject: userCreds.AZURE_DEVOPS_PROJECT,
+      azurePat: userCreds.AZURE_DEVOPS_PAT,
+      jiraDomain: userCreds.JIRA_DOMAIN,
+      jiraEmail: userCreds.JIRA_EMAIL,
+      jiraToken: userCreds.JIRA_API_TOKEN,
+    });
+    await plmSvc.closeTask(
       task.source as "azure-devops" | "jira",
       task.externalId,
       body.data.commitHash,

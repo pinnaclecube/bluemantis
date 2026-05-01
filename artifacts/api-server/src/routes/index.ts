@@ -5,13 +5,16 @@ import tasksRouter from "./tasks";
 import taskActionsRouter from "./taskActions";
 import statsRouter from "./stats";
 import configRouter from "./config";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
+// Health check is public
 router.use(healthRouter);
-
-// GET /health alias (in addition to /healthz)
 router.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+// All other routes require authentication
+router.use(requireAuth);
 
 router.use(repositoriesRouter);
 router.use(tasksRouter);
