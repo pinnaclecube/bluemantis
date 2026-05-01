@@ -50,6 +50,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `artifacts/api-server/src/adapters/azureDevOpsAdapter.ts` — PLM adapter: WIQL fetch, HTML-strip, PAT auth, closeTask via PATCH
 - `artifacts/api-server/src/adapters/jiraAdapter.ts` — PLM adapter: JQL sprint fetch, ADF→text parsing, AC field discovery, transition-based close
 - `artifacts/api-server/src/services/plmService.ts` — Merges & deduplicates tasks from both PLM adapters with per-adapter error isolation
+- `artifacts/api-server/src/services/gitService.ts` — Git integration service; GitHub via @octokit/rest, Azure Repos via REST; auto-detects stack on first connect
 
 ## API Endpoints (key)
 
