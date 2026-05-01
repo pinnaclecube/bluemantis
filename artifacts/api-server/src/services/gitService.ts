@@ -81,7 +81,7 @@ class GitHubClient implements GitProviderClient {
   private readonly defaultBranch: string;
 
   constructor(repoUrl: string, defaultBranch: string, creds?: GitCreds) {
-    this.octokit = new Octokit({ auth: creds?.githubToken ?? process.env.GITHUB_TOKEN });
+    this.octokit = new Octokit({ auth: creds?.githubToken });
     this.defaultBranch = defaultBranch;
 
     const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:\/|$)/);
@@ -218,7 +218,7 @@ class AzureReposClient implements GitProviderClient {
     if (!match) throw new Error(`Cannot parse Azure Repos URL: ${repoUrl}`);
     [, this.org, this.project, this.repoName] = match;
 
-    const pat = creds?.azureReposToken ?? process.env.AZURE_REPOS_TOKEN ?? "";
+    const pat = creds?.azureReposToken ?? "";
     this.authHeader = `Basic ${Buffer.from(`:${pat}`).toString("base64")}`;
   }
 

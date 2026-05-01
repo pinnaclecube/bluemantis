@@ -32,7 +32,7 @@ async function fetchGitHubFilePaths(repoUrl: string, branch: string, githubToken
   const [, owner, repo] = match;
   const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
 
-  const token = githubToken ?? process.env.GITHUB_TOKEN;
+  const token = githubToken;
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
@@ -55,9 +55,9 @@ async function fetchGitHubFilePaths(repoUrl: string, branch: string, githubToken
 }
 
 async function fetchAzureReposFilePaths(repoUrl: string, branch: string, azureToken?: string): Promise<string[]> {
-  const pat = azureToken ?? process.env.AZURE_REPOS_TOKEN;
+  const pat = azureToken;
   if (!pat) {
-    logger.warn("No Azure Repos token available, cannot fetch file list");
+    logger.warn("No Azure Repos token provided, cannot fetch file list");
     return [];
   }
 

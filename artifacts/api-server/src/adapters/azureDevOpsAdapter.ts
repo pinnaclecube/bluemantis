@@ -79,9 +79,9 @@ export class AzureDevOpsAdapter implements PLMAdapter {
   private readonly authHeader: string;
 
   constructor(creds?: { org?: string; project?: string; pat?: string }) {
-    this.org = creds?.org ?? process.env.AZURE_DEVOPS_ORG ?? "";
-    this.project = creds?.project ?? process.env.AZURE_DEVOPS_PROJECT ?? "";
-    const pat = creds?.pat ?? process.env.AZURE_DEVOPS_PAT ?? "";
+    this.org = creds?.org ?? "";
+    this.project = creds?.project ?? "";
+    const pat = creds?.pat ?? "";
     this.pat = pat;
     this.authHeader = `Basic ${Buffer.from(`:${pat}`).toString("base64")}`;
 

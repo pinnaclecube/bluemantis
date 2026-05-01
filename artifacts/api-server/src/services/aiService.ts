@@ -106,8 +106,8 @@ export class AIOrchestrator {
   private readonly openaiApiKey: string | undefined;
 
   constructor(creds?: AICreds) {
-    this.anthropicApiKey = creds?.anthropicApiKey ?? process.env.ANTHROPIC_API_KEY;
-    this.openaiApiKey = creds?.openaiApiKey ?? process.env.OPENAI_API_KEY;
+    this.anthropicApiKey = creds?.anthropicApiKey;
+    this.openaiApiKey = creds?.openaiApiKey;
   }
 
   async generateSuggestions(
@@ -206,7 +206,7 @@ export class SynthesisEngine {
   private readonly anthropicApiKey: string | undefined;
 
   constructor(creds?: Pick<AICreds, "anthropicApiKey">) {
-    this.anthropicApiKey = creds?.anthropicApiKey ?? process.env.ANTHROPIC_API_KEY;
+    this.anthropicApiKey = creds?.anthropicApiKey;
   }
 
   async synthesize(
