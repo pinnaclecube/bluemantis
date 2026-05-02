@@ -35,7 +35,13 @@ const queryClient = new QueryClient({
   },
 });
 
-const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
+const clerkPubKey = publishableKeyFromHost(
+  window.location.hostname,
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+);
+
+// In dev this is empty; in prod Replit sets it automatically
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL as string | undefined;
 
 const clerkAppearance = {
   baseTheme: dark,
@@ -92,12 +98,16 @@ function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
       </div>
       {mode === "sign-in" ? (
         <SignIn
+          routing="path"
+          path={`${basePath}/sign-in`}
           appearance={clerkAppearance}
           signUpUrl={`${basePath}/sign-up`}
           forceRedirectUrl={`${basePath}/tasks`}
         />
       ) : (
         <SignUp
+          routing="path"
+          path={`${basePath}/sign-up`}
           appearance={clerkAppearance}
           signInUrl={`${basePath}/sign-in`}
           forceRedirectUrl={`${basePath}/tasks`}
