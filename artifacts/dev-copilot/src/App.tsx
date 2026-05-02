@@ -176,7 +176,8 @@ function App() {
   return (
     <ErrorBoundary>
       <ClerkProvider
-        publishableKey={CLERK_PUBLISHABLE_KEY}
+        publishableKey={clerkPubKey}
+        proxyUrl={clerkProxyUrl}
         signInUrl={`${basePath}/sign-in`}
         signUpUrl={`${basePath}/sign-up`}
         afterSignOutUrl={`${basePath}/`}
