@@ -8,6 +8,7 @@ import {
   ClerkLoading,
   useAuth,
 } from "@clerk/react";
+import { publishableKeyFromHost } from "@clerk/react/internal";
 import { dark } from "@clerk/themes";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppShell } from "@/components/layout/AppShell";
