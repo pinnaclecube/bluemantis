@@ -341,6 +341,22 @@ function IntegrationCard({
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
+
+  const handleRemove = async (key: string) => {
+    setRemoving(key);
+    setRemoveError(null);
+    try {
+      const res = await fetch(`/api/config/${encodeURIComponent(key)}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Remove failed");
+      onSaved();
+    } catch {
+      setRemoveError("Failed to remove — please try again");
+    } finally {
+      setRemoving(null);
+    }
+  };
 
   const isConfigured = integration.fields.every((f) => configMap[f.key]?.set);
 
@@ -501,6 +517,19 @@ function IntegrationCard({
                     >
                       Replace
                     </button>
+                    <button
+                      onClick={() => handleRemove(field.key)}
+                      disabled={removing === field.key}
+                      style={{
+                        padding: "8px 14px", fontSize: "12px", fontWeight: 600,
+                        background: "none", border: "1px solid rgba(239,68,68,0.4)",
+                        borderRadius: "var(--dc-radius-sm)", color: "#ef4444",
+                        cursor: removing === field.key ? "not-allowed" : "pointer",
+                        opacity: removing === field.key ? 0.6 : 1,
+                      }}
+                    >
+                      {removing === field.key ? "Removing…" : "Remove"}
+                    </button>
                   </div>
                 ) : (
                   <SecretInput
@@ -512,6 +541,20 @@ function IntegrationCard({
               </div>
             ))}
           </div>
+
+          {/* Remove error */}
+          {removeError && (
+            <div style={{
+              marginTop: 14, padding: "10px 14px", borderRadius: "var(--dc-radius-sm)",
+              background: "rgba(239,68,68,0.08)",
+              border: "1px solid rgba(239,68,68,0.25)",
+              fontSize: "13px", color: "#ef4444",
+              display: "flex", alignItems: "center", gap: 8,
+            }}>
+              <span>✗</span>
+              {removeError}
+            </div>
+          )}
 
           {/* Test result */}
           {testResult && (
