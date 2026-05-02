@@ -35,10 +35,11 @@ const queryClient = new QueryClient({
   },
 });
 
-const clerkPubKey = publishableKeyFromHost(
-  window.location.hostname,
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-);
+const clerkPubKey =
+  publishableKeyFromHost(
+    window.location.hostname,
+    import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+  ) ?? (import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string);
 
 // In dev this is empty; in prod Replit sets it automatically
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL as string | undefined;
