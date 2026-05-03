@@ -1,8 +1,8 @@
-# DevCopilot Workspace
+# Red Mantis Workspace
 
 ## Overview
 
-DevCopilot is an AI-powered developer task management assistant that connects to Azure DevOps, Jira, and GitHub. It helps software teams track tasks linked to code commits across multiple repositories with full stack detection.
+Red Mantis is an AI-powered developer task management assistant that connects to Azure DevOps, Jira, and GitHub. It helps software teams track tasks linked to code commits across multiple repositories with full stack detection.
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 

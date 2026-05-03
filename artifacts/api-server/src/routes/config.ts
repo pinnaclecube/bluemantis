@@ -127,7 +127,7 @@ router.post("/config/test/:integration", async (req, res): Promise<void> => {
         const token = await resolve(body, "GITHUB_TOKEN", uid, "GITHUB_TOKEN");
         if (!token) { res.status(400).json({ ok: false, message: "Token not set" }); return; }
         const r = await fetch("https://api.github.com/user", {
-          headers: { Authorization: `Bearer ${token}`, "User-Agent": "DevCopilot" },
+          headers: { Authorization: `Bearer ${token}`, "User-Agent": "RedMantis" },
         });
         if (!r.ok) throw new Error(`GitHub returned ${r.status}`);
         const data = (await r.json()) as { login?: string };

@@ -25,10 +25,8 @@ export default function LandingPage() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
-            <path d="M10 1.5L17.5 5.75V14.25L10 18.5L2.5 14.25V5.75L10 1.5Z" fill="var(--accent-purple)" />
-          </svg>
-          <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>DevCopilot</span>
+          <img src={`${basePath}/logo.png`} alt="Red Mantis" style={{ width: 28, height: 28, objectFit: "contain" }} />
+          <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>Red Mantis</span>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
           <Link
@@ -114,7 +112,7 @@ export default function LandingPage() {
             margin: 0,
           }}
         >
-          DevCopilot connects your Azure DevOps, Jira tasks, and GitHub repositories — then uses Claude and GPT-4 to generate targeted code suggestions scoped to your actual codebase.
+          Red Mantis connects your Azure DevOps, Jira tasks, and GitHub repositories — then uses Claude and GPT-4 to generate targeted code suggestions scoped to your actual codebase.
         </p>
 
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
@@ -192,7 +190,7 @@ export default function LandingPage() {
           color: "var(--text-muted)",
         }}
       >
-        DevCopilot — AI-powered task management for software teams
+        Red Mantis — AI-powered task management for software teams
       </footer>
     </div>
   );

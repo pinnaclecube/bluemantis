@@ -181,7 +181,7 @@ export class AzureDevOpsAdapter implements PLMAdapter {
       {
         op: "add",
         path: "/fields/System.History",
-        value: `Closed via DevCopilot. Commit: ${commitHash}`,
+        value: `Closed via Red Mantis. Commit: ${commitHash}`,
       },
     ];
 

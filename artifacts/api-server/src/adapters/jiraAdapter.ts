@@ -265,7 +265,7 @@ export class JiraAdapter implements PLMAdapter {
               content: [
                 {
                   type: "text",
-                  text: `Closed via DevCopilot. Commit: ${commitHash}`,
+                  text: `Closed via Red Mantis. Commit: ${commitHash}`,
                 },
               ],
             },

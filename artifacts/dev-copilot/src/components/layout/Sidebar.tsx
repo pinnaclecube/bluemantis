@@ -9,11 +9,13 @@ interface SidebarProps {
   isJiraConnected: boolean;
 }
 
-function HexSvg() {
+function Logo() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
-      <path d="M10 1.5L17.5 5.75V14.25L10 18.5L2.5 14.25V5.75L10 1.5Z" fill="var(--accent-purple)" />
-    </svg>
+    <img
+      src={`${import.meta.env.BASE_URL}logo.png`}
+      alt="Red Mantis"
+      style={{ width: 24, height: 24, objectFit: "contain", flexShrink: 0 }}
+    />
   );
 }
 
@@ -66,7 +68,7 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
 
   const initials = user
     ? (user.firstName?.[0] ?? '') + (user.lastName?.[0] ?? user.username?.[0] ?? '')
-    : 'DC';
+    : 'RM';
 
   const displayName = user?.firstName
     ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}`
@@ -112,9 +114,9 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
       <nav className="dc-sidebar">
         {/* Wordmark */}
         <div style={{ padding: '20px 16px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <HexSvg />
+          <Logo />
           <span className="dc-sidebar-wordmark-text" style={{ color: 'var(--text-primary)', fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-sans)' }}>
-            DevCopilot
+            Red Mantis
           </span>
         </div>
 
@@ -214,7 +216,7 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
                   flexShrink: 0,
                   textTransform: 'uppercase',
                 }}>
-                  {initials.toUpperCase() || 'DC'}
+                  {initials.toUpperCase() || 'RM'}
                 </div>
               )}
               <span

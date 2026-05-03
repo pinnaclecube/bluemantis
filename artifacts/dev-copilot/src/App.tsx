@@ -90,11 +90,9 @@ function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-        <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
-          <path d="M10 1.5L17.5 5.75V14.25L10 18.5L2.5 14.25V5.75L10 1.5Z" fill="#7c6ff7" />
-        </svg>
+        <img src={`${basePath}/logo.png`} alt="Red Mantis" style={{ width: 32, height: 32, objectFit: "contain" }} />
         <span style={{ color: "var(--text-primary)", fontSize: 20, fontWeight: 700, fontFamily: "var(--font-sans)" }}>
-          DevCopilot
+          Red Mantis
         </span>
       </div>
       {mode === "sign-in" ? (

@@ -175,9 +175,9 @@ export default function WorkspacePage() {
   /* page title */
   useEffect(() => {
     if (task && stackProfile) {
-      document.title = `DevCopilot — ${task.title} [${stackProfile.frontend} · ${stackProfile.backend}]`;
+      document.title = `Red Mantis — ${task.title} [${stackProfile.frontend} · ${stackProfile.backend}]`;
     } else {
-      document.title = 'DevCopilot — Loading…';
+      document.title = 'Red Mantis — Loading…';
     }
   }, [task, stackProfile]);
 
@@ -703,7 +703,7 @@ export default function WorkspacePage() {
   /* ─── Mobile banner ───────────────────────────────────────────────────── */
   const MobileBanner = !mobileBannerDismissed && (
     <div style={{ background: 'var(--bg-raised)', borderBottom: '1px solid var(--border)', borderLeft: '3px solid var(--accent-amber)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} className="dc-mobile-banner">
-      <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>DevCopilot works best on a wider screen</span>
+      <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>Red Mantis works best on a wider screen</span>
       <button onClick={() => setMobileBannerDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1 }}>×</button>
     </div>
   );
