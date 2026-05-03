@@ -1,8 +1,8 @@
 import { useGetTask, useUpdateTask, useDeleteTask, useListRepositories, getGetTaskQueryKey, getListTasksQueryKey } from "@workspace/api-client-react";
 import { useParams, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Database, Edit, Trash2, ArrowLeft, Clock, GitBranch, CheckSquare, Github, FileText, AlignLeft } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Database, Edit, Trash2, ArrowLeft, Clock, GitBranch, CheckSquare, AlignLeft, Zap, Link2, X } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -45,6 +45,8 @@ export default function TaskDetail() {
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isLinkingRepo, setIsLinkingRepo] = useState(false);
+  const [pendingRepoId, setPendingRepoId] = useState<string>("");
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,6 +61,20 @@ export default function TaskDetail() {
       repositoryId: task?.repositoryId || null
     }
   });
+
+  const handleLinkRepo = () => {
+    if (!pendingRepoId || pendingRepoId === "none") return;
+    updateTask.mutate({ id, data: { repositoryId: parseInt(pendingRepoId) } }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetTaskQueryKey(id) });
+        queryClient.invalidateQueries({ queryKey: getListTasksQueryKey() });
+        setIsLinkingRepo(false);
+        setPendingRepoId("");
+        toast({ title: "Repository linked" });
+      },
+      onError: () => toast({ title: "Failed to link repository", variant: "destructive" }),
+    });
+  };
 
   const onEdit = (values: z.infer<typeof formSchema>) => {
     updateTask.mutate({ id, data: values }, {
@@ -123,6 +139,14 @@ export default function TaskDetail() {
           <h1 className="text-3xl font-bold tracking-tight mt-2">{task.title}</h1>
         </div>
         <div className="flex gap-2">
+          <Button
+            size="sm"
+            className="font-mono text-xs uppercase tracking-wider bg-primary hover:bg-primary/90"
+            onClick={() => setLocation(`/workspace/${task.id}`)}
+          >
+            <Zap className="mr-2 h-4 w-4" /> Generate Code
+          </Button>
+
           <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="font-mono text-xs uppercase tracking-wider">
@@ -299,6 +323,26 @@ export default function TaskDetail() {
         </div>
       </div>
 
+      {!task.repositoryId && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm">
+          <Zap className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <span className="font-medium text-amber-500">No repository linked</span>
+            <span className="text-muted-foreground ml-2">
+              Link a repository in the Details panel so Red Mantis can scan your codebase and generate targeted code suggestions.
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs shrink-0 border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+            onClick={() => setIsLinkingRepo(true)}
+          >
+            <Link2 className="mr-1.5 h-3 w-3" /> Link repo
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           <Card>
@@ -361,11 +405,52 @@ export default function TaskDetail() {
                 <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider font-bold">Repository</span>
                 {task.repositoryId ? (
                   <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                    <Database className="h-4 w-4" /> 
+                    <Database className="h-4 w-4" />
                     <span className="truncate">{getRepoName(task.repositoryId)}</span>
                   </div>
+                ) : isLinkingRepo ? (
+                  <div className="flex flex-col gap-2 mt-1">
+                    <Select value={pendingRepoId} onValueChange={setPendingRepoId}>
+                      <SelectTrigger className="h-8 text-xs font-mono bg-muted/50">
+                        <SelectValue placeholder="Choose a repository…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(repos?.length ?? 0) === 0 ? (
+                          <SelectItem value="none" disabled>No repositories configured</SelectItem>
+                        ) : (
+                          repos?.map(r => (
+                            <SelectItem key={r.id} value={r.id.toString()}>{r.name}</SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs flex-1"
+                        disabled={!pendingRepoId || pendingRepoId === "none" || updateTask.isPending}
+                        onClick={handleLinkRepo}
+                      >
+                        <Link2 className="mr-1 h-3 w-3" /> Link
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs px-2"
+                        onClick={() => { setIsLinkingRepo(false); setPendingRepoId(""); }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
-                  <span className="text-sm text-muted-foreground italic font-mono">Unlinked</span>
+                  <button
+                    onClick={() => setIsLinkingRepo(true)}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors mt-0.5 font-mono group"
+                  >
+                    <Link2 className="h-3 w-3 group-hover:text-primary" />
+                    Link a repository
+                  </button>
                 )}
               </div>
 
