@@ -14,7 +14,7 @@ function Logo() {
     <img
       src={`${import.meta.env.BASE_URL}logo.png`}
       alt="Blue Mantis"
-      style={{ width: 24, height: 24, objectFit: "contain", flexShrink: 0 }}
+      style={{ height: 22, width: 'auto', objectFit: "contain", flexShrink: 0 }}
     />
   );
 }

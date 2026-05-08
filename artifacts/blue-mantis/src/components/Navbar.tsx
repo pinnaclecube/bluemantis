@@ -5,7 +5,7 @@ const Logo = () => (
     <img
       src={`${import.meta.env.BASE_URL}logo.png`}
       alt="Blue Mantis logo"
-      style={{ height: 34, width: 'auto' }}
+      style={{ height: 40, width: 'auto' }}
     />
     <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>
       Blue Mantis
