@@ -23,7 +23,7 @@ const faqItems = [
   { q: 'What does "unlimited AI suggestions" mean?', a: 'Every task generates four code suggestions — one from each AI agent. There is no cap on how many tasks you can run through Blue Mantis.' },
   { q: 'Is my code sent to third-party AI providers?', a: 'Only the specific file context for the active task is sent — not your whole codebase. Credentials are stored in your own environment, never on our servers. We never store your code.' },
   { q: 'Does Blue Mantis replace our IDE or Git workflow?', a: 'No. Blue Mantis generates and commits code, but you can always pull the branch and edit in your IDE. It is additive, not replacing.' },
-  { q: 'What if our stack isn\'t supported yet?', a: 'React + Node.js + PostgreSQL is live today. Angular, .NET, Java, and Oracle are on the roadmap for 2026. Email us at sales@bluemantis.io to get early access for your stack.' },
+  { q: 'What if our stack isn\'t supported yet?', a: 'React + Node.js + PostgreSQL is live today. Angular, .NET, Java, and Oracle are on the roadmap for 2026. Email us at sales@getbluemantis.com to get early access for your stack.' },
 ];
 
 function FAQ() {
@@ -91,7 +91,7 @@ export default function PricingSection() {
                 <FeatureItem key={f} text={f} color="var(--accent-teal)" />
               ))}
             </div>
-            <button onClick={() => { window.location.href = 'mailto:sales@bluemantis.io?subject=Free tier signup'; }} style={{ width: '100%', marginTop: 28, padding: 12, background: 'none', border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600 }}>
+            <button onClick={() => { window.location.href = 'mailto:sales@getbluemantis.com?subject=Free tier signup'; }} style={{ width: '100%', marginTop: 28, padding: 12, background: 'none', border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600 }}>
               Start free — no card needed
             </button>
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginTop: 10 }}>No time limit. Use it as long as you need.</p>
@@ -112,7 +112,7 @@ export default function PricingSection() {
                 <FeatureItem key={f} text={f} color="var(--accent-teal)" />
               ))}
             </div>
-            <button onClick={() => { window.location.href = 'mailto:sales@bluemantis.io?subject=Growth trial'; }} style={{ width: '100%', marginTop: 28, padding: 12, background: 'var(--accent-blue)', border: 'none', color: '#0C1E2E', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600 }}>
+            <button onClick={() => { window.location.href = 'mailto:sales@getbluemantis.com?subject=Growth trial'; }} style={{ width: '100%', marginTop: 28, padding: 12, background: 'var(--accent-blue)', border: 'none', color: '#0C1E2E', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600 }}>
               Start Growth trial
             </button>
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginTop: 10 }}>Most teams upgrade after their first sprint.</p>
@@ -131,7 +131,7 @@ export default function PricingSection() {
                 <FeatureItem key={f} text={f} color="var(--accent-teal)" />
               ))}
             </div>
-            <button onClick={() => { window.location.href = 'mailto:sales@bluemantis.io?subject=Enterprise enquiry'; }} style={{ width: '100%', marginTop: 28, padding: 12, background: 'none', border: '1px solid var(--accent-teal)', color: 'var(--accent-teal)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600 }}>
+            <button onClick={() => { window.location.href = 'mailto:sales@getbluemantis.com?subject=Enterprise enquiry'; }} style={{ width: '100%', marginTop: 28, padding: 12, background: 'none', border: '1px solid var(--accent-teal)', color: 'var(--accent-teal)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600 }}>
               Talk to us
             </button>
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginTop: 10 }}>We'll scope a trial for your security requirements.</p>

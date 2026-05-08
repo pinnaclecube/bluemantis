@@ -54,7 +54,7 @@ export default function CTASection() {
 
         <div ref={cta.ref as any} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 72, ...cta.style }}>
           <button
-            onClick={() => { window.location.href = 'mailto:sales@bluemantis.io?subject=Start free'; }}
+            onClick={() => { window.location.href = 'mailto:sales@getbluemantis.com?subject=Start free'; }}
             style={{
               padding: '18px 48px', background: 'var(--accent-blue)', color: '#0C1E2E',
               border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
@@ -66,11 +66,11 @@ export default function CTASection() {
             Start free — no card needed
           </button>
 
-          <a href="mailto:sales@bluemantis.io" style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-muted)', marginTop: 12, textDecoration: 'none' }}
+          <a href="mailto:sales@getbluemantis.com" style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-muted)', marginTop: 12, textDecoration: 'none' }}
             onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
             onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
           >
-            Talk to sales → sales@bluemantis.io
+            Talk to sales → sales@getbluemantis.com
           </a>
 
           <div style={{ display: 'flex', gap: 12, marginTop: 24, flexWrap: 'wrap', justifyContent: 'center' }}>

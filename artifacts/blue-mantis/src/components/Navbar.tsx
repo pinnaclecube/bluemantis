@@ -1,17 +1,12 @@
 import { useState, useEffect } from 'react';
 
 const Logo = () => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }} >
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {[0, 6, 12].map((offset, i) => (
-        <div key={i} style={{
-          width: 18, height: 4,
-          background: 'var(--accent-teal)',
-          borderRadius: 2,
-          transform: `translateX(${offset}px)`,
-        }} />
-      ))}
-    </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <img
+      src={`${import.meta.env.BASE_URL}logo.png`}
+      alt="Blue Mantis logo"
+      style={{ height: 34, width: 'auto' }}
+    />
     <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>
       Blue Mantis
     </span>
@@ -43,7 +38,7 @@ export default function Navbar() {
   }, []);
 
   const handleStart = () => {
-    window.location.href = 'mailto:sales@bluemantis.io?subject=Start free trial';
+    window.location.href = 'mailto:sales@getbluemantis.com?subject=Start free trial';
   };
 
   return (

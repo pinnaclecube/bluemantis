@@ -20,15 +20,15 @@ const sections = [
   },
   {
     title: 'SOC 2 Type II',
-    body: `SOC 2 Type II certification is on our 12-month roadmap. We are happy to complete security questionnaires and provide current documentation to enterprise prospects. Email security@bluemantis.io.`,
+    body: `SOC 2 Type II certification is on our 12-month roadmap. We are happy to complete security questionnaires and provide current documentation to enterprise prospects. Email security@getbluemantis.com.`,
   },
   {
     title: 'Private cloud deployment',
-    body: `Enterprise customers can deploy Blue Mantis in their own AWS or Azure environment. In this configuration, no data leaves your cloud boundary. Contact sales@bluemantis.io to discuss.`,
+    body: `Enterprise customers can deploy Blue Mantis in their own AWS or Azure environment. In this configuration, no data leaves your cloud boundary. Contact sales@getbluemantis.com to discuss.`,
   },
   {
     title: 'Contact',
-    body: `Security questions: security@bluemantis.io\nResponsible disclosure: Please email security@bluemantis.io before publishing any vulnerability findings.`,
+    body: `Security questions: security@getbluemantis.com\nResponsible disclosure: Please email security@getbluemantis.com before publishing any vulnerability findings.`,
   },
 ];
 

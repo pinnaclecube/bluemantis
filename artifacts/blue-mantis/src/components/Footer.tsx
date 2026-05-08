@@ -1,10 +1,10 @@
 const Logo = () => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {[0, 6, 12].map((offset, i) => (
-        <div key={i} style={{ width: 18, height: 4, background: 'var(--accent-teal)', borderRadius: 2, transform: `translateX(${offset}px)` }} />
-      ))}
-    </div>
+    <img
+      src={`${import.meta.env.BASE_URL}logo.png`}
+      alt="Blue Mantis logo"
+      style={{ height: 34, width: 'auto' }}
+    />
     <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>
       Blue Mantis
     </span>
@@ -20,12 +20,12 @@ const cols = [
   {
     title: 'Pricing',
     links: ['Free tier', 'Growth', 'Enterprise', 'Talk to sales'],
-    hrefs: ['#pricing', '#pricing', '#pricing', 'mailto:sales@bluemantis.io'],
+    hrefs: ['#pricing', '#pricing', '#pricing', 'mailto:sales@getbluemantis.com'],
   },
   {
     title: 'Company',
     links: ['About', 'Blog', 'Careers', 'Contact'],
-    hrefs: ['#', '#blog', '#', 'mailto:sales@bluemantis.io'],
+    hrefs: ['#', '#blog', '#', 'mailto:sales@getbluemantis.com'],
   },
   {
     title: 'Legal',
@@ -44,8 +44,8 @@ export default function Footer() {
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-muted)', marginTop: 12, lineHeight: 1.6 }}>
               The AI platform that turns a backlog task into committed, reviewed code — automatically.
             </p>
-            <a href="mailto:sales@bluemantis.io" style={{ display: 'block', marginTop: 20, fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--accent-blue)', textDecoration: 'none' }}>
-              sales@bluemantis.io
+            <a href="mailto:sales@getbluemantis.com" style={{ display: 'block', marginTop: 20, fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--accent-blue)', textDecoration: 'none' }}>
+              sales@getbluemantis.com
             </a>
           </div>
 
