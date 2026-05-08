@@ -7,7 +7,6 @@ import ProofSection from '../components/ProofSection';
 import ROICalculator from '../components/ROICalculator';
 import IntegrationsSection from '../components/IntegrationsSection';
 import PricingSection from '../components/PricingSection';
-import CTASection from '../components/CTASection';
 import Footer from '../components/Footer';
 
 export default function HomePage() {
@@ -22,7 +21,6 @@ export default function HomePage() {
       <ROICalculator />
       <IntegrationsSection />
       <PricingSection />
-      <CTASection />
       <Footer />
     </>
   );
