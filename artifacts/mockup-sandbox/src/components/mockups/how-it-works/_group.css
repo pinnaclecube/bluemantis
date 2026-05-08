@@ -1,0 +1,25 @@
+:root {
+  --bg-app: #0C1E2E;
+  --bg-surface: #0E2841;
+  --bg-raised: #112D4A;
+  --border: rgba(77, 148, 216, 0.15);
+  --accent-blue: #4D94D8;
+  --accent-teal: #02B8A0;
+  --text-primary: #EEF4FB;
+  --text-secondary: #9BB8D4;
+  --text-muted: #5E8AAA;
+  --radius-lg: 16px;
+  --radius-md: 10px;
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'Bricolage Grotesque', system-ui, sans-serif;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes progressLine {
+  from { width: 0; }
+  to   { width: 100%; }
+}
