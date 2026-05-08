@@ -13,7 +13,7 @@ function Logo() {
   return (
     <img
       src={`${import.meta.env.BASE_URL}logo.png`}
-      alt="Red Mantis"
+      alt="Blue Mantis"
       style={{ width: 24, height: 24, objectFit: "contain", flexShrink: 0 }}
     />
   );
@@ -116,7 +116,7 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
         <div style={{ padding: '20px 16px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <Logo />
           <span className="dc-sidebar-wordmark-text" style={{ color: 'var(--text-primary)', fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-sans)' }}>
-            Red Mantis
+            Blue Mantis
           </span>
         </div>
 

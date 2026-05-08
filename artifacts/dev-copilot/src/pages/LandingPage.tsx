@@ -25,8 +25,8 @@ export default function LandingPage() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src={`${basePath}/logo.png`} alt="Red Mantis" style={{ width: 28, height: 28, objectFit: "contain" }} />
-          <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>Red Mantis</span>
+          <img src={`${basePath}/logo.png`} alt="Blue Mantis" style={{ width: 28, height: 28, objectFit: "contain" }} />
+          <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>Blue Mantis</span>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
           <Link
@@ -112,7 +112,7 @@ export default function LandingPage() {
             margin: 0,
           }}
         >
-          Red Mantis connects your Azure DevOps, Jira tasks, and GitHub repositories — then uses Claude and GPT-4 to generate targeted code suggestions scoped to your actual codebase.
+          Blue Mantis connects your Azure DevOps, Jira tasks, and GitHub repositories — then uses Claude and GPT-4 to generate targeted code suggestions scoped to your actual codebase.
         </p>
 
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
@@ -190,7 +190,7 @@ export default function LandingPage() {
           color: "var(--text-muted)",
         }}
       >
-        Red Mantis — AI-powered task management for software teams
+        Blue Mantis — AI-powered task management for software teams
       </footer>
     </div>
   );

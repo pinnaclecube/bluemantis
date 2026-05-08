@@ -89,9 +89,9 @@ function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-        <img src={`${basePath}/logo.png`} alt="Red Mantis" style={{ width: 32, height: 32, objectFit: "contain" }} />
+        <img src={`${basePath}/logo.png`} alt="Blue Mantis" style={{ width: 32, height: 32, objectFit: "contain" }} />
         <span style={{ color: "var(--text-primary)", fontSize: 20, fontWeight: 700, fontFamily: "var(--font-sans)" }}>
-          Red Mantis
+          Blue Mantis
         </span>
       </div>
       {mode === "sign-in" ? (

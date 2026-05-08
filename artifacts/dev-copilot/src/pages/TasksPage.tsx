@@ -99,7 +99,7 @@ function ConnectModal({ onClose, onSuccess }: ConnectModalProps) {
           style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1 }}
         >×</button>
         <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Connect Repository</h2>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>Link a Git repository to Red Mantis</p>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>Link a Git repository to Blue Mantis</p>
 
         {detectedRepo ? (
           <div style={{ textAlign: 'center', padding: '16px 0' }}>
@@ -191,7 +191,7 @@ export default function TasksPage() {
   const [redetecting, setRedetecting] = useState(false);
   const [filters, setFilters] = useState<FilterState>({ type: 'All', source: 'All', priority: 'All' });
 
-  useEffect(() => { document.title = 'Red Mantis — Sprint Backlog'; }, []);
+  useEffect(() => { document.title = 'Blue Mantis — Sprint Backlog'; }, []);
 
   const loadTasks = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
