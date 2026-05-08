@@ -68,7 +68,7 @@ export default function Navbar() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button className="hidden md:block" style={{
+            <button className="hidden md:block" onClick={() => { window.location.href = '/app/sign-in'; }} style={{
               background: 'none', border: '1px solid var(--border)', color: 'var(--text-secondary)',
               padding: '8px 16px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
               fontFamily: 'var(--font-sans)', fontSize: 14,

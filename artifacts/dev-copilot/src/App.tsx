@@ -14,7 +14,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppShell } from "@/components/layout/AppShell";
 import { RepoProvider } from "@/context/RepoContext";
 import { ConfigProvider } from "@/context/ConfigContext";
-import LandingPage from "@/pages/LandingPage";
 import WorkspacePage from "@/pages/WorkspacePage";
 import Dashboard from "@/pages/dashboard";
 import Repositories from "@/pages/repositories";
@@ -116,12 +115,12 @@ function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
   );
 }
 
-/** Public root: LandingPage for guests, redirect to /tasks for signed-in users */
+/** Root: redirect signed-in users to /tasks, others to /sign-in */
 function RootRoute() {
   const { isSignedIn, isLoaded } = useAuth();
   if (!isLoaded) return <LoadingScreen />;
   if (isSignedIn) return <Redirect to="/tasks" />;
-  return <LandingPage />;
+  return <Redirect to="/sign-in" />;
 }
 
 /** Wraps any route that requires authentication */
@@ -179,7 +178,7 @@ function App() {
         proxyUrl={clerkProxyUrl}
         signInUrl={`${basePath}/sign-in`}
         signUpUrl={`${basePath}/sign-up`}
-        afterSignOutUrl={`${basePath}/`}
+        afterSignOutUrl="/"
       >
         <QueryClientProvider client={queryClient}>
           <RepoProvider>

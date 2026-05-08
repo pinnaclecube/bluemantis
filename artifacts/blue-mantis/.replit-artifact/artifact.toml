@@ -1,5 +1,5 @@
 kind = "web"
-previewPath = "/blue-mantis/"
+previewPath = "/"
 title = "Blue Mantis — Marketing Site"
 version = "1.0.0"
 id = "artifacts/blue-mantis"
@@ -11,7 +11,7 @@ version = "1.0.0"
 
 [[services]]
 name = "web"
-paths = [ "/blue-mantis/" ]
+paths = [ "/" ]
 localPort = 21575
 
 [services.development]
@@ -28,4 +28,4 @@ to = "/index.html"
 
 [services.env]
 PORT = "21575"
-BASE_PATH = "/blue-mantis/"
+BASE_PATH = "/"
