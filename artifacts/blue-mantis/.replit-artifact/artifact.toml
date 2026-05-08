@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/blue-mantis/"
+title = "Blue Mantis — Marketing Site"
+version = "1.0.0"
+id = "artifacts/blue-mantis"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/blue-mantis/" ]
+localPort = 21575
+
+[services.development]
+run = "pnpm --filter @workspace/blue-mantis run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/blue-mantis", "run", "build" ]
+publicDir = "artifacts/blue-mantis/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21575"
+BASE_PATH = "/blue-mantis/"
