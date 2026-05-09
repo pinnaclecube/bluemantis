@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { z } from "zod/v4";
+import { clerkClient } from "@clerk/express";
 import {
   getAllConfigs,
   saveConfigs,
@@ -49,6 +50,32 @@ router.delete("/config/:key", async (req, res): Promise<void> => {
   }
   await deleteConfig(req.userId, key);
   res.json({ ok: true });
+});
+
+// POST /api/auth/github-sync — pull the user's GitHub OAuth token that Clerk holds
+// and upsert it into integration_configs as GITHUB_TOKEN.
+// Returns { ok: true, login } on success, { ok: false, reason } when no GitHub OAuth is present.
+router.post("/auth/github-sync", async (req, res): Promise<void> => {
+  const userId = req.userId;
+  try {
+    const result = await clerkClient.users.getUserOauthAccessToken(userId, "oauth_github");
+    const token = result.data?.[0]?.token;
+    if (!token) {
+      res.json({ ok: false, reason: "no_github_oauth" });
+      return;
+    }
+    // Verify the token is usable and fetch the GitHub login name
+    const ghRes = await fetch("https://api.github.com/user", {
+      headers: { Authorization: `Bearer ${token}`, "User-Agent": "BlueMantis" },
+    });
+    const login = ghRes.ok ? ((await ghRes.json()) as { login?: string }).login : undefined;
+    await saveConfigs(userId, { GITHUB_TOKEN: token });
+    req.log.info({ login }, "GitHub token auto-synced from Clerk OAuth");
+    res.json({ ok: true, login });
+  } catch (err) {
+    req.log.warn({ err }, "GitHub OAuth sync failed");
+    res.json({ ok: false, reason: "sync_failed" });
+  }
 });
 
 // GET /api/config/test/:integration — friendly error for browser navigation

@@ -1,5 +1,6 @@
 import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import {
   ClerkProvider,
   SignIn,
@@ -13,7 +14,7 @@ import { dark } from "@clerk/themes";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppShell } from "@/components/layout/AppShell";
 import { RepoProvider } from "@/context/RepoContext";
-import { ConfigProvider } from "@/context/ConfigContext";
+import { ConfigProvider, useConfig } from "@/context/ConfigContext";
 import WorkspacePage from "@/pages/WorkspacePage";
 import Dashboard from "@/pages/dashboard";
 import Repositories from "@/pages/repositories";
@@ -150,7 +151,36 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/**
+ * Runs once per browser session after the user is signed in.
+ * Calls /api/auth/github-sync to pull the Clerk-held GitHub OAuth token
+ * into integration_configs so the GitHub integration is ready automatically.
+ */
+function useGitHubSync() {
+  const { refreshConfig } = useConfig();
+  const attempted = useRef(false);
+
+  useEffect(() => {
+    if (attempted.current) return;
+    if (sessionStorage.getItem("gh_sync_done")) return;
+    attempted.current = true;
+
+    fetch("/api/auth/github-sync", { method: "POST" })
+      .then((r) => r.json())
+      .then((data: { ok?: boolean; login?: string }) => {
+        if (data.ok) {
+          sessionStorage.setItem("gh_sync_done", "1");
+          refreshConfig();
+        }
+      })
+      .catch(() => {
+        // Silent — GitHub sign-in is optional
+      });
+  }, [refreshConfig]);
+}
+
 function ProtectedApp() {
+  useGitHubSync();
   return (
     <RequireAuth>
       <AppShell>
