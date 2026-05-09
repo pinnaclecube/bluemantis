@@ -54,7 +54,13 @@ router.delete("/config/:key", async (req, res): Promise<void> => {
 
 // POST /api/auth/github-sync — pull the user's GitHub OAuth token that Clerk holds
 // and upsert it into integration_configs as GITHUB_TOKEN.
-// Returns { ok: true, login } on success, { ok: false, reason } when no GitHub OAuth is present.
+//
+// Prerequisites: GitHub must be enabled as a social provider in the Replit Auth pane
+// (Configure → SSO providers → GitHub → enable). That is a one-time configuration step
+// in the workspace Auth pane — no code change is required.
+//
+// Returns { ok: true, login } on success, { ok: false, reason } when no GitHub OAuth
+// token is present (user signed in via a different method) or on error.
 router.post("/auth/github-sync", async (req, res): Promise<void> => {
   const userId = req.userId;
   try {
@@ -64,6 +70,15 @@ router.post("/auth/github-sync", async (req, res): Promise<void> => {
       res.json({ ok: false, reason: "no_github_oauth" });
       return;
     }
+
+    // No-op if the stored token is already identical — avoids unnecessary DB writes
+    const existing = await getConfig(userId, "GITHUB_TOKEN");
+    if (existing === token) {
+      req.log.info("GitHub token unchanged — skipping sync");
+      res.json({ ok: true, noOp: true });
+      return;
+    }
+
     // Verify the token is usable and fetch the GitHub login name
     const ghRes = await fetch("https://api.github.com/user", {
       headers: { Authorization: `Bearer ${token}`, "User-Agent": "BlueMantis" },

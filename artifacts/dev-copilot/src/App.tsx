@@ -152,15 +152,20 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Runs once per browser session after the user is signed in.
+ * Runs once per browser session after Clerk has confirmed the user is signed in.
  * Calls /api/auth/github-sync to pull the Clerk-held GitHub OAuth token
  * into integration_configs so the GitHub integration is ready automatically.
+ *
+ * To activate GitHub sign-in: open the Auth pane → Configure → SSO providers
+ * → enable GitHub. No code change is needed — it's a one-time Auth pane step.
  */
 function useGitHubSync() {
+  const { isLoaded, isSignedIn } = useAuth();
   const { refreshConfig } = useConfig();
   const attempted = useRef(false);
 
   useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
     if (attempted.current) return;
     if (sessionStorage.getItem("gh_sync_done")) return;
     attempted.current = true;
@@ -176,7 +181,7 @@ function useGitHubSync() {
       .catch(() => {
         // Silent — GitHub sign-in is optional
       });
-  }, [refreshConfig]);
+  }, [isLoaded, isSignedIn, refreshConfig]);
 }
 
 function ProtectedApp() {
