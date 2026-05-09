@@ -47,10 +47,29 @@ const clerkAppearance = {
   baseTheme: dark,
   variables: {
     colorPrimary: "#7c6ff7",
-    colorBackground: "#0f1117",
-    colorInputBackground: "#1a1d27",
-    colorText: "#e2e4ef",
+    colorBackground: "#1a2538",
+    colorInputBackground: "#111b2c",
+    colorText: "#f0f2f8",
+    colorTextSecondary: "#a8b4cc",
+    colorNeutral: "#c0cce0",
     borderRadius: "8px",
+    fontFamily: "'Inter', sans-serif",
+  },
+  elements: {
+    card: "shadow-2xl",
+    headerTitle: { color: "#f0f2f8" },
+    headerSubtitle: { color: "#a8b4cc" },
+    socialButtonsBlockButton: {
+      background: "#232f45",
+      border: "1px solid #3a4d6a",
+      color: "#d8e0f0",
+    },
+    dividerLine: { background: "#2d3f5a" },
+    dividerText: { color: "#7a8fa8" },
+    formFieldLabel: { color: "#c0cce0" },
+    footerActionText: { color: "#7a8fa8" },
+    identityPreviewText: { color: "#c0cce0" },
+    formResendCodeLink: { color: "#7c6ff7" },
   },
 };
 
