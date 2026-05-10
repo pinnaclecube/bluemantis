@@ -38,7 +38,7 @@ export default function Navbar() {
   }, []);
 
   const handleStart = () => {
-    window.location.href = 'mailto:sales@getbluemantis.com?subject=Start free trial';
+    window.location.href = '/app/sign-up';
   };
 
   return (
