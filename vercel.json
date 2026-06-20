@@ -1,0 +1,27 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "builds": [
+    {
+      "src": "artifacts/api-server/src/serverless.ts",
+      "use": "@vercel/node",
+      "config": { "maxDuration": 300 }
+    },
+    {
+      "src": "artifacts/blue-mantis/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist/public" }
+    },
+    {
+      "src": "artifacts/dev-copilot/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist/public" }
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/artifacts/api-server/src/serverless.ts" },
+    { "src": "/app/assets/(.*)", "dest": "/artifacts/dev-copilot/dist/public/assets/$1" },
+    { "handle": "filesystem" },
+    { "src": "/app(?:/.*)?", "dest": "/artifacts/dev-copilot/dist/public/index.html" },
+    { "src": "/(.*)", "dest": "/artifacts/blue-mantis/dist/public/index.html" }
+  ]
+}

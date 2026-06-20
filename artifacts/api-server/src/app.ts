@@ -1,7 +1,6 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import rateLimit from "express-rate-limit";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 import {
@@ -53,21 +52,17 @@ app.use(
 );
 
 // ---------------------------------------------------------------------------
-// Rate limiting — AI suggestion routes are expensive; cap at 20 req/min
+// Rate limiting
 // ---------------------------------------------------------------------------
-const suggestionsLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 20,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-  message: { error: "Too many suggestion requests — please wait a moment before retrying" },
-  handler(req, res, _next, options) {
-    logger.warn({ ip: req.ip, url: req.url }, "Rate limit exceeded on suggestions endpoint");
-    res.status(options.statusCode).json(options.message);
-  },
-});
-
-app.use("/api/tasks/:taskId/suggestions", suggestionsLimiter);
+// TODO(serverless): The AI suggestion route (POST /api/tasks/:taskId/suggestions)
+// is the most expensive endpoint — it fans out to Claude + OpenAI and then runs
+// a synthesis call. It was previously protected by an in-memory express-rate-limit
+// (20 req/min). That limiter is ineffective on Vercel: each serverless invocation
+// gets fresh memory and many instances run concurrently, so per-process counters
+// never accumulate. It has been removed for the migration. For now the endpoint is
+// guarded only by Clerk auth (requireAuth). Before any heavy usage, add a
+// serverless-safe limiter — e.g. a Supabase-backed per-user/time-window counter
+// table checked at the top of the handler.
 
 app.use("/api", router);
 
