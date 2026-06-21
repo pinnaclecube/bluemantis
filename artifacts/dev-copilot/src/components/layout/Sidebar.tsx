@@ -103,9 +103,9 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
           color: var(--text-secondary); cursor: pointer; position: relative;
           transition: background 110ms ease, color 110ms ease;
         }
-        .dc-nav:hover { background: var(--bg-hover); color: var(--text-primary); }
-        .dc-nav.active { background: var(--accent-soft); color: var(--accent-blue); font-weight: 500; }
-        .dc-nav.active::before { content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 2.5px; border-radius: 2px; background: var(--accent-blue); }
+        .dc-nav:hover { background: var(--bg-raised); color: var(--text-primary); }
+        .dc-nav.active { background: var(--bg-hover); color: var(--text-primary); font-weight: 500; }
+        .dc-nav.active .dc-nav-ico { color: var(--accent-blue); }
         .dc-nav-ico { flex-shrink: 0; display: inline-flex; }
         .dc-grouplabel { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; padding: 0 9px; margin-bottom: 4px; }
         .dc-foot { border-top: 1px solid var(--hairline); padding: 8px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; }
