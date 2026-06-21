@@ -15,7 +15,15 @@ async function buildAll() {
   await rm(distDir, { recursive: true, force: true });
 
   await esbuild({
-    entryPoints: [path.resolve(artifactDir, "src/index.ts")],
+    entryPoints: [
+      // Local-dev/standalone server entry (validateEnv + app.listen)
+      path.resolve(artifactDir, "src/index.ts"),
+      // Vercel serverless entry: exports the Express app, no listen. Bundled to
+      // self-contained JS here so @vercel/node ships built JS (the api/index.js
+      // shim re-exports dist/serverless.mjs) instead of re-typechecking the TS
+      // source under its own stricter compiler pass.
+      path.resolve(artifactDir, "src/serverless.ts"),
+    ],
     platform: "node",
     bundle: true,
     format: "esm",

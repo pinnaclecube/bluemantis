@@ -1,8 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "pnpm install && pnpm --filter @workspace/api-server build",
   "builds": [
     {
-      "src": "artifacts/api-server/src/serverless.ts",
+      "src": "artifacts/api-server/api/index.js",
       "use": "@vercel/node",
       "config": { "maxDuration": 300 }
     },
@@ -18,7 +19,7 @@
     }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/artifacts/api-server/src/serverless.ts" },
+    { "src": "/api/(.*)", "dest": "/artifacts/api-server/api/index.js" },
     { "src": "/app/assets/(.*)", "dest": "/artifacts/dev-copilot/dist/public/assets/$1" },
     { "handle": "filesystem" },
     { "src": "/app(?:/.*)?", "dest": "/artifacts/dev-copilot/dist/public/index.html" },
