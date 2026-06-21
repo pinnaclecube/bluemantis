@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+/* Fonts (Inter + JetBrains Mono) are loaded once via <link> in index.html. */
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -64,7 +64,6 @@
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
   --font-sans: var(--app-font-sans);
-  --font-serif: var(--app-font-serif);
   --font-mono: var(--app-font-mono);
 
   --radius-sm: var(--radius-sm);
@@ -151,9 +150,8 @@
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.06);
 
-  /* fonts */
+  /* fonts — the only two families used in the authenticated app */
   --app-font-sans: 'Inter', sans-serif;
-  --app-font-serif: Georgia, serif;
   --app-font-mono: 'JetBrains Mono', monospace;
 
   /* radius */
