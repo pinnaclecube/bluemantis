@@ -27,10 +27,13 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/body-parser": "^1.19.6",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/express-serve-static-core": "^5.1.1",
     "@types/node": "catalog:",
+    "@types/serve-static": "^2.2.0",
     "esbuild": "^0.27.3",
     "esbuild-plugin-pino": "^2.3.3",
     "pino-pretty": "^13",
