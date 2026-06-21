@@ -1,6 +1,8 @@
-import type { ReactNode } from 'react';
-import { Sidebar } from './Sidebar';
-import { useConfig } from '@/context/ConfigContext';
+import type { ReactNode } from "react";
+import { Sidebar } from "./Sidebar";
+import { TabBar } from "./TabBar";
+import { TabsProvider } from "@/context/TabsContext";
+import { useConfig } from "@/context/ConfigContext";
 
 interface AppShellProps {
   children: ReactNode;
@@ -10,26 +12,28 @@ export function AppShell({ children }: AppShellProps) {
   const { isAzureConnected, isJiraConnected } = useConfig();
 
   return (
-    <>
-      <style>{`
-        .dc-main-content {
-          margin-left: 220px;
-          flex: 1;
-          background: var(--bg-app);
-          overflow-y: auto;
-          transition: margin-left 200ms ease;
-          min-height: 100vh;
-        }
-        @media (max-width: 1200px) {
-          .dc-main-content { margin-left: 48px; }
-        }
-      `}</style>
-      <div style={{ display: 'flex', flexDirection: 'row', minHeight: '100vh' }}>
+    <TabsProvider>
+      <div
+        style={{
+          display: "flex",
+          height: "100vh",
+          overflow: "hidden",
+          background: "var(--bg-app)",
+          color: "var(--text-primary)",
+          fontFamily: "var(--app-font-sans)",
+        }}
+      >
         <Sidebar isAzureConnected={isAzureConnected} isJiraConnected={isJiraConnected} />
-        <main className="dc-main-content">
-          {children}
-        </main>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+          <TabBar />
+          <main
+            data-testid="app-main"
+            style={{ flex: 1, minHeight: 0, overflowY: "auto", background: "var(--bg-app)" }}
+          >
+            {children}
+          </main>
+        </div>
       </div>
-    </>
+    </TabsProvider>
   );
 }

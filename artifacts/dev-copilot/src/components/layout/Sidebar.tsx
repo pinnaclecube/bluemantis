@@ -1,237 +1,224 @@
-import { useLocation, Link } from 'wouter';
-import { useUser, useClerk } from '@clerk/react';
-import { Tooltip } from '@/components/dc/Tooltip';
-import { StackBadge } from '@/components/dc/StackBadge';
-import { useRepo } from '@/context/RepoContext';
+import { useLocation } from "wouter";
+import { useUser, useClerk } from "@clerk/react";
+import { useRepo } from "@/context/RepoContext";
+import { useTabs } from "@/context/TabsContext";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface SidebarProps {
   isAzureConnected: boolean;
   isJiraConnected: boolean;
 }
 
-function Logo() {
-  return (
-    <img
-      src={`${import.meta.env.BASE_URL}logo.png`}
-      alt="Blue Mantis"
-      style={{ height: 22, width: 'auto', objectFit: "contain", flexShrink: 0 }}
-    />
-  );
-}
+/* ---- icons ---- */
+const sx = { width: 16, height: 16, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+const TasksIcon = () => (<svg {...sx}><rect x="2.5" y="1.5" width="11" height="13" rx="1.5" /><path d="M5 5h6M5 8h6M5 11h4" /></svg>);
+const RepoIcon = () => (<svg {...sx}><path d="M4 2h8a1 1 0 0 1 1 1v10.5a.5.5 0 0 1-.8.4L8 11l-4.2 2.9a.5.5 0 0 1-.8-.4V3a1 1 0 0 1 1-1z" /></svg>);
+const DashIcon = () => (<svg {...sx}><rect x="2" y="2" width="5" height="5" rx="1" /><rect x="9" y="2" width="5" height="5" rx="1" /><rect x="2" y="9" width="5" height="5" rx="1" /><rect x="9" y="9" width="5" height="5" rx="1" /></svg>);
+const HistoryIcon = () => (<svg {...sx}><circle cx="8" cy="8" r="6" /><path d="M8 5v3.5l2 2" /></svg>);
+const SettingsIcon = () => (<svg {...sx}><circle cx="8" cy="8" r="2.3" /><path d="M8 1.5v1.4M8 13.1v1.4M1.5 8h1.4M13.1 8h1.4M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1" /></svg>);
+const SearchIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>);
+const PlusIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M8 3.5v9M3.5 8h9" /></svg>);
+const ChevronIcon = () => (<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6l4 4 4-4" /></svg>);
+const SignOutIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M11 11l3-3-3-3M14 8H6" /></svg>);
 
-function TasksIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="1" width="12" height="14" rx="1.5" />
-      <path d="M5 5h6M5 8h6M5 11h4" />
-    </svg>
-  );
-}
-
-function HistoryIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="8" cy="8" r="6" />
-      <path d="M8 5v3.5l2 2" />
-    </svg>
-  );
-}
-
-function SettingsIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="8" cy="8" r="2.5" />
-      <path d="M8 1.5v1.2M8 13.3v1.2M1.5 8h1.2M13.3 8h1.2M3.4 3.4l.85.85M11.75 11.75l.85.85M3.4 12.6l.85-.85M11.75 4.25l.85-.85" />
-    </svg>
-  );
-}
-
-function SignOutIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M11 11l3-3-3-3M14 8H6" />
-    </svg>
-  );
-}
-
-const NAV_ITEMS = [
-  { href: '/tasks', label: 'Tasks', Icon: TasksIcon, match: (l: string) => l === '/tasks' || l.startsWith('/workspace') || l.startsWith('/tasks/') },
-  { href: '/history', label: 'History', Icon: HistoryIcon, match: (l: string) => l === '/history' },
-  { href: '/settings', label: 'Settings', Icon: SettingsIcon, match: (l: string) => l === '/settings' },
+const NAV = [
+  { href: "/tasks", label: "Tasks", Icon: TasksIcon, match: (l: string) => l === "/tasks" || l.startsWith("/tasks/") || l.startsWith("/workspace") },
+  { href: "/repositories", label: "Repositories", Icon: RepoIcon, match: (l: string) => l === "/repositories" || l.startsWith("/repositories/") },
+  { href: "/dashboard", label: "Dashboard", Icon: DashIcon, match: (l: string) => l === "/dashboard" },
+  { href: "/history", label: "History", Icon: HistoryIcon, match: (l: string) => l === "/history" },
+  { href: "/settings", label: "Settings", Icon: SettingsIcon, match: (l: string) => l === "/settings" },
 ];
 
 export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
   const [location] = useLocation();
-  const { activeRepository, stackProfile, setActiveRepository } = useRepo();
+  const { open } = useTabs();
+  const { repos, activeRepository, setActiveRepository } = useRepo();
   const { user } = useUser();
   const { signOut } = useClerk();
 
   const initials = user
-    ? (user.firstName?.[0] ?? '') + (user.lastName?.[0] ?? user.username?.[0] ?? '')
-    : 'RM';
-
+    ? ((user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? user.username?.[0] ?? "")).toUpperCase() || "BM"
+    : "BM";
   const displayName = user?.firstName
-    ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ''}`
-    : (user?.username ?? user?.primaryEmailAddress?.emailAddress ?? 'User');
+    ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
+    : user?.username ?? user?.primaryEmailAddress?.emailAddress ?? "User";
 
   return (
     <>
       <style>{`
-        .dc-sidebar {
-          position: fixed; left: 0; top: 0;
-          width: 220px; height: 100vh;
+        .dc-sb {
+          width: var(--sidebar-w); min-width: var(--sidebar-w);
+          height: 100vh;
           background: var(--bg-surface);
-          border-right: 1px solid var(--border);
+          border-right: 1px solid var(--hairline);
           display: flex; flex-direction: column;
-          z-index: 100; transition: width 200ms ease;
+          transition: width 180ms ease, min-width 180ms ease;
+          flex-shrink: 0;
         }
-        .dc-sidebar-wordmark-text,
-        .dc-sidebar-nav-label,
-        .dc-sidebar-stack-section,
-        .dc-sidebar-bottom-text {
-          transition: opacity 200ms ease;
+        .dc-sb-head { display: flex; align-items: center; gap: 9px; padding: 12px 14px; flex-shrink: 0; }
+        .dc-sb-word { color: var(--text-primary); font-size: var(--fs-md); font-weight: 600; letter-spacing: -.01em; }
+        .dc-sb-sec { padding: 0 10px; }
+        .dc-repo-switch {
+          display: flex; align-items: center; gap: 8px; width: 100%;
+          padding: 7px 9px; border-radius: var(--radius-md);
+          background: var(--bg-raised); border: 1px solid var(--hairline);
+          color: var(--text-primary); cursor: pointer; font-family: var(--app-font-sans);
+          transition: border-color 120ms ease, background 120ms ease;
         }
-        @media (max-width: 1200px) {
-          .dc-sidebar { width: 48px; }
-          .dc-sidebar-wordmark-text,
-          .dc-sidebar-nav-label,
-          .dc-sidebar-stack-section,
-          .dc-sidebar-bottom-text { display: none !important; }
-          .dc-sidebar-nav-item { justify-content: center; padding: 10px 0 !important; }
-          .dc-sidebar-bottom { align-items: center; }
-          .dc-sidebar-status-text { display: none !important; }
+        .dc-repo-switch:hover { border-color: var(--hairline-strong); }
+        .dc-repo-name { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); font-family: var(--app-font-mono); }
+        .dc-cta {
+          display: flex; align-items: center; justify-content: center; gap: 7px;
+          width: 100%; margin-top: 8px; padding: 8px 10px; border-radius: var(--radius-md);
+          background: var(--accent-blue); color: var(--accent-fg); border: none; cursor: pointer;
+          font-size: var(--fs-sm); font-weight: 600; font-family: var(--app-font-sans);
+          transition: background 120ms ease;
         }
-        .dc-signout-btn {
-          display: flex; align-items: center; gap: 6px;
-          background: none; border: none; cursor: pointer;
-          color: var(--text-muted); font-size: 11px;
-          font-family: var(--font-sans); padding: 4px 0;
-          transition: color 150ms ease;
+        .dc-cta:hover { background: var(--accent-blue-hover); }
+        .dc-search {
+          display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 8px;
+          padding: 7px 9px; border-radius: var(--radius-md);
+          background: var(--bg-app); border: 1px solid var(--hairline);
+          color: var(--text-muted); cursor: text; font-size: var(--fs-sm); font-family: var(--app-font-sans);
+          transition: border-color 120ms ease;
         }
-        .dc-signout-btn:hover { color: var(--accent-red); }
+        .dc-search:hover { border-color: var(--hairline-strong); }
+        .dc-kbd {
+          margin-left: auto; font-size: 10px; font-family: var(--app-font-mono);
+          color: var(--text-muted); border: 1px solid var(--hairline); border-radius: 4px; padding: 1px 5px;
+        }
+        .dc-navlist { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 1px; }
+        .dc-nav {
+          display: flex; align-items: center; gap: 10px;
+          padding: 6px 9px; border-radius: var(--radius-md);
+          font-size: var(--fs-base); font-family: var(--app-font-sans);
+          color: var(--text-secondary); cursor: pointer; position: relative;
+          transition: background 110ms ease, color 110ms ease;
+        }
+        .dc-nav:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .dc-nav.active { background: var(--accent-soft); color: var(--accent-blue); font-weight: 500; }
+        .dc-nav.active::before { content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 2.5px; border-radius: 2px; background: var(--accent-blue); }
+        .dc-nav-ico { flex-shrink: 0; display: inline-flex; }
+        .dc-grouplabel { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; padding: 0 9px; margin-bottom: 4px; }
+        .dc-foot { border-top: 1px solid var(--hairline); padding: 8px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; }
+        .dc-statusrow { display: flex; align-items: center; gap: 14px; padding: 4px 9px 6px; }
+        .dc-status { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--text-secondary); }
+        .dc-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .dc-user { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius-md); cursor: pointer; }
+        .dc-user:hover { background: var(--bg-hover); }
+        .dc-avatar { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; object-fit: cover; border: 1px solid var(--hairline); }
+        .dc-avatar-fb { background: var(--accent-soft); color: var(--accent-blue); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .dc-username { flex: 1; min-width: 0; font-size: var(--fs-sm); color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .dc-signout { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: var(--radius-sm); color: var(--text-muted); background: none; border: none; cursor: pointer; flex-shrink: 0; transition: background 120ms ease, color 120ms ease; }
+        .dc-signout:hover { background: var(--bg-hover); color: var(--accent-red); }
+        @media (max-width: 1100px) {
+          .dc-sb { width: var(--sidebar-w-collapsed); min-width: var(--sidebar-w-collapsed); }
+          .dc-sb-word, .dc-repo-name, .dc-repo-chev, .dc-cta-label, .dc-search-label, .dc-kbd,
+          .dc-nav-label, .dc-grouplabel, .dc-status-label, .dc-username, .dc-theme-label { display: none !important; }
+          .dc-sb-sec { padding: 0 8px; }
+          .dc-nav { justify-content: center; padding: 8px 0; }
+          .dc-cta, .dc-search, .dc-repo-switch { justify-content: center; padding: 8px 0; }
+          .dc-statusrow { justify-content: center; gap: 8px; }
+          .dc-user { justify-content: center; }
+          .dc-theme-toggle span { display: none !important; }
+          .dc-theme-toggle { justify-content: center !important; }
+        }
       `}</style>
 
-      <nav className="dc-sidebar">
-        {/* Wordmark */}
-        <div style={{ padding: '20px 16px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <Logo />
-          <span className="dc-sidebar-wordmark-text" style={{ color: 'var(--text-primary)', fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-sans)' }}>
-            Blue Mantis
-          </span>
+      <nav className="dc-sb" data-testid="sidebar">
+        <div className="dc-sb-head">
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Blue Mantis" style={{ height: 20, width: "auto", objectFit: "contain", flexShrink: 0 }} />
+          <span className="dc-sb-word">Blue Mantis</span>
         </div>
 
-        {/* Nav */}
-        <div style={{ flex: 1, padding: 8, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {NAV_ITEMS.map(({ href, label, Icon, match }) => {
-            const active = match(location);
-            return (
-              <Tooltip key={href} content={label}>
-                <Link href={href} style={{ display: 'block', textDecoration: 'none', width: '100%' }}>
-                  <div
-                    className="dc-sidebar-nav-item"
-                    data-testid={`nav-${label.toLowerCase()}`}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      padding: '10px 12px',
-                      borderRadius: 'var(--radius-md)',
-                      cursor: 'pointer',
-                      fontSize: 13,
-                      fontFamily: 'var(--font-sans)',
-                      transition: 'background 150ms ease',
-                      color: active ? 'var(--accent-blue)' : 'var(--text-muted)',
-                      background: active ? 'var(--bg-raised)' : 'transparent',
-                      borderLeft: active ? '3px solid var(--accent-blue)' : '3px solid transparent',
-                      fontWeight: active ? 500 : 400,
-                    }}
-                  >
-                    <span style={{ flexShrink: 0 }}><Icon /></span>
-                    <span className="dc-sidebar-nav-label">{label}</span>
-                  </div>
-                </Link>
-              </Tooltip>
-            );
-          })}
-        </div>
+        {/* Repo switcher + primary action + search */}
+        <div className="dc-sb-sec">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="dc-repo-switch" data-testid="repo-switcher" title={activeRepository?.name ?? "Select repository"}>
+                <RepoIcon />
+                <span className="dc-repo-name">{activeRepository?.name ?? "Select repository"}</span>
+                <span className="dc-repo-chev" style={{ color: "var(--text-muted)", display: "inline-flex" }}><ChevronIcon /></span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuLabel>Repositories</DropdownMenuLabel>
+              {repos.length === 0 && (
+                <DropdownMenuItem disabled>No repositories yet</DropdownMenuItem>
+              )}
+              {repos.map((r) => (
+                <DropdownMenuItem
+                  key={r.id}
+                  onSelect={() => setActiveRepository(r)}
+                  style={{ fontFamily: "var(--app-font-mono)", fontSize: "var(--fs-sm)" }}
+                >
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", marginRight: 8, background: activeRepository?.id === r.id ? "var(--accent-blue)" : "transparent", border: activeRepository?.id === r.id ? "none" : "1px solid var(--hairline-strong)" }} />
+                  {r.name}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => open("/repositories")}>Manage repositories…</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        {/* Active repo */}
-        <div
-          className="dc-sidebar-stack-section"
-          style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', flexShrink: 0 }}
-        >
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, fontWeight: 500 }}>
-            Active Repo
-          </div>
-          <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 8 }}>
-            {activeRepository?.name ?? 'None selected'}
-          </div>
-          {stackProfile && (
-            <div style={{ marginBottom: 8 }}>
-              <StackBadge stackProfile={stackProfile} />
-            </div>
-          )}
-          <button
-            onClick={() => setActiveRepository(null)}
-            style={{ fontSize: 11, color: 'var(--accent-blue)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-sans)' }}
-          >
-            Change repo
+          <button className="dc-cta" onClick={() => open("/tasks/new")} data-testid="new-task-cta">
+            <PlusIcon /><span className="dc-cta-label">New task</span>
+          </button>
+
+          <button className="dc-search" onClick={() => open("/tasks")} data-testid="sidebar-search">
+            <SearchIcon /><span className="dc-search-label">Search tasks</span><span className="dc-kbd">⌘K</span>
           </button>
         </div>
 
-        {/* Status / user */}
-        <div style={{ padding: 16, borderTop: '1px solid var(--border)', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <div className="dc-sidebar-bottom" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: isAzureConnected ? 'var(--accent-green)' : 'var(--accent-red)', flexShrink: 0 }} />
-              <span className="dc-sidebar-status-text dc-sidebar-bottom-text">Azure DevOps</span>
+        {/* Nav */}
+        <div className="dc-navlist">
+          <div className="dc-grouplabel">Workspace</div>
+          {NAV.map(({ href, label, Icon, match }) => (
+            <div
+              key={href}
+              className={`dc-nav${match(location) ? " active" : ""}`}
+              onClick={() => open(href)}
+              data-testid={`nav-${label.toLowerCase()}`}
+              title={label}
+            >
+              <span className="dc-nav-ico"><Icon /></span>
+              <span className="dc-nav-label">{label}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: isJiraConnected ? 'var(--accent-green)' : 'var(--accent-red)', flexShrink: 0 }} />
-              <span className="dc-sidebar-status-text dc-sidebar-bottom-text">JIRA</span>
-            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="dc-foot">
+          <div className="dc-statusrow">
+            <span className="dc-status" title={isAzureConnected ? "Azure DevOps connected" : "Azure DevOps not connected"}>
+              <span className="dc-dot" style={{ background: isAzureConnected ? "var(--accent-green)" : "var(--text-muted)" }} />
+              <span className="dc-status-label">Azure</span>
+            </span>
+            <span className="dc-status" title={isJiraConnected ? "Jira connected" : "Jira not connected"}>
+              <span className="dc-dot" style={{ background: isJiraConnected ? "var(--accent-green)" : "var(--text-muted)" }} />
+              <span className="dc-status-label">Jira</span>
+            </span>
           </div>
 
-          {/* User avatar + sign out */}
-          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {user?.imageUrl ? (
-                <img
-                  src={user.imageUrl}
-                  alt={displayName}
-                  style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid var(--border)' }}
-                />
-              ) : (
-                <div style={{
-                  width: 28, height: 28,
-                  borderRadius: '50%',
-                  background: 'rgba(139,124,248,0.2)',
-                  color: 'var(--accent-purple)',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'var(--font-sans)',
-                  flexShrink: 0,
-                  textTransform: 'uppercase',
-                }}>
-                  {initials.toUpperCase() || 'RM'}
-                </div>
-              )}
-              <span
-                className="dc-sidebar-bottom-text"
-                style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-              >
-                {displayName}
-              </span>
+          <ThemeToggle />
+
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div className="dc-user" onClick={() => open("/settings")} style={{ flex: 1, minWidth: 0 }} title={displayName}>
+              {user?.imageUrl
+                ? <img className="dc-avatar" src={user.imageUrl} alt={displayName} />
+                : <span className="dc-avatar dc-avatar-fb">{initials}</span>}
+              <span className="dc-username">{displayName}</span>
             </div>
-            <button
-              className="dc-signout-btn dc-sidebar-bottom-text"
-              onClick={() => signOut()}
-            >
+            <button className="dc-signout" onClick={() => signOut()} title="Sign out" aria-label="Sign out" data-testid="signout">
               <SignOutIcon />
-              Sign out
             </button>
           </div>
         </div>

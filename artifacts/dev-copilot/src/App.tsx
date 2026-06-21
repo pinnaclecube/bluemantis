@@ -11,7 +11,9 @@ import {
 } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { dark } from "@clerk/themes";
+import { useTheme } from "next-themes";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { RepoProvider } from "@/context/RepoContext";
 import { ConfigProvider, useConfig } from "@/context/ConfigContext";
@@ -44,35 +46,24 @@ const clerkPubKey =
 // In dev this is empty; in prod Replit sets it automatically
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL as string | undefined;
 
-const clerkAppearance = {
-  baseTheme: dark,
-  variables: {
-    colorPrimary: "#7c6ff7",
-    colorBackground: "#1a2538",
-    colorInputBackground: "#111b2c",
-    colorText: "#f0f2f8",
-    colorTextSecondary: "#a8b4cc",
-    colorNeutral: "#c0cce0",
-    borderRadius: "8px",
-    fontFamily: "'Inter', sans-serif",
-  },
-  elements: {
-    card: "shadow-2xl",
-    headerTitle: { color: "#f0f2f8" },
-    headerSubtitle: { color: "#a8b4cc" },
-    socialButtonsBlockButton: {
-      background: "#232f45",
-      border: "1px solid #3a4d6a",
-      color: "#d8e0f0",
+function getClerkAppearance(isDark: boolean) {
+  return {
+    baseTheme: isDark ? dark : undefined,
+    variables: {
+      colorPrimary: "#4d9cff",
+      colorBackground: isDark ? "#161a1f" : "#ffffff",
+      colorInputBackground: isDark ? "#1e2329" : "#f5f7fa",
+      colorText: isDark ? "#e8eaf0" : "#0d1117",
+      colorTextSecondary: isDark ? "#8b92a5" : "#4a5673",
+      colorNeutral: isDark ? "#8b92a5" : "#4a5673",
+      borderRadius: "6px",
+      fontFamily: "'Inter', sans-serif",
     },
-    dividerLine: { background: "#2d3f5a" },
-    dividerText: { color: "#7a8fa8" },
-    formFieldLabel: { color: "#c0cce0" },
-    footerActionText: { color: "#7a8fa8" },
-    identityPreviewText: { color: "#c0cce0" },
-    formResendCodeLink: { color: "#7c6ff7" },
-  },
-};
+    elements: {
+      card: "shadow-xl",
+    },
+  };
+}
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -96,6 +87,8 @@ function LoadingScreen() {
 }
 
 function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
+  const { resolvedTheme } = useTheme();
+  const clerkAppearance = getClerkAppearance(resolvedTheme !== "light");
   return (
     <div
       style={{
@@ -224,26 +217,36 @@ function Router() {
   );
 }
 
+function ClerkedApp() {
+  const { resolvedTheme } = useTheme();
+  return (
+    <ClerkProvider
+      publishableKey={clerkPubKey}
+      proxyUrl={clerkProxyUrl}
+      signInUrl={`${basePath}/sign-in`}
+      signUpUrl={`${basePath}/sign-up`}
+      afterSignOutUrl="/"
+      appearance={getClerkAppearance(resolvedTheme !== "light")}
+    >
+      <QueryClientProvider client={queryClient}>
+        <RepoProvider>
+          <ConfigProvider>
+            <WouterRouter base={basePath}>
+              <Router />
+            </WouterRouter>
+          </ConfigProvider>
+        </RepoProvider>
+      </QueryClientProvider>
+    </ClerkProvider>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
-      <ClerkProvider
-        publishableKey={clerkPubKey}
-        proxyUrl={clerkProxyUrl}
-        signInUrl={`${basePath}/sign-in`}
-        signUpUrl={`${basePath}/sign-up`}
-        afterSignOutUrl="/"
-      >
-        <QueryClientProvider client={queryClient}>
-          <RepoProvider>
-            <ConfigProvider>
-              <WouterRouter base={basePath}>
-                <Router />
-              </WouterRouter>
-            </ConfigProvider>
-          </RepoProvider>
-        </QueryClientProvider>
-      </ClerkProvider>
+      <ThemeProvider>
+        <ClerkedApp />
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

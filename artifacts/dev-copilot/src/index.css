@@ -5,6 +5,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* =========================================================================
+   Blue Mantis — dev-copilot design tokens (single source of truth)
+   Day palette lives in :root, Night palette in .dark (default via next-themes).
+   - shadcn semantic vars (HSL triples) drive all src/components/ui/* primitives
+   - friendly tokens (hex) drive the IDE shell + dc/* components
+   Light-blue accent (#4D9CFF) is constant across both modes; only bg + text invert.
+   ========================================================================= */
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -51,86 +59,135 @@
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-primary: hsl(var(--sidebar-primary));
   --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-primary-border: var(--sidebar-primary-border);
   --color-sidebar-accent: hsl(var(--sidebar-accent));
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-accent-border: var(--sidebar-accent-border);
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
   --font-sans: var(--app-font-sans);
   --font-serif: var(--app-font-serif);
   --font-mono: var(--app-font-mono);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: calc(var(--radius-lg) + 4px);
 }
 
-/* LIGHT MODE */
+/* ---------------- DAY (light) ---------------- */
 :root {
-  --button-outline: rgba(0,0,0, .10);
-  --badge-outline: rgba(0,0,0, .05);
-
-  /* Automatic computation of border around primary / danger buttons */
-  --opaque-button-border-intensity: -8; /* In terms of percentages */
-
-  /* Backgrounds applied on top of other backgrounds when hovered/active */
-  --elevate-1: rgba(0,0,0, .03);
-  --elevate-2: rgba(0,0,0, .08);
-
-  --background: 210 20% 98%;
-  --foreground: 222 47% 11%;
-  --border: 214 32% 91%;
+  /* shadcn semantic (HSL triples) */
+  --background: 0 0% 100%;
+  --foreground: 222 28% 7%;
+  --border: 216 30% 91%;
+  --input: 216 30% 91%;
+  --ring: 213 100% 65%;
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --card-border: 214 32% 91%;
-  --sidebar: 210 20% 98%;
-  --sidebar-foreground: 222 47% 11%;
-  --sidebar-border: 214 32% 91%;
-  --sidebar-primary: 221 83% 53%;
-  --sidebar-primary-foreground: 210 40% 98%;
-  --sidebar-accent: 210 40% 96%;
-  --sidebar-accent-foreground: 222 47% 11%;
-  --sidebar-ring: 221 83% 53%;
+  --card-foreground: 222 28% 7%;
+  --card-border: 216 30% 91%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --popover-border: 214 32% 91%;
-  --primary: 221 83% 53%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222 47% 11%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
-  --input: 214 32% 91%;
-  --ring: 221 83% 53%;
-  
-  --chart-1: 221 83% 53%;
+  --popover-foreground: 222 28% 7%;
+  --popover-border: 216 30% 91%;
+  --primary: 213 100% 65%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 216 27% 94%;
+  --secondary-foreground: 222 28% 12%;
+  --muted: 214 33% 97%;
+  --muted-foreground: 222 14% 46%;
+  --accent: 216 27% 94%;
+  --accent-foreground: 222 28% 12%;
+  --destructive: 359 70% 59%;
+  --destructive-foreground: 0 0% 100%;
+  --chart-1: 213 100% 65%;
   --chart-2: 199 89% 48%;
-  --chart-3: 160 84% 39%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --chart-3: 152 62% 47%;
+  --chart-4: 256 78% 68%;
+  --chart-5: 36 92% 55%;
+  --sidebar: 214 33% 97%;
+  --sidebar-foreground: 222 28% 7%;
+  --sidebar-border: 216 30% 91%;
+  --sidebar-primary: 213 100% 65%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 216 27% 94%;
+  --sidebar-accent-foreground: 222 28% 12%;
+  --sidebar-ring: 213 100% 65%;
 
+  /* friendly tokens (hex) — IDE shell + dc components */
+  --bg-app: #ffffff;
+  --bg-base: #ffffff;
+  --bg-surface: #f5f7fa;
+  --bg-raised: #ffffff;
+  --bg-hover: #eceff4;
+  --hairline: #e3e8f0;
+  --hairline-strong: #ced5e1;
+  --text-primary: #0d1117;
+  --text-secondary: #4a5673;
+  --text-muted: #8a93a8;
+  --accent-blue: #4d9cff;
+  --accent-blue-hover: #3b8df5;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(77, 156, 255, 0.12);
+  --accent-green: #1aa672;
+  --accent-amber: #c77700;
+  --accent-red: #e5484d;
+  --accent-purple: #6e5ce6;
+
+  /* legacy aliases (resolved lazily → adapt to whichever theme is active) */
+  --border-bright: var(--hairline-strong);
+  --dc-bg: var(--bg-surface);
+  --dc-surface: var(--bg-raised);
+  --dc-border: var(--hairline);
+  --dc-accent: var(--accent-blue);
+  --dc-text-primary: var(--text-primary);
+  --dc-text-secondary: var(--text-secondary);
+  --dc-text-muted: var(--text-muted);
+  --dc-radius-sm: var(--radius-sm);
+  --dc-radius-md: var(--radius-md);
+  --dc-font-mono: var(--app-font-mono);
+
+  /* elevate (shadcn ui hover/active helpers) */
+  --button-outline: rgba(0, 0, 0, 0.1);
+  --badge-outline: rgba(0, 0, 0, 0.05);
+  --opaque-button-border-intensity: -8;
+  --elevate-1: rgba(0, 0, 0, 0.03);
+  --elevate-2: rgba(0, 0, 0, 0.06);
+
+  /* fonts */
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: 'JetBrains Mono', monospace;
-  --radius: 0.25rem; 
-  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-xs: 0px 1px 2px 0px rgba(0,0,0, 0.05);
-  --shadow-sm: 0px 1px 3px 0px rgba(0,0,0, 0.1), 0px 1px 2px -1px rgba(0,0,0, 0.1);
-  --shadow: 0px 1px 3px 0px rgba(0,0,0, 0.1), 0px 1px 2px -1px rgba(0,0,0, 0.1);
-  --shadow-md: 0px 4px 6px -1px rgba(0,0,0, 0.1), 0px 2px 4px -2px rgba(0,0,0, 0.1);
-  --shadow-lg: 0px 10px 15px -3px rgba(0,0,0, 0.1), 0px 4px 6px -4px rgba(0,0,0, 0.1);
-  --shadow-xl: 0px 20px 25px -5px rgba(0,0,0, 0.1), 0px 8px 10px -6px rgba(0,0,0, 0.1);
-  --shadow-2xl: 0px 25px 50px -12px rgba(0,0,0, 0.25);
+
+  /* radius */
+  --radius: 6px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* type scale */
+  --fs-2xl: 22px;
+  --fs-xl: 18px;
+  --fs-lg: 15px;
+  --fs-md: 14px;
+  --fs-base: 13px;
+  --fs-sm: 12px;
+  --fs-xs: 11px;
+
+  /* spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* shell metrics */
+  --sidebar-w: 232px;
+  --sidebar-w-collapsed: 52px;
+  --tabbar-h: 38px;
+
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
-  /* Automatically computed borders - intensity can be controlled by the user by the --opaque-button-border-intensity setting */
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
@@ -140,57 +197,83 @@
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
+/* ---------------- NIGHT (dark, default) ---------------- */
 .dark {
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
-  --opaque-button-border-intensity: 9;  /* In terms of percentages */
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
+  --background: 220 16% 6%;
+  --foreground: 225 27% 93%;
+  --border: 218 14% 19%;
+  --input: 218 14% 19%;
+  --ring: 213 100% 65%;
+  --card: 213 15% 14%;
+  --card-foreground: 225 27% 93%;
+  --card-border: 218 14% 19%;
+  --popover: 213 15% 14%;
+  --popover-foreground: 225 27% 93%;
+  --popover-border: 218 14% 19%;
+  --primary: 213 100% 65%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 213 15% 14%;
+  --secondary-foreground: 225 27% 93%;
+  --muted: 213 15% 14%;
+  --muted-foreground: 222 13% 60%;
+  --accent: 217 15% 18%;
+  --accent-foreground: 225 27% 93%;
+  --destructive: 0 83% 67%;
+  --destructive-foreground: 0 0% 100%;
+  --chart-1: 213 100% 65%;
+  --chart-2: 199 89% 56%;
+  --chart-3: 152 62% 54%;
+  --chart-4: 256 78% 74%;
+  --chart-5: 36 92% 62%;
+  --sidebar: 216 16% 10%;
+  --sidebar-foreground: 225 27% 93%;
+  --sidebar-border: 218 14% 19%;
+  --sidebar-primary: 213 100% 65%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 217 15% 18%;
+  --sidebar-accent-foreground: 225 27% 93%;
+  --sidebar-ring: 213 100% 65%;
 
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
-  --border: 217 32% 17%;
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 217 32% 17%;
-  --sidebar: 222 47% 11%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 217 32% 17%;
-  --sidebar-primary: 217.2 91.2% 59.8%;
-  --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-  --sidebar-accent: 217 32% 17%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 224.3 76.3% 48%;
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 217 32% 17%;
-  --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217 32% 17%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217 32% 17%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217 32% 17%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --input: 217 32% 17%;
-  --ring: 224.3 76.3% 48%;
-  
-  --chart-1: 221 83% 53%;
-  --chart-2: 199 89% 48%;
-  --chart-3: 160 84% 39%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --bg-app: #0d0f12;
+  --bg-base: #0d0f12;
+  --bg-surface: #161a1f;
+  --bg-raised: #1e2329;
+  --bg-hover: #262c34;
+  --hairline: #2a2f38;
+  --hairline-strong: #3d4450;
+  --text-primary: #e8eaf0;
+  --text-secondary: #8b92a5;
+  --text-muted: #555e70;
+  --accent-blue: #4d9cff;
+  --accent-blue-hover: #6bb0ff;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(77, 156, 255, 0.14);
+  --accent-green: #3dd68c;
+  --accent-amber: #f5a623;
+  --accent-red: #f06565;
+  --accent-purple: #8b7cf8;
+
+  --button-outline: rgba(255, 255, 255, 0.1);
+  --badge-outline: rgba(255, 255, 255, 0.05);
+  --opaque-button-border-intensity: 9;
+  --elevate-1: rgba(255, 255, 255, 0.04);
+  --elevate-2: rgba(255, 255, 255, 0.09);
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    font-size: var(--fs-base);
+    line-height: 1.5;
   }
 }
 
@@ -256,34 +339,22 @@
   }
 }
 
-body {
-  background: var(--bg-app);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-}
-
-::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); background-clip: padding-box; }
 
-@keyframes dc-spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes dc-spin { to { transform: rotate(360deg); } }
 @keyframes dc-pulse {
   0%, 100% { background: var(--bg-raised); }
-  50% { background: var(--border); }
+  50% { background: var(--hairline); }
 }
 @keyframes dc-slide-in-right {
   from { transform: translateX(120%); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }
 }
-@keyframes dc-draw-circle {
-  to { stroke-dashoffset: 0; }
-}
-@keyframes dc-draw-check {
-  to { stroke-dashoffset: 0; }
-}
+@keyframes dc-draw-circle { to { stroke-dashoffset: 0; } }
+@keyframes dc-draw-check { to { stroke-dashoffset: 0; } }
 @keyframes dc-bounce-dot {
   0%, 100% { transform: scale(1); }
   50%      { transform: scale(1.4); }
