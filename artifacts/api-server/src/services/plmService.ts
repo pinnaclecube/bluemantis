@@ -1,7 +1,7 @@
-import type { DevCopilotTask } from "../../../../shared/types/task";
-import { AzureDevOpsAdapter } from "../adapters/azureDevOpsAdapter";
-import { JiraAdapter } from "../adapters/jiraAdapter";
-import { logger } from "../lib/logger";
+import type { DevCopilotTask } from "../../../../shared/types/task.js";
+import { AzureDevOpsAdapter } from "../adapters/azureDevOpsAdapter.js";
+import { JiraAdapter } from "../adapters/jiraAdapter.js";
+import { logger } from "../lib/logger.js";
 
 interface PLMCredentials {
   azureOrg?: string;

@@ -1,10 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
-import { buildPrompt } from "../stack/prompts";
-import { logger } from "../lib/logger";
-import type { DevCopilotTask } from "../../../../shared/types/task";
-import type { CodeSuggestion } from "../../../../shared/types/codeSuggestion";
-import type { StackProfile } from "../stack/detector";
+import { buildPrompt } from "../stack/prompts.js";
+import { logger } from "../lib/logger.js";
+import type { DevCopilotTask } from "../../../../shared/types/task.js";
+import type { CodeSuggestion } from "../../../../shared/types/codeSuggestion.js";
+import type { StackProfile } from "../stack/detector.js";
 
 // ---------------------------------------------------------------------------
 // Language detection

@@ -2,12 +2,12 @@ import { Router, type IRouter } from "express";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { db, tasksTable, repositoriesTable } from "@workspace/db";
-import { GitService } from "../services/gitService";
-import { AIOrchestrator, SynthesisEngine } from "../services/aiService";
-import { PLMService } from "../services/plmService";
-import { getConfigs } from "../services/configService";
-import type { StackProfile } from "../stack/detector";
-import type { DevCopilotTask } from "../../../../shared/types/task";
+import { GitService } from "../services/gitService.js";
+import { AIOrchestrator, SynthesisEngine } from "../services/aiService.js";
+import { PLMService } from "../services/plmService.js";
+import { getConfigs } from "../services/configService.js";
+import type { StackProfile } from "../stack/detector.js";
+import type { DevCopilotTask } from "../../../../shared/types/task.js";
 
 const router: IRouter = Router();
 

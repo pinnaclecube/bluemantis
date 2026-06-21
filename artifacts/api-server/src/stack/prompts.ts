@@ -1,4 +1,4 @@
-import type { StackProfile } from "./detector";
+import type { StackProfile } from "./detector.js";
 
 type Task = {
   title: string;

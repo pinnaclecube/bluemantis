@@ -2,8 +2,8 @@ import { Octokit } from "@octokit/rest";
 import { eq } from "drizzle-orm";
 import { db, repositoriesTable } from "@workspace/db";
 import type { Repository } from "@workspace/db";
-import { detectStack, type StackProfile } from "../stack/detector";
-import { logger } from "../lib/logger";
+import { detectStack, type StackProfile } from "../stack/detector.js";
+import { logger } from "../lib/logger.js";
 
 // ---------------------------------------------------------------------------
 // Stack → file extension mapping

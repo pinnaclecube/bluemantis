@@ -1,11 +1,11 @@
 import { Router, type IRouter } from "express";
-import healthRouter from "./health";
-import repositoriesRouter from "./repositories";
-import tasksRouter from "./tasks";
-import taskActionsRouter from "./taskActions";
-import statsRouter from "./stats";
-import configRouter from "./config";
-import { requireAuth } from "../middlewares/requireAuth";
+import healthRouter from "./health.js";
+import repositoriesRouter from "./repositories.js";
+import tasksRouter from "./tasks.js";
+import taskActionsRouter from "./taskActions.js";
+import statsRouter from "./stats.js";
+import configRouter from "./config.js";
+import { requireAuth } from "../middlewares/requireAuth.js";
 
 const router: IRouter = Router();
 

@@ -1,5 +1,5 @@
-import type { DevCopilotTask, PLMAdapter } from "../../../../shared/types/task";
-import { logger } from "../lib/logger";
+import type { DevCopilotTask, PLMAdapter } from "../../../../shared/types/task.js";
+import { logger } from "../lib/logger.js";
 
 type WorkItemFields = {
   "System.Id": number;

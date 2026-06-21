@@ -13,10 +13,10 @@ import {
   GetRepositoryResponse,
   UpdateRepositoryResponse,
 } from "@workspace/api-zod";
-import { detectStack } from "../stack/detector";
-import { fetchFilePaths } from "../adapters/gitService";
-import { GitService } from "../services/gitService";
-import { getConfigs } from "../services/configService";
+import { detectStack } from "../stack/detector.js";
+import { fetchFilePaths } from "../adapters/gitService.js";
+import { GitService } from "../services/gitService.js";
+import { getConfigs } from "../services/configService.js";
 
 const router: IRouter = Router();
 

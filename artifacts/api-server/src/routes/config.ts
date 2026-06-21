@@ -8,8 +8,8 @@ import {
   getConfig,
   CONFIG_KEYS,
   type ConfigKey,
-} from "../services/configService";
-import { logger } from "../lib/logger";
+} from "../services/configService.js";
+import { logger } from "../lib/logger.js";
 
 const router: IRouter = Router();
 

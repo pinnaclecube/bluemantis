@@ -12,9 +12,9 @@ import {
   GetTaskResponse,
   UpdateTaskResponse,
 } from "@workspace/api-zod";
-import { PLMService } from "../services/plmService";
-import { getConfigs } from "../services/configService";
-import type { DevCopilotTask } from "../../../../shared/types/task";
+import { PLMService } from "../services/plmService.js";
+import { getConfigs } from "../services/configService.js";
+import type { DevCopilotTask } from "../../../../shared/types/task.js";
 
 const router: IRouter = Router();
 

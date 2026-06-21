@@ -2,7 +2,17 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "types": ["node"]
+    "types": ["node"],
+    // The api-server is an ESM Node package ("type": "module") and is compiled
+    // by @vercel/node under node16/nodenext resolution. Match that here so the
+    // local `tsc` typecheck exercises the same module resolution as the Vercel
+    // build (instead of the repo-wide "bundler" default) — otherwise code that
+    // passes locally can fail in the serverless build. nodenext requires
+    // explicit .js extensions on relative imports; esModuleInterop is needed so
+    // default-importing CommonJS deps (express, pino-http, cors) keeps its types.
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "esModuleInterop": true
   },
   "include": ["src", "../../shared"],
   "references": [

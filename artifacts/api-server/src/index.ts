@@ -1,9 +1,9 @@
-import { validateEnv } from "./lib/env";
+import { validateEnv } from "./lib/env.js";
 
 validateEnv();
 
-import app from "./app";
-import { logger } from "./lib/logger";
+import app from "./app.js";
+import { logger } from "./lib/logger.js";
 
 const port = Number(process.env["PORT"]);
 
