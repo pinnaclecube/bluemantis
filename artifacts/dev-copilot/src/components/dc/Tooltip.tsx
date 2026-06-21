@@ -29,7 +29,7 @@ export function Tooltip({ content, children }: TooltipProps) {
           left: '50%',
           transform: 'translateX(-50%)',
           background: 'var(--bg-raised)',
-          border: '1px solid var(--border)',
+          border: '1px solid var(--hairline)',
           color: 'var(--text-primary)',
           fontSize: 12,
           padding: '4px 8px',

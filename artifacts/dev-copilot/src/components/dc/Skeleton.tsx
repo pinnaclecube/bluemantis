@@ -10,7 +10,7 @@ export function Skeleton({ width = '100%', height = 16, borderRadius = 'var(--ra
       <style>{`
         @keyframes _dc_pulse {
           0%,100% { background: var(--bg-raised); }
-          50% { background: var(--border); }
+          50% { background: var(--hairline); }
         }
       `}</style>
       <div style={{

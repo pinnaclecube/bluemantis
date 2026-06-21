@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { useConfig, type ConfigMap } from "@/context/ConfigContext";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Eye, EyeOff, Check, X, ExternalLink, ChevronDown, Loader2 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -60,18 +63,10 @@ const INTEGRATIONS: Integration[] = [
     icon: <GeminiIcon />,
     testKey: "gemini",
     fields: [
-      {
-        key: "GOOGLE_GEMINI_API_KEY",
-        label: "API Key",
-        placeholder: "AIza…",
-        hint: "Starts with AIza — from Google AI Studio",
-      },
+      { key: "GOOGLE_GEMINI_API_KEY", label: "API Key", placeholder: "AIza…", hint: "Starts with AIza — from Google AI Studio" },
     ],
     steps: [
-      {
-        label: "Go to Google AI Studio and sign in",
-        link: { text: "Open AI Studio", url: "https://aistudio.google.com/app/apikey" },
-      },
+      { label: "Go to Google AI Studio and sign in", link: { text: "Open AI Studio", url: "https://aistudio.google.com/app/apikey" } },
       { label: "Click Get API key → Create API key in new project (or an existing project)" },
       { label: "Copy the key and paste it below — it starts with AIza" },
     ],
@@ -83,24 +78,12 @@ const INTEGRATIONS: Integration[] = [
     icon: <CopilotIcon />,
     testKey: "copilot",
     fields: [
-      {
-        key: "GITHUB_COPILOT_TOKEN",
-        label: "Copilot Token",
-        placeholder: "ghu_… or ghp_…",
-        hint: "GitHub does not yet offer a public Copilot generation API",
-      },
+      { key: "GITHUB_COPILOT_TOKEN", label: "Copilot Token", placeholder: "ghu_… or ghp_…", hint: "GitHub does not yet offer a public Copilot generation API" },
     ],
     steps: [
-      {
-        label: "GitHub Copilot's code-generation API is not publicly available — only IDE plugins can use it",
-      },
-      {
-        label: "Save your token here now so the app is ready when GitHub opens up access",
-        link: { text: "Check Copilot docs", url: "https://docs.github.com/en/copilot" },
-      },
-      {
-        label: "When a public API ships, no Settings change will be needed — just re-save the token",
-      },
+      { label: "GitHub Copilot's code-generation API is not publicly available — only IDE plugins can use it" },
+      { label: "Save your token here now so the app is ready when GitHub opens up access", link: { text: "Check Copilot docs", url: "https://docs.github.com/en/copilot" } },
+      { label: "When a public API ships, no Settings change will be needed — just re-save the token" },
     ],
   },
   {
@@ -125,31 +108,14 @@ const INTEGRATIONS: Integration[] = [
     icon: <AzureReposIcon />,
     testKey: "azurerepos",
     fields: [
-      {
-        key: "AZURE_REPOS_ORG",
-        label: "Organisation",
-        placeholder: "mycompany",
-        hint: "The part after dev.azure.com/ in your browser URL",
-      },
-      {
-        key: "AZURE_REPOS_TOKEN",
-        label: "Personal Access Token",
-        placeholder: "Paste your PAT here",
-        hint: "Needs Code → Read & Write scope",
-      },
+      { key: "AZURE_REPOS_ORG", label: "Organisation", placeholder: "mycompany", hint: "The part after dev.azure.com/ in your browser URL" },
+      { key: "AZURE_REPOS_TOKEN", label: "Personal Access Token", placeholder: "Paste your PAT here", hint: "Needs Code → Read & Write scope" },
     ],
     steps: [
       { label: "Open dev.azure.com and note your organisation name from the URL (dev.azure.com/{org})" },
-      {
-        label: "Click your avatar → Personal Access Tokens",
-        link: { text: "Open ADO", url: "https://dev.azure.com" },
-      },
-      {
-        label: "Click New Token — set scope to Code → Read & Write only (do NOT use Full access)",
-      },
-      {
-        label: "Enter your organisation name above, paste the token, then click Test connection.",
-      },
+      { label: "Click your avatar → Personal Access Tokens", link: { text: "Open ADO", url: "https://dev.azure.com" } },
+      { label: "Click New Token — set scope to Code → Read & Write only (do NOT use Full access)" },
+      { label: "Enter your organisation name above, paste the token, then click Test connection." },
     ],
   },
   {
@@ -193,148 +159,86 @@ const INTEGRATIONS: Integration[] = [
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
 function AnthropicIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="6" fill="#D4845A" />
-      <text x="12" y="16" textAnchor="middle" fill="white" fontSize="11" fontWeight="700">A</text>
-    </svg>
-  );
+  return (<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#D4845A" /><text x="12" y="16" textAnchor="middle" fill="white" fontSize="11" fontWeight="700">A</text></svg>);
 }
 function OpenAIIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="6" fill="#10A37F" />
-      <text x="12" y="16" textAnchor="middle" fill="white" fontSize="9" fontWeight="700">GPT</text>
-    </svg>
-  );
+  return (<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#10A37F" /><text x="12" y="16" textAnchor="middle" fill="white" fontSize="9" fontWeight="700">GPT</text></svg>);
 }
 function GitHubIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-      <rect width="24" height="24" rx="6" fill="#24292E" />
-      <path d="M12 3.5C7.3 3.5 3.5 7.3 3.5 12c0 3.75 2.44 6.94 5.82 8.07.43.08.59-.18.59-.41V18.3c-2.37.51-2.87-1.14-2.87-1.14-.39-1-.95-1.26-.95-1.26-.77-.53.06-.52.06-.52.85.06 1.3.88 1.3.88.76 1.3 1.99.92 2.47.7.08-.55.3-.92.54-1.13-1.89-.21-3.88-.95-3.88-4.21 0-.93.33-1.69.88-2.29-.09-.21-.38-1.08.08-2.25 0 0 .72-.23 2.35.88a8.2 8.2 0 0 1 2.15-.29c.73 0 1.46.1 2.15.29 1.63-1.11 2.35-.88 2.35-.88.46 1.17.17 2.04.08 2.25.55.6.87 1.36.87 2.29 0 3.27-1.99 3.99-3.89 4.2.31.27.58.8.58 1.61v2.38c0 .23.15.5.59.41A8.51 8.51 0 0 0 20.5 12C20.5 7.3 16.7 3.5 12 3.5Z" fill="white" />
-    </svg>
-  );
+  return (<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#24292E" /><path d="M12 3.5C7.3 3.5 3.5 7.3 3.5 12c0 3.75 2.44 6.94 5.82 8.07.43.08.59-.18.59-.41V18.3c-2.37.51-2.87-1.14-2.87-1.14-.39-1-.95-1.26-.95-1.26-.77-.53.06-.52.06-.52.85.06 1.3.88 1.3.88.76 1.3 1.99.92 2.47.7.08-.55.3-.92.54-1.13-1.89-.21-3.88-.95-3.88-4.21 0-.93.33-1.69.88-2.29-.09-.21-.38-1.08.08-2.25 0 0 .72-.23 2.35.88a8.2 8.2 0 0 1 2.15-.29c.73 0 1.46.1 2.15.29 1.63-1.11 2.35-.88 2.35-.88.46 1.17.17 2.04.08 2.25.55.6.87 1.36.87 2.29 0 3.27-1.99 3.99-3.89 4.2.31.27.58.8.58 1.61v2.38c0 .23.15.5.59.41A8.51 8.51 0 0 0 20.5 12C20.5 7.3 16.7 3.5 12 3.5Z" fill="white" /></svg>);
 }
 function JiraIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="6" fill="#0052CC" />
-      <text x="12" y="16" textAnchor="middle" fill="white" fontSize="10" fontWeight="700">J</text>
-    </svg>
-  );
+  return (<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#0052CC" /><text x="12" y="16" textAnchor="middle" fill="white" fontSize="10" fontWeight="700">J</text></svg>);
 }
 function AzureIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="6" fill="#0078D4" />
-      <text x="12" y="16" textAnchor="middle" fill="white" fontSize="9" fontWeight="700">ADO</text>
-    </svg>
-  );
+  return (<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#0078D4" /><text x="12" y="16" textAnchor="middle" fill="white" fontSize="9" fontWeight="700">ADO</text></svg>);
 }
 function AzureReposIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="6" fill="#0078D4" />
-      <path d="M17 7H13L7 12L13 17H17L11 12L17 7Z" fill="white" />
-      <rect x="7" y="11" width="2" height="2" rx="1" fill="white" />
-    </svg>
-  );
+  return (<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#0078D4" /><path d="M17 7H13L7 12L13 17H17L11 12L17 7Z" fill="white" /><rect x="7" y="11" width="2" height="2" rx="1" fill="white" /></svg>);
 }
 function GeminiIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="6" fill="#1A73E8" />
-      <path d="M12 4L13.8 10.2H20.4L15 13.8L16.8 20L12 16.4L7.2 20L9 13.8L3.6 10.2H10.2L12 4Z" fill="white" />
-    </svg>
-  );
+  return (<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#1A73E8" /><path d="M12 4L13.8 10.2H20.4L15 13.8L16.8 20L12 16.4L7.2 20L9 13.8L3.6 10.2H10.2L12 4Z" fill="white" /></svg>);
 }
 function CopilotIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect width="24" height="24" rx="6" fill="#6E40C9" />
-      <circle cx="9" cy="10" r="2" fill="white" />
-      <circle cx="15" cy="10" r="2" fill="white" />
-      <path d="M8 15c0 0 1.5 2 4 2s4-2 4-2" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-    </svg>
-  );
+  return (<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#6E40C9" /><circle cx="9" cy="10" r="2" fill="white" /><circle cx="15" cy="10" r="2" fill="white" /><path d="M8 15c0 0 1.5 2 4 2s4-2 4-2" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" /></svg>);
+}
+
+// ─── Tone helpers (success/error using brand tokens) ────────────────────────────
+
+const GREEN = "var(--accent-green)";
+const RED = "var(--accent-red)";
+function tone(color: string): React.CSSProperties {
+  return {
+    color,
+    background: `color-mix(in srgb, ${color} 12%, transparent)`,
+    borderColor: `color-mix(in srgb, ${color} 30%, transparent)`,
+  };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatusPill({ set }: { set: boolean }) {
   return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: "5px",
-      padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 600,
-      background: set ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.06)",
-      color: set ? "#22c55e" : "var(--dc-text-muted)",
-      border: `1px solid ${set ? "rgba(34,197,94,0.3)" : "var(--dc-border)"}`,
-    }}>
-      <span style={{
-        width: 6, height: 6, borderRadius: "50%",
-        background: set ? "#22c55e" : "var(--dc-text-muted)",
-        flexShrink: 0,
-      }} />
-      {set ? "Configured" : "Not set"}
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium"
+      style={set ? tone(GREEN) : undefined}
+    >
+      <span className="h-1.5 w-1.5 rounded-full" style={{ background: set ? GREEN : "var(--text-muted)" }} />
+      <span className={set ? "" : "text-muted-foreground"}>{set ? "Configured" : "Not set"}</span>
     </span>
   );
 }
 
 function SecretInput({
-  value, onChange, placeholder, disabled,
-}: {
-  value: string; onChange: (v: string) => void; placeholder: string; disabled?: boolean;
-}) {
+  value, onChange, placeholder,
+}: { value: string; onChange: (v: string) => void; placeholder: string }) {
   const [show, setShow] = useState(false);
   return (
-    <div style={{ position: "relative" }}>
-      <input
+    <div className="relative">
+      <Input
         type={show ? "text" : "password"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        disabled={disabled}
         autoComplete="off"
         spellCheck={false}
-        style={{
-          width: "100%", boxSizing: "border-box",
-          padding: "9px 40px 9px 12px",
-          background: "var(--dc-bg)", border: "1px solid var(--dc-border)",
-          borderRadius: "var(--dc-radius-sm)", color: "var(--dc-text-primary)",
-          fontSize: "13px", fontFamily: "var(--dc-font-mono)",
-          outline: "none", transition: "border-color 0.15s",
-        }}
-        onFocus={(e) => (e.target.style.borderColor = "var(--dc-accent)")}
-        onBlur={(e) => (e.target.style.borderColor = "var(--dc-border)")}
+        className="h-9 pr-9 font-mono text-sm"
       />
       <button
         type="button"
         onClick={() => setShow((s) => !s)}
-        style={{
-          position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-          background: "none", border: "none", cursor: "pointer",
-          color: "var(--dc-text-muted)", padding: 0, lineHeight: 1,
-        }}
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
         title={show ? "Hide" : "Show"}
       >
-        {show ? "🙈" : "👁"}
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </button>
     </div>
   );
 }
 
-// ─── Integration Card ─────────────────────────────────────────────────────────
-
 function IntegrationCard({
-  integration,
-  configMap,
-  onSaved,
-}: {
-  integration: Integration;
-  configMap: ConfigMap;
-  onSaved: () => void;
-}) {
+  integration, configMap, onSaved,
+}: { integration: Integration; configMap: ConfigMap; onSaved: () => void }) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -417,66 +321,35 @@ function IntegrationCard({
   const hasNewValues = integration.fields.some((f) => (values[f.key] ?? "").trim().length > 0);
 
   return (
-    <div style={{
-      border: `1px solid ${open ? "var(--dc-accent)" : "var(--dc-border)"}`,
-      borderRadius: "var(--dc-radius-md)",
-      background: "var(--dc-surface)",
-      overflow: "hidden",
-      transition: "border-color 0.2s",
-    }}>
-      {/* Header */}
+    <div className={`overflow-hidden rounded-md border bg-card transition-colors ${open ? "border-primary/60" : ""}`}>
       <button
         onClick={() => setOpen((o) => !o)}
-        style={{
-          width: "100%", display: "flex", alignItems: "center", gap: 14,
-          padding: "16px 20px", background: "none", border: "none",
-          cursor: "pointer", textAlign: "left",
-        }}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left"
       >
-        <span style={{ flexShrink: 0 }}>{integration.icon}</span>
-        <span style={{ flex: 1 }}>
-          <span style={{ display: "block", fontSize: "14px", fontWeight: 600, color: "var(--dc-text-primary)" }}>
-            {integration.title}
-          </span>
-          <span style={{ display: "block", fontSize: "12px", color: "var(--dc-text-muted)", marginTop: 2 }}>
-            {integration.subtitle}
-          </span>
+        <span className="shrink-0">{integration.icon}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium text-foreground">{integration.title}</span>
+          <span className="block truncate text-xs text-muted-foreground">{integration.subtitle}</span>
         </span>
         <StatusPill set={isConfigured} />
-        <ChevronIcon open={open} />
+        <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {/* Body */}
       {open && (
-        <div style={{ padding: "0 20px 20px", borderTop: "1px solid var(--dc-border)" }}>
+        <div className="border-t px-4 pb-4">
           {/* Steps */}
-          <div style={{ margin: "16px 0 20px" }}>
-            <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--dc-text-muted)", marginBottom: 10 }}>
-              How to obtain credentials
-            </p>
-            <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="my-4">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">How to obtain credentials</p>
+            <ol className="flex list-none flex-col gap-2 p-0">
               {integration.steps.map((step, i) => (
-                <li key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  <span style={{
-                    flexShrink: 0, width: 20, height: 20, borderRadius: "50%",
-                    background: "var(--dc-bg)", border: "1px solid var(--dc-border)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "10px", fontWeight: 700, color: "var(--dc-text-muted)",
-                  }}>
-                    {i + 1}
-                  </span>
-                  <span style={{ fontSize: "13px", color: "var(--dc-text-secondary)", lineHeight: 1.5, paddingTop: 1 }}>
+                <li key={i} className="flex items-start gap-2.5">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border bg-muted text-[10px] font-bold text-muted-foreground">{i + 1}</span>
+                  <span className="pt-0.5 text-[13px] leading-relaxed text-muted-foreground">
                     {step.label}
                     {step.link && (
-                      <>
-                        {" "}
-                        <a
-                          href={step.link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: "var(--dc-accent)", textDecoration: "none" }}
-                        >
-                          {step.link.text} ↗
+                      <>{" "}
+                        <a href={step.link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-primary hover:underline">
+                          {step.link.text} <ExternalLink className="h-3 w-3" />
                         </a>
                       </>
                     )}
@@ -487,120 +360,53 @@ function IntegrationCard({
           </div>
 
           {/* Fields */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="flex flex-col gap-3">
             {integration.fields.map((field) => (
               <div key={field.key}>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--dc-text-secondary)", marginBottom: 5 }}>
+                <label className="mb-1.5 block text-xs font-medium text-foreground">
                   {field.label}
-                  {field.hint && (
-                    <span style={{ fontWeight: 400, color: "var(--dc-text-muted)", marginLeft: 6 }}>— {field.hint}</span>
-                  )}
+                  {field.hint && <span className="ml-1.5 font-normal text-muted-foreground">— {field.hint}</span>}
                 </label>
                 {configMap[field.key]?.set && !(field.key in values) ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{
-                      flex: 1, padding: "9px 12px",
-                      background: "var(--dc-bg)", border: "1px solid var(--dc-border)",
-                      borderRadius: "var(--dc-radius-sm)", fontSize: "13px",
-                      fontFamily: "var(--dc-font-mono)", color: "var(--dc-text-muted)",
-                    }}>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 truncate rounded-md border bg-muted px-3 py-2 font-mono text-sm text-muted-foreground">
                       {configMap[field.key].masked}
                     </div>
-                    <button
-                      onClick={() => setField(field.key, "")}
-                      style={{
-                        padding: "8px 14px", fontSize: "12px", fontWeight: 600,
-                        background: "none", border: "1px solid var(--dc-border)",
-                        borderRadius: "var(--dc-radius-sm)", color: "var(--dc-text-muted)",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Replace
-                    </button>
-                    <button
-                      onClick={() => handleRemove(field.key)}
-                      disabled={removing === field.key}
-                      style={{
-                        padding: "8px 14px", fontSize: "12px", fontWeight: 600,
-                        background: "none", border: "1px solid rgba(239,68,68,0.4)",
-                        borderRadius: "var(--dc-radius-sm)", color: "#ef4444",
-                        cursor: removing === field.key ? "not-allowed" : "pointer",
-                        opacity: removing === field.key ? 0.6 : 1,
-                      }}
+                    <Button variant="outline" size="sm" className="h-9" onClick={() => setField(field.key, "")}>Replace</Button>
+                    <Button
+                      variant="outline" size="sm" className="h-9 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => handleRemove(field.key)} disabled={removing === field.key}
                     >
                       {removing === field.key ? "Removing…" : "Remove"}
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <SecretInput
-                    value={values[field.key] ?? ""}
-                    onChange={(v) => setField(field.key, v)}
-                    placeholder={field.placeholder}
-                  />
+                  <SecretInput value={values[field.key] ?? ""} onChange={(v) => setField(field.key, v)} placeholder={field.placeholder} />
                 )}
               </div>
             ))}
           </div>
 
-          {/* Remove error */}
           {removeError && (
-            <div style={{
-              marginTop: 14, padding: "10px 14px", borderRadius: "var(--dc-radius-sm)",
-              background: "rgba(239,68,68,0.08)",
-              border: "1px solid rgba(239,68,68,0.25)",
-              fontSize: "13px", color: "#ef4444",
-              display: "flex", alignItems: "center", gap: 8,
-            }}>
-              <span>✗</span>
-              {removeError}
+            <div className="mt-3.5 flex items-center gap-2 rounded-md border px-3.5 py-2.5 text-[13px]" style={tone(RED)}>
+              <X className="h-4 w-4" /> {removeError}
             </div>
           )}
-
-          {/* Test result */}
           {testResult && (
-            <div style={{
-              marginTop: 14, padding: "10px 14px", borderRadius: "var(--dc-radius-sm)",
-              background: testResult.ok ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)",
-              border: `1px solid ${testResult.ok ? "rgba(34,197,94,0.25)" : "rgba(239,68,68,0.25)"}`,
-              fontSize: "13px",
-              color: testResult.ok ? "#22c55e" : "#ef4444",
-              display: "flex", alignItems: "center", gap: 8,
-            }}>
-              <span>{testResult.ok ? "✓" : "✗"}</span>
-              {testResult.message}
+            <div className="mt-3.5 flex items-center gap-2 rounded-md border px-3.5 py-2.5 text-[13px]" style={tone(testResult.ok ? GREEN : RED)}>
+              {testResult.ok ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />} {testResult.message}
             </div>
           )}
 
-          {/* Actions */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16 }}>
-            <button
-              onClick={handleTest}
-              disabled={testing}
-              style={{
-                padding: "8px 18px", fontSize: "13px", fontWeight: 600,
-                background: "none", border: "1px solid var(--dc-border)",
-                borderRadius: "var(--dc-radius-sm)", color: "var(--dc-text-secondary)",
-                cursor: testing ? "not-allowed" : "pointer",
-                opacity: testing ? 0.6 : 1,
-              }}
-            >
+          <div className="mt-4 flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-9" onClick={handleTest} disabled={testing}>
+              {testing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {testing ? "Testing…" : "Test connection"}
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving || !hasNewValues}
-              style={{
-                padding: "8px 22px", fontSize: "13px", fontWeight: 600,
-                background: hasNewValues ? "var(--dc-accent)" : "var(--dc-surface-raised)",
-                border: "none", borderRadius: "var(--dc-radius-sm)",
-                color: hasNewValues ? "#fff" : "var(--dc-text-muted)",
-                cursor: saving || !hasNewValues ? "not-allowed" : "pointer",
-                opacity: saving ? 0.7 : 1,
-                transition: "background 0.15s",
-              }}
-            >
+            </Button>
+            <Button size="sm" className="h-9" onClick={handleSave} disabled={saving || !hasNewValues}>
+              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {saving ? "Saving…" : saveMsg ?? "Save"}
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -608,37 +414,17 @@ function IntegrationCard({
   );
 }
 
-function ChevronIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      width="14" height="14" viewBox="0 0 14 14" fill="none"
-      style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}
-    >
-      <path d="M3 5l4 4 4-4" stroke="var(--dc-text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-// ─── Progress bar ─────────────────────────────────────────────────────────────
-
 function ProgressBar({ configured, total }: { configured: number; total: number }) {
   const pct = total === 0 ? 0 : Math.round((configured / total) * 100);
+  const done = pct === 100;
   return (
-    <div style={{ marginBottom: 32 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-        <span style={{ fontSize: "13px", color: "var(--dc-text-secondary)" }}>
-          {configured} of {total} integrations configured
-        </span>
-        <span style={{ fontSize: "13px", fontWeight: 600, color: pct === 100 ? "#22c55e" : "var(--dc-text-muted)" }}>
-          {pct}%
-        </span>
+    <div className="mb-6">
+      <div className="mb-2 flex justify-between text-xs">
+        <span className="text-muted-foreground">{configured} of {total} integrations configured</span>
+        <span className="font-medium" style={{ color: done ? GREEN : "var(--text-muted)" }}>{pct}%</span>
       </div>
-      <div style={{ height: 4, background: "var(--dc-border)", borderRadius: 4, overflow: "hidden" }}>
-        <div style={{
-          height: "100%", width: `${pct}%`,
-          background: pct === 100 ? "#22c55e" : "var(--dc-accent)",
-          borderRadius: 4, transition: "width 0.4s ease",
-        }} />
+      <div className="h-1 overflow-hidden rounded bg-muted">
+        <div className="h-full rounded transition-[width] duration-500" style={{ width: `${pct}%`, background: done ? GREEN : "var(--accent-blue)" }} />
       </div>
     </div>
   );
@@ -649,42 +435,29 @@ function ProgressBar({ configured, total }: { configured: number; total: number 
 export default function SettingsPage() {
   const { configMap, loading, error, refreshConfig } = useConfig();
 
-  const configuredCount = INTEGRATIONS.filter((integ) =>
-    integ.fields.every((f) => configMap[f.key]?.set)
-  ).length;
+  const configuredCount = INTEGRATIONS.filter((integ) => integ.fields.every((f) => configMap[f.key]?.set)).length;
 
   return (
-    <div style={{ padding: "40px 48px", maxWidth: 680 }}>
-      <h1 style={{
-        fontSize: "22px", fontWeight: 600, color: "var(--dc-text-primary)", marginBottom: 4,
-      }}>
-        Settings
-      </h1>
-      <p style={{ fontSize: "13px", color: "var(--dc-text-muted)", marginBottom: 32 }}>
+    <div className="mx-auto max-w-2xl px-6 py-6">
+      <h1 className="text-lg font-semibold tracking-tight text-foreground">Settings</h1>
+      <p className="mb-6 mt-0.5 text-xs text-muted-foreground">
         Connect your tools. Credentials are stored securely in the database and loaded automatically on startup.
       </p>
 
       {loading ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className="flex flex-col gap-2.5">
           {[1, 2, 3].map((i) => (
-            <div key={i} style={{ height: 64, borderRadius: "var(--dc-radius-md)", background: "var(--dc-surface)", border: "1px solid var(--dc-border)", animation: "dc-pulse 1.5s ease-in-out infinite" }} />
+            <div key={i} className="h-14 rounded-md border bg-card" style={{ animation: "dc-pulse 1.5s ease-in-out infinite" }} />
           ))}
         </div>
       ) : error ? (
-        <div style={{ padding: "16px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "var(--dc-radius-md)", color: "#ef4444", fontSize: "13px" }}>
-          {error}
-        </div>
+        <div className="rounded-md border px-4 py-3 text-[13px]" style={tone(RED)}>{error}</div>
       ) : (
         <>
           <ProgressBar configured={configuredCount} total={INTEGRATIONS.length} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="flex flex-col gap-2.5">
             {INTEGRATIONS.map((integ) => (
-              <IntegrationCard
-                key={integ.id}
-                integration={integ}
-                configMap={configMap}
-                onSaved={refreshConfig}
-              />
+              <IntegrationCard key={integ.id} integration={integ} configMap={configMap} onSaved={refreshConfig} />
             ))}
           </div>
         </>

@@ -24,7 +24,7 @@ type BtnState = 'default' | 'success';
 
 const VARIANT_STYLES: Record<ButtonVariant, React.CSSProperties> = {
   primary: { background: 'var(--accent-blue)', color: '#0D0F12', border: 'none' },
-  outline: { background: 'transparent', border: '1px solid var(--border-bright)', color: 'var(--text-primary)' },
+  outline: { background: 'transparent', border: '1px solid var(--hairline-strong)', color: 'var(--text-primary)' },
   ghost:   { background: 'transparent', border: 'none', color: 'var(--text-secondary)' },
   danger:  { background: 'rgba(240,101,101,0.15)', color: 'var(--accent-red)', border: '1px solid var(--accent-red)' },
 };

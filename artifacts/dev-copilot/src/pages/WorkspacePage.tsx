@@ -54,7 +54,7 @@ const SECTION_LABEL: React.CSSProperties = {
 };
 
 const DIVIDER: React.CSSProperties = {
-  height: 1, background: 'var(--border)', margin: '16px 0', border: 'none',
+  height: 1, background: 'var(--hairline)', margin: '16px 0', border: 'none',
 };
 
 function SparkIcon() {
@@ -267,7 +267,7 @@ export default function WorkspacePage() {
     <div style={{
       width: 280, flexShrink: 0,
       background: 'var(--bg-surface)',
-      borderRight: '1px solid var(--border)',
+      borderRight: '1px solid var(--hairline)',
       overflowY: 'auto',
       padding: 20,
     }}>
@@ -328,7 +328,7 @@ export default function WorkspacePage() {
                     <path d="M4 8l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 ) : (
-                  <span style={{ width: 16, height: 16, borderRadius: '50%', border: '1.5px solid var(--border-bright)', flexShrink: 0, marginTop: 2, display: 'inline-block' }} />
+                  <span style={{ width: 16, height: 16, borderRadius: '50%', border: '1.5px solid var(--hairline-strong)', flexShrink: 0, marginTop: 2, display: 'inline-block' }} />
                 )}
                 <span style={{
                   fontSize: 13, color: criteria[i] ? 'var(--accent-green)' : 'var(--text-secondary)',
@@ -351,12 +351,12 @@ export default function WorkspacePage() {
         onChange={(e) => setRefinementPrompt(e.target.value)}
         placeholder="Ask the agents to adjust the approach…"
         style={{
-          width: '100%', background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
+          width: '100%', background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)',
           color: 'var(--text-primary)', fontSize: 13, fontFamily: 'var(--font-sans)', padding: 10, resize: 'vertical',
           outline: 'none', boxSizing: 'border-box',
         }}
         onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent-blue)'; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--hairline)'; }}
       />
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
         {['Add error handling', 'Add unit tests', 'Optimise performance', 'Add TypeScript types'].map((chip) => (
@@ -364,12 +364,12 @@ export default function WorkspacePage() {
             key={chip}
             onClick={() => setRefinementPrompt((p) => p ? `${p} ${chip}` : chip)}
             style={{
-              padding: '4px 10px', border: '1px solid var(--border)', borderRadius: 20,
+              padding: '4px 10px', border: '1px solid var(--hairline)', borderRadius: 20,
               fontSize: 12, color: 'var(--text-muted)', background: 'none', cursor: 'pointer',
               fontFamily: 'var(--font-sans)', transition: 'border-color 150ms, color 150ms',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent-blue)'; e.currentTarget.style.color = 'var(--accent-blue)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--hairline)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
           >{chip}</button>
         ))}
       </div>
@@ -393,7 +393,7 @@ export default function WorkspacePage() {
       {/* Agent tabs (top 60%) */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '60%', minHeight: 0 }}>
         {/* Tab bar */}
-        <div style={{ display: 'flex', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', padding: '0 16px', overflowX: 'auto', flexShrink: 0 }}>
+        <div style={{ display: 'flex', background: 'var(--bg-surface)', borderBottom: '1px solid var(--hairline)', padding: '0 16px', overflowX: 'auto', flexShrink: 0 }}>
           {(isGenerating ? ['claude', 'openai', 'antigravity', 'copilot'] : sortedSuggestions.map((s) => s.agent)).map((agentKey, idx) => {
             const meta = AGENT_META[agentKey];
             const suggestion = sortedSuggestions.find((s) => s.agent === agentKey);
@@ -443,12 +443,12 @@ export default function WorkspacePage() {
           ) : activeSuggestion ? (
             <>
               {/* Explanation banner */}
-              <p style={{ fontStyle: 'italic', fontSize: 13, color: 'var(--text-secondary)', background: 'var(--bg-raised)', padding: '10px 16px', borderBottom: '1px solid var(--border)', margin: 0 }}>
+              <p style={{ fontStyle: 'italic', fontSize: 13, color: 'var(--text-secondary)', background: 'var(--bg-raised)', padding: '10px 16px', borderBottom: '1px solid var(--hairline)', margin: 0 }}>
                 {activeSuggestion.explanation}
               </p>
 
               {/* File path bar */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', borderBottom: '1px solid var(--hairline)' }}>
                 <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>{activeSuggestion.filePath}</span>
                 <button
                   onClick={() => void copyToClipboard(activeSuggestion.filePath, 'path')}
@@ -463,7 +463,7 @@ export default function WorkspacePage() {
               <div style={{ flex: 1, position: 'relative', overflowY: 'auto' }}>
                 <button
                   onClick={() => void copyToClipboard(activeSuggestion.code, 'code')}
-                  style={{ position: 'absolute', top: 8, right: 8, zIndex: 10, background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: copyFeedback === 'code' ? 'var(--accent-green)' : 'var(--text-muted)', padding: '4px 6px', display: 'flex', alignItems: 'center', gap: 4 }}
+                  style={{ position: 'absolute', top: 8, right: 8, zIndex: 10, background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: copyFeedback === 'code' ? 'var(--accent-green)' : 'var(--text-muted)', padding: '4px 6px', display: 'flex', alignItems: 'center', gap: 4 }}
                   title={copyFeedback === 'code' ? 'Copied!' : 'Copy code'}
                 >
                   <CopyIcon />
@@ -480,7 +480,7 @@ export default function WorkspacePage() {
               </div>
 
               {/* Score bars */}
-              <div style={{ padding: 16, borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+              <div style={{ padding: 16, borderTop: '1px solid var(--hairline)', flexShrink: 0 }}>
                 {[
                   { label: 'Correctness', score: activeSuggestion.score },
                   { label: 'Readability', score: activeSuggestion.score ? activeSuggestion.score * 0.95 : undefined },
@@ -500,7 +500,7 @@ export default function WorkspacePage() {
               </div>
 
               {/* Accept button */}
-              <div style={{ padding: 16, borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+              <div style={{ padding: 16, borderTop: '1px solid var(--hairline)', flexShrink: 0 }}>
                 <Button
                   data-testid={`btn-accept-${activeSuggestion.agent}`}
                   label={acceptedSuggestion?.agent === activeSuggestion.agent ? '✓ Accepted' : 'Accept this suggestion'}
@@ -521,8 +521,8 @@ export default function WorkspacePage() {
       </div>
 
       {/* Diff view (bottom 40%) */}
-      <div style={{ height: '40%', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+      <div style={{ height: '40%', borderTop: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'var(--bg-surface)', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>Changes</span>
           <span style={{ fontSize: 11 }}>
             <span style={{ color: 'var(--accent-green)' }}>+14</span>
@@ -559,7 +559,7 @@ export default function WorkspacePage() {
   /* ─── RIGHT PANEL ──────────────────────────────────────────────────────── */
   const RightPanel = isComplete ? (
     <div style={{
-      width: 280, flexShrink: 0, background: 'var(--bg-surface)', borderLeft: '1px solid var(--border)',
+      width: 280, flexShrink: 0, background: 'var(--bg-surface)', borderLeft: '1px solid var(--hairline)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       height: '100%', textAlign: 'center', padding: 20,
     }}>
@@ -575,7 +575,7 @@ export default function WorkspacePage() {
   ) : (
     <div style={{
       width: 280, flexShrink: 0, background: 'var(--bg-surface)',
-      borderLeft: '1px solid var(--border)', overflowY: 'auto', padding: 20,
+      borderLeft: '1px solid var(--hairline)', overflowY: 'auto', padding: 20,
     }}>
       <Stepper currentStep={currentStep} />
 
@@ -584,11 +584,11 @@ export default function WorkspacePage() {
       {/* Accepted suggestion card */}
       <span style={SECTION_LABEL}>Accepted Suggestion</span>
       {!acceptedSuggestion ? (
-        <div style={{ border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)', padding: 12, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+        <div style={{ border: '1px dashed var(--hairline)', borderRadius: 'var(--radius-md)', padding: 12, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
           No suggestion accepted yet
         </div>
       ) : (
-        <div style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 12 }}>
+        <div style={{ background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)', padding: 12 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: AGENT_META[acceptedSuggestion.agent]?.color ?? 'var(--accent-blue)', marginBottom: 4 }}>
             {AGENT_META[acceptedSuggestion.agent]?.label ?? acceptedSuggestion.agent}
           </div>
@@ -610,14 +610,14 @@ export default function WorkspacePage() {
       <input
         readOnly
         value={`task/${taskId}`}
-        style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', cursor: 'default', boxSizing: 'border-box' }}
+        style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', cursor: 'default', boxSizing: 'border-box' }}
       />
       <input
         value={commitMessage}
         onChange={(e) => setCommitMessage(e.target.value)}
-        style={{ width: '100%', fontFamily: 'var(--font-sans)', fontSize: 13, background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', cursor: 'text', boxSizing: 'border-box', marginTop: 8, outline: 'none' }}
+        style={{ width: '100%', fontFamily: 'var(--font-sans)', fontSize: 13, background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', cursor: 'text', boxSizing: 'border-box', marginTop: 8, outline: 'none' }}
         onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent-blue)'; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--hairline)'; }}
       />
       <div style={{ marginTop: 12 }}>
         <Button
@@ -653,7 +653,7 @@ export default function WorkspacePage() {
       />
 
       {confirmDialogOpen && (
-        <div style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-bright)', borderRadius: 'var(--radius-md)', padding: 14, marginTop: 8 }}>
+        <div style={{ background: 'var(--bg-raised)', border: '1px solid var(--hairline-strong)', borderRadius: 'var(--radius-md)', padding: 14, marginTop: 8 }}>
           <p style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 10 }}>
             Close this task in {SOURCE_LABELS[task.source] ?? task.source}?
           </p>
@@ -682,7 +682,7 @@ export default function WorkspacePage() {
   /* ─── Shortcuts panel ─────────────────────────────────────────────────── */
   const ShortcutsPanel = shortcutsOpen && (
     <div
-      style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 200, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 16, width: 260 }}
+      style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 200, background: 'var(--bg-surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-lg)', padding: 16, width: 260 }}
       onClick={(e) => e.stopPropagation()}
     >
       <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>Keyboard shortcuts</p>
@@ -693,7 +693,7 @@ export default function WorkspacePage() {
         { key: 'Esc', desc: 'Close dialogs' },
       ].map(({ key, desc }) => (
         <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 4, padding: '2px 6px', color: 'var(--text-secondary)', flexShrink: 0 }}>{key}</span>
+          <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 4, padding: '2px 6px', color: 'var(--text-secondary)', flexShrink: 0 }}>{key}</span>
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{desc}</span>
         </div>
       ))}
@@ -702,7 +702,7 @@ export default function WorkspacePage() {
 
   /* ─── Mobile banner ───────────────────────────────────────────────────── */
   const MobileBanner = !mobileBannerDismissed && (
-    <div style={{ background: 'var(--bg-raised)', borderBottom: '1px solid var(--border)', borderLeft: '3px solid var(--accent-amber)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} className="dc-mobile-banner">
+    <div style={{ background: 'var(--bg-raised)', borderBottom: '1px solid var(--hairline)', borderLeft: '3px solid var(--accent-amber)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} className="dc-mobile-banner">
       <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>Blue Mantis works best on a wider screen</span>
       <button onClick={() => setMobileBannerDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1 }}>×</button>
     </div>
@@ -729,11 +729,11 @@ export default function WorkspacePage() {
         }
       `}</style>
 
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         {MobileBanner}
 
         {/* Mobile tabs */}
-        <div className="dc-workspace-tabs" style={{ display: 'none', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', padding: '0 16px' }}>
+        <div className="dc-workspace-tabs" style={{ display: 'none', background: 'var(--bg-surface)', borderBottom: '1px solid var(--hairline)', padding: '0 16px' }}>
           {(['task', 'suggestions', 'actions'] as const).map((tab) => (
             <button key={tab} onClick={() => setMobileTab(tab)} style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, background: 'transparent', border: 'none', borderBottom: `2px solid ${mobileTab === tab ? 'var(--accent-blue)' : 'transparent'}`, color: mobileTab === tab ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', textTransform: 'capitalize', fontFamily: 'var(--font-sans)' }}>
               {tab === 'task' ? 'Task' : tab === 'suggestions' ? 'Suggestions' : 'Actions'}

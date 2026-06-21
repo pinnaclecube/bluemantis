@@ -24,7 +24,7 @@ export function ToastContainer({ toasts, dismiss }: ToastContainerProps) {
           onClick={() => dismiss(t.id)}
           style={{
             background: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
+            border: '1px solid var(--hairline)',
             borderLeft: `4px solid ${t.type === 'success' ? 'var(--accent-green)' : 'var(--accent-red)'}`,
             borderRadius: 'var(--radius-md)',
             padding: '12px 16px',
