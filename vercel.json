@@ -20,8 +20,11 @@
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/artifacts/api-server/api/index.js" },
+    { "src": "/app", "dest": "/artifacts/dev-copilot/index.html" },
+    { "src": "/app/(.*)", "dest": "/artifacts/dev-copilot/$1" },
+    { "src": "/(.*)", "dest": "/artifacts/blue-mantis/$1" },
     { "handle": "filesystem" },
-    { "src": "/app(?:/.*)?", "dest": "/app/index.html" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    { "src": "/artifacts/dev-copilot/.*", "dest": "/artifacts/dev-copilot/index.html" },
+    { "src": "/.*", "dest": "/artifacts/blue-mantis/index.html" }
   ]
 }
