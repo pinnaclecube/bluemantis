@@ -113,7 +113,7 @@ function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
           path={`${basePath}/sign-in`}
           appearance={clerkAppearance}
           signUpUrl={`${basePath}/sign-up`}
-          forceRedirectUrl={`${basePath}/tasks`}
+          forceRedirectUrl={`${basePath}/dashboard`}
         />
       ) : (
         <SignUp
@@ -121,7 +121,7 @@ function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
           path={`${basePath}/sign-up`}
           appearance={clerkAppearance}
           signInUrl={`${basePath}/sign-in`}
-          forceRedirectUrl={`${basePath}/tasks`}
+          forceRedirectUrl={`${basePath}/dashboard`}
         />
       )}
     </div>
@@ -132,7 +132,7 @@ function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
 function RootRoute() {
   const { isSignedIn, isLoaded } = useAuth();
   if (!isLoaded) return <LoadingScreen />;
-  if (isSignedIn) return <Redirect to="/tasks" />;
+  if (isSignedIn) return <Redirect to="/dashboard" />;
   return <Redirect to="/sign-in" />;
 }
 

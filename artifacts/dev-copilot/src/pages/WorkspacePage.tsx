@@ -257,7 +257,7 @@ export default function WorkspacePage() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 16, textAlign: 'center' }}>
         <p style={{ color: 'var(--accent-red)', fontSize: 13 }}>{initError ?? 'Task not found'}</p>
-        <Button variant="outline" size="sm" onClick={() => navigate('/')}>← Back to tasks</Button>
+        <Button variant="outline" size="sm" onClick={() => navigate('/tasks')}>← Back to tasks</Button>
       </div>
     );
   }
@@ -273,7 +273,7 @@ export default function WorkspacePage() {
     }}>
       {/* Back */}
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/tasks')}
         style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 20 }}
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--text-muted)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -567,7 +567,7 @@ export default function WorkspacePage() {
         {task.externalId ?? `TASK-${task.id}`}
       </p>
       <div style={{ marginTop: 20 }}>
-        <Button variant="outline" size="sm" onClick={() => navigate('/')}>Back to backlog</Button>
+        <Button variant="outline" size="sm" onClick={() => navigate('/tasks')}>Back to backlog</Button>
       </div>
     </div>
   ) : (

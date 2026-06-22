@@ -45,7 +45,7 @@ const NEW_VIEWS: { path: string; label: string; kind: TabKind }[] = [
 ];
 
 export function TabBar() {
-  const { tabs, activePath, open, close } = useTabs();
+  const { tabs, activePath, open, openTab, close } = useTabs();
 
   return (
     <>
@@ -129,7 +129,7 @@ export function TabBar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-44">
             {NEW_VIEWS.map((v) => (
-              <DropdownMenuItem key={v.path} onSelect={() => open(v.path)}>
+              <DropdownMenuItem key={v.path} onSelect={() => openTab(v.path)}>
                 <span style={{ display: "inline-flex", marginRight: 8, color: "var(--text-muted)" }}>
                   <Icon kind={v.kind} />
                 </span>
@@ -137,7 +137,7 @@ export function TabBar() {
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => open("/tasks/new")}>
+            <DropdownMenuItem onSelect={() => openTab("/tasks/new")}>
               <span style={{ display: "inline-flex", marginRight: 8, color: "var(--accent-blue)" }}><PlusIcon /></span>
               New task
             </DropdownMenuItem>

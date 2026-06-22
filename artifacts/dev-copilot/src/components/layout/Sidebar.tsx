@@ -30,11 +30,10 @@ const ChevronIcon = () => (<svg width="12" height="12" viewBox="0 0 16 16" fill=
 const SignOutIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M11 11l3-3-3-3M14 8H6" /></svg>);
 
 const NAV = [
+  { href: "/dashboard", label: "Dashboard", Icon: DashIcon, match: (l: string) => l === "/dashboard" },
   { href: "/tasks", label: "Tasks", Icon: TasksIcon, match: (l: string) => l === "/tasks" || l.startsWith("/tasks/") || l.startsWith("/workspace") },
   { href: "/repositories", label: "Repositories", Icon: RepoIcon, match: (l: string) => l === "/repositories" || l.startsWith("/repositories/") },
-  { href: "/dashboard", label: "Dashboard", Icon: DashIcon, match: (l: string) => l === "/dashboard" },
   { href: "/history", label: "History", Icon: HistoryIcon, match: (l: string) => l === "/history" },
-  { href: "/settings", label: "Settings", Icon: SettingsIcon, match: (l: string) => l === "/settings" },
 ];
 
 export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
@@ -112,13 +111,14 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
         .dc-statusrow { display: flex; align-items: center; gap: 14px; padding: 4px 9px 6px; }
         .dc-status { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--text-secondary); }
         .dc-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-        .dc-user { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius-md); cursor: pointer; }
-        .dc-user:hover { background: var(--bg-hover); }
+        .dc-footrow { display: flex; align-items: center; gap: 4px; }
+        .dc-user { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius-md); flex: 1; min-width: 0; }
         .dc-avatar { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; object-fit: cover; border: 1px solid var(--hairline); }
         .dc-avatar-fb { background: var(--accent-soft); color: var(--accent-blue); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
         .dc-username { flex: 1; min-width: 0; font-size: var(--fs-sm); color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .dc-signout { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: var(--radius-sm); color: var(--text-muted); background: none; border: none; cursor: pointer; flex-shrink: 0; transition: background 120ms ease, color 120ms ease; }
-        .dc-signout:hover { background: var(--bg-hover); color: var(--accent-red); }
+        .dc-iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: var(--radius-sm); color: var(--text-muted); background: none; border: none; cursor: pointer; flex-shrink: 0; transition: background 120ms ease, color 120ms ease; }
+        .dc-iconbtn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .dc-iconbtn-danger:hover { color: var(--accent-red); }
         @media (max-width: 1100px) {
           .dc-sb { width: var(--sidebar-w-collapsed); min-width: var(--sidebar-w-collapsed); }
           .dc-sb-word, .dc-repo-name, .dc-repo-chev, .dc-cta-label, .dc-search-label, .dc-kbd,
@@ -127,7 +127,8 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
           .dc-nav { justify-content: center; padding: 8px 0; }
           .dc-cta, .dc-search, .dc-repo-switch { justify-content: center; padding: 8px 0; }
           .dc-statusrow { justify-content: center; gap: 8px; }
-          .dc-user { justify-content: center; }
+          .dc-footrow { flex-direction: column; align-items: center; }
+          .dc-user { justify-content: center; flex: none; }
           .dc-theme-toggle span { display: none !important; }
           .dc-theme-toggle { justify-content: center !important; }
         }
@@ -210,14 +211,17 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
 
           <ThemeToggle />
 
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <div className="dc-user" onClick={() => open("/settings")} style={{ flex: 1, minWidth: 0 }} title={displayName}>
+          <div className="dc-footrow">
+            <div className="dc-user" title={displayName}>
               {user?.imageUrl
                 ? <img className="dc-avatar" src={user.imageUrl} alt={displayName} />
                 : <span className="dc-avatar dc-avatar-fb">{initials}</span>}
               <span className="dc-username">{displayName}</span>
             </div>
-            <button className="dc-signout" onClick={() => signOut()} title="Sign out" aria-label="Sign out" data-testid="signout">
+            <button className="dc-iconbtn" onClick={() => open("/settings")} title="Settings" aria-label="Settings" data-testid="nav-settings">
+              <SettingsIcon />
+            </button>
+            <button className="dc-iconbtn dc-iconbtn-danger" onClick={() => signOut()} title="Sign out" aria-label="Sign out" data-testid="signout">
               <SignOutIcon />
             </button>
           </div>

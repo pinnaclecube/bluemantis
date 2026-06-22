@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { useLocation } from "wouter";
 
 export type TabKind =
@@ -29,7 +29,10 @@ export function deriveTabMeta(path: string): OpenTab {
 interface TabsContextValue {
   tabs: OpenTab[];
   activePath: string;
+  /** Plain navigation — switches the view WITHOUT opening a header tab. */
   open: (path: string) => void;
+  /** Explicit tab open — adds a header tab (if absent) and navigates to it. */
+  openTab: (path: string) => void;
   close: (path: string) => void;
 }
 
@@ -37,17 +40,18 @@ const TabsContext = createContext<TabsContextValue | null>(null);
 
 export function TabsProvider({ children }: { children: ReactNode }) {
   const [location, navigate] = useLocation();
-  const [tabs, setTabs] = useState<OpenTab[]>(() => [deriveTabMeta(location)]);
-
-  // Ensure a tab exists for the current location (auto-open on navigation).
-  useEffect(() => {
-    setTabs((prev) => {
-      if (prev.some((t) => t.path === location)) return prev;
-      return [...prev, deriveTabMeta(location)];
-    });
-  }, [location]);
+  // Header tabs are opened explicitly only — start empty, never auto-populate.
+  const [tabs, setTabs] = useState<OpenTab[]>([]);
 
   const open = useCallback((path: string) => navigate(path), [navigate]);
+
+  const openTab = useCallback(
+    (path: string) => {
+      setTabs((prev) => (prev.some((t) => t.path === path) ? prev : [...prev, deriveTabMeta(path)]));
+      navigate(path);
+    },
+    [navigate],
+  );
 
   const close = useCallback(
     (path: string) => {
@@ -55,10 +59,10 @@ export function TabsProvider({ children }: { children: ReactNode }) {
         const idx = prev.findIndex((t) => t.path === path);
         if (idx === -1) return prev;
         const next = prev.filter((t) => t.path !== path);
-        // If we closed the active tab, move to a sensible neighbour.
+        // If the closed tab was the active view, fall back to a neighbouring tab.
         if (path === location) {
-          const fallback = next[idx - 1] ?? next[idx] ?? next[next.length - 1];
-          navigate(fallback ? fallback.path : "/tasks");
+          const fallback = next[idx - 1] ?? next[idx];
+          if (fallback) navigate(fallback.path);
         }
         return next;
       });
@@ -67,7 +71,7 @@ export function TabsProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <TabsContext.Provider value={{ tabs, activePath: location, open, close }}>
+    <TabsContext.Provider value={{ tabs, activePath: location, open, openTab, close }}>
       {children}
     </TabsContext.Provider>
   );
