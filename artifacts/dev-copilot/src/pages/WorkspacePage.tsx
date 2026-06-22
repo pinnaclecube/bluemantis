@@ -97,7 +97,7 @@ function LoadingDots({ color }: { color: string }) {
           animation: `dc-bounce-dot 1s ease-in-out ${i * 0.2}s infinite`,
         }} />
       ))}
-      <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>Generating…</span>
+      <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>Generating…</span>
     </span>
   );
 }
@@ -256,7 +256,7 @@ export default function WorkspacePage() {
   if (initError || !task) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 16, textAlign: 'center' }}>
-        <p style={{ color: 'var(--accent-red)', fontSize: 14 }}>{initError ?? 'Task not found'}</p>
+        <p style={{ color: 'var(--accent-red)', fontSize: 13 }}>{initError ?? 'Task not found'}</p>
         <Button variant="outline" size="sm" onClick={() => navigate('/')}>← Back to tasks</Button>
       </div>
     );
@@ -279,7 +279,7 @@ export default function WorkspacePage() {
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--text-muted)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 11L5 7l4-4" />
         </svg>
-        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Sprint backlog</span>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Sprint backlog</span>
       </button>
 
       {/* Task header */}
@@ -287,17 +287,17 @@ export default function WorkspacePage() {
         <Badge variant="secondary">{SOURCE_LABELS[task.source] ?? task.source}</Badge>
         <Badge variant="secondary">{TYPE_LABELS[task.type] ?? task.type}</Badge>
       </div>
-      <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: '8px 0', fontFamily: 'var(--font-sans)', lineHeight: 1.4 }}>{task.title}</h2>
+      <h2 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: '8px 0', fontFamily: 'var(--font-sans)', lineHeight: 1.4 }}>{task.title}</h2>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: (task.priority === 'critical' || task.priority === 'high') ? 'var(--accent-amber)' : 'var(--text-muted)', flexShrink: 0 }} />
-        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Priority {PRIORITY_LABELS[task.priority] ?? task.priority}</span>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Priority {PRIORITY_LABELS[task.priority] ?? task.priority}</span>
       </div>
 
       <hr style={DIVIDER} />
 
       {/* Stack */}
       <span style={SECTION_LABEL}>Repository Stack</span>
-      {stackProfile ? <StackBadge stackProfile={stackProfile} /> : <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>No repo selected</span>}
+      {stackProfile ? <StackBadge stackProfile={stackProfile} /> : <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>No repo selected</span>}
       <p style={{ fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic', marginTop: 6 }}>AI suggestions will target this stack</p>
 
       <hr style={DIVIDER} />
@@ -306,7 +306,7 @@ export default function WorkspacePage() {
       {task.description && (
         <>
           <span style={SECTION_LABEL}>Description</span>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 0 }}>{task.description}</p>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 0 }}>{task.description}</p>
           <hr style={DIVIDER} />
         </>
       )}
@@ -331,7 +331,7 @@ export default function WorkspacePage() {
                   <span style={{ width: 16, height: 16, borderRadius: '50%', border: '1.5px solid var(--hairline-strong)', flexShrink: 0, marginTop: 2, display: 'inline-block' }} />
                 )}
                 <span style={{
-                  fontSize: 13, color: criteria[i] ? 'var(--accent-green)' : 'var(--text-secondary)',
+                  fontSize: 12, color: criteria[i] ? 'var(--accent-green)' : 'var(--text-secondary)',
                   textDecoration: criteria[i] ? 'line-through' : 'none', lineHeight: 1.5,
                 }}>
                   {item}
@@ -352,7 +352,7 @@ export default function WorkspacePage() {
         placeholder="Ask the agents to adjust the approach…"
         style={{
           width: '100%', background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)',
-          color: 'var(--text-primary)', fontSize: 13, fontFamily: 'var(--font-sans)', padding: 10, resize: 'vertical',
+          color: 'var(--text-primary)', fontSize: 12, fontFamily: 'var(--font-sans)', padding: 10, resize: 'vertical',
           outline: 'none', boxSizing: 'border-box',
         }}
         onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent-blue)'; }}
@@ -365,7 +365,7 @@ export default function WorkspacePage() {
             onClick={() => setRefinementPrompt((p) => p ? `${p} ${chip}` : chip)}
             style={{
               padding: '4px 10px', border: '1px solid var(--hairline)', borderRadius: 20,
-              fontSize: 12, color: 'var(--text-muted)', background: 'none', cursor: 'pointer',
+              fontSize: 11, color: 'var(--text-muted)', background: 'none', cursor: 'pointer',
               fontFamily: 'var(--font-sans)', transition: 'border-color 150ms, color 150ms',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent-blue)'; e.currentTarget.style.color = 'var(--accent-blue)'; }}
@@ -405,7 +405,7 @@ export default function WorkspacePage() {
                 data-testid={`tab-${agentKey}`}
                 onClick={() => !isGenerating && setActiveAgent(agentKey)}
                 style={{
-                  padding: '12px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  padding: '12px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
                   background: 'transparent', border: 'none',
                   borderBottom: `2px solid ${isActive ? meta?.color ?? 'var(--accent-blue)' : 'transparent'}`,
                   color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
@@ -442,13 +442,13 @@ export default function WorkspacePage() {
           ) : activeSuggestion ? (
             <>
               {/* Explanation banner */}
-              <p style={{ fontStyle: 'italic', fontSize: 13, color: 'var(--text-secondary)', background: 'var(--bg-raised)', padding: '10px 16px', borderBottom: '1px solid var(--hairline)', margin: 0 }}>
+              <p style={{ fontStyle: 'italic', fontSize: 12, color: 'var(--text-secondary)', background: 'var(--bg-raised)', padding: '10px 16px', borderBottom: '1px solid var(--hairline)', margin: 0 }}>
                 {activeSuggestion.explanation}
               </p>
 
               {/* File path bar */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', borderBottom: '1px solid var(--hairline)' }}>
-                <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>{activeSuggestion.filePath}</span>
+                <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>{activeSuggestion.filePath}</span>
                 <button
                   onClick={() => void copyToClipboard(activeSuggestion.filePath, 'path')}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: copyFeedback === 'path' ? 'var(--accent-green)' : 'var(--text-muted)', padding: 4 }}
@@ -487,11 +487,11 @@ export default function WorkspacePage() {
                   { label: 'Conventions', score: activeSuggestion.score ? activeSuggestion.score * 0.92 : undefined },
                 ].map(({ label, score }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)', width: 140, flexShrink: 0 }}>{label}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-secondary)', width: 140, flexShrink: 0 }}>{label}</span>
                     <div style={{ flex: 1, height: 4, background: 'var(--bg-raised)', borderRadius: 2 }}>
                       <div style={{ width: `${(score ?? 0) * 10}%`, height: '100%', background: 'var(--accent-blue)', borderRadius: 2, transition: 'width 600ms ease' }} />
                     </div>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)', width: 36, textAlign: 'right' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', width: 36, textAlign: 'right' }}>
                       {score !== undefined ? `${Math.round(score * 10)}%` : '—'}
                     </span>
                   </div>
@@ -512,7 +512,7 @@ export default function WorkspacePage() {
             </>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>No suggestions loaded.</p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No suggestions loaded.</p>
             </div>
           )}
         </div>
@@ -521,7 +521,7 @@ export default function WorkspacePage() {
       {/* Diff view (bottom 40%) */}
       <div style={{ height: '40%', borderTop: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', background: 'var(--bg-surface)', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>Changes</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)' }}>Changes</span>
           <span style={{ fontSize: 11 }}>
             <span style={{ color: 'var(--accent-green)' }}>+14</span>
             <span style={{ color: 'var(--text-muted)', margin: '0 4px' }}>/</span>
@@ -530,13 +530,13 @@ export default function WorkspacePage() {
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
           {!acceptedSuggestion ? (
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', marginTop: 24 }}>Select a suggestion to see the diff</p>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', marginTop: 24 }}>Select a suggestion to see the diff</p>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, height: '100%' }}>
               {(['Current', 'Suggested'] as const).map((side) => (
                 <div key={side}>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{side}</div>
-                  <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', background: 'var(--bg-raised)', borderRadius: 'var(--radius-sm)', padding: 12 }}>
+                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', background: 'var(--bg-raised)', borderRadius: 'var(--radius-sm)', padding: 12 }}>
                     {side === 'Suggested' ? (
                       <div style={{ borderLeft: '3px solid var(--accent-green)', background: 'rgba(61,214,140,0.08)', paddingLeft: 4 }}>
                         {acceptedSuggestion.code.split('\n').slice(0, 8).join('\n')}
@@ -562,8 +562,8 @@ export default function WorkspacePage() {
       height: '100%', textAlign: 'center', padding: 20,
     }}>
       <SuccessCircle />
-      <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--accent-green)', marginTop: 16 }}>Task closed</p>
-      <p style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginTop: 4 }}>
+      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent-green)', marginTop: 16 }}>Task closed</p>
+      <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', marginTop: 4 }}>
         {task.externalId ?? `TASK-${task.id}`}
       </p>
       <div style={{ marginTop: 20 }}>
@@ -582,20 +582,20 @@ export default function WorkspacePage() {
       {/* Accepted suggestion card */}
       <span style={SECTION_LABEL}>Accepted Suggestion</span>
       {!acceptedSuggestion ? (
-        <div style={{ border: '1px dashed var(--hairline)', borderRadius: 'var(--radius-md)', padding: 12, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+        <div style={{ border: '1px dashed var(--hairline)', borderRadius: 'var(--radius-md)', padding: 12, textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
           No suggestion accepted yet
         </div>
       ) : (
         <div style={{ background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)', padding: 12 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: AGENT_META[acceptedSuggestion.agent]?.color ?? 'var(--accent-blue)', marginBottom: 4 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: AGENT_META[acceptedSuggestion.agent]?.color ?? 'var(--accent-blue)', marginBottom: 4 }}>
             {AGENT_META[acceptedSuggestion.agent]?.label ?? acceptedSuggestion.agent}
           </div>
           {acceptedSuggestion.score !== undefined && (
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>
               {acceptedSuggestion.score.toFixed(1)} / 10
             </div>
           )}
-          <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {acceptedSuggestion.filePath}
           </div>
         </div>
@@ -608,12 +608,12 @@ export default function WorkspacePage() {
       <input
         readOnly
         value={`task/${taskId}`}
-        style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', cursor: 'default', boxSizing: 'border-box' }}
+        style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 11, background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', cursor: 'default', boxSizing: 'border-box' }}
       />
       <input
         value={commitMessage}
         onChange={(e) => setCommitMessage(e.target.value)}
-        style={{ width: '100%', fontFamily: 'var(--font-sans)', fontSize: 13, background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', cursor: 'text', boxSizing: 'border-box', marginTop: 8, outline: 'none' }}
+        style={{ width: '100%', fontFamily: 'var(--font-sans)', fontSize: 12, background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', cursor: 'text', boxSizing: 'border-box', marginTop: 8, outline: 'none' }}
         onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent-blue)'; }}
         onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--hairline)'; }}
       />
@@ -629,7 +629,7 @@ export default function WorkspacePage() {
         </Button>
       </div>
       {prUrl && (
-        <a href={prUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginTop: 8, fontSize: 12, color: 'var(--accent-blue)', wordBreak: 'break-all' }}>
+        <a href={prUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginTop: 8, fontSize: 11, color: 'var(--accent-blue)', wordBreak: 'break-all' }}>
           {prUrl}
         </a>
       )}
@@ -651,7 +651,7 @@ export default function WorkspacePage() {
 
       {confirmDialogOpen && (
         <div style={{ background: 'var(--bg-raised)', border: '1px solid var(--hairline-strong)', borderRadius: 'var(--radius-md)', padding: 14, marginTop: 8 }}>
-          <p style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 10 }}>
+          <p style={{ fontSize: 12, color: 'var(--text-primary)', marginBottom: 10 }}>
             Close this task in {SOURCE_LABELS[task.source] ?? task.source}?
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -684,7 +684,7 @@ export default function WorkspacePage() {
       style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 200, background: 'var(--bg-surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-lg)', padding: 16, width: 260 }}
       onClick={(e) => e.stopPropagation()}
     >
-      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>Keyboard shortcuts</p>
+      <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>Keyboard shortcuts</p>
       {[
         { key: 'R', desc: 'Re-generate suggestions' },
         { key: 'Ctrl+↵', desc: 'Commit accepted code' },
@@ -693,7 +693,7 @@ export default function WorkspacePage() {
       ].map(({ key, desc }) => (
         <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
           <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', background: 'var(--bg-raised)', border: '1px solid var(--hairline)', borderRadius: 4, padding: '2px 6px', color: 'var(--text-secondary)', flexShrink: 0 }}>{key}</span>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{desc}</span>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{desc}</span>
         </div>
       ))}
     </div>
@@ -702,8 +702,8 @@ export default function WorkspacePage() {
   /* ─── Mobile banner ───────────────────────────────────────────────────── */
   const MobileBanner = !mobileBannerDismissed && (
     <div style={{ background: 'var(--bg-raised)', borderBottom: '1px solid var(--hairline)', borderLeft: '3px solid var(--accent-amber)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} className="dc-mobile-banner">
-      <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>Blue Mantis works best on a wider screen</span>
-      <button onClick={() => setMobileBannerDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 18, lineHeight: 1 }}>×</button>
+      <span style={{ fontSize: 12, color: 'var(--text-primary)' }}>Blue Mantis works best on a wider screen</span>
+      <button onClick={() => setMobileBannerDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 14, lineHeight: 1 }}>×</button>
     </div>
   );
 
@@ -734,7 +734,7 @@ export default function WorkspacePage() {
         {/* Mobile tabs */}
         <div className="dc-workspace-tabs" style={{ display: 'none', background: 'var(--bg-surface)', borderBottom: '1px solid var(--hairline)', padding: '0 16px' }}>
           {(['task', 'suggestions', 'actions'] as const).map((tab) => (
-            <button key={tab} onClick={() => setMobileTab(tab)} style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, background: 'transparent', border: 'none', borderBottom: `2px solid ${mobileTab === tab ? 'var(--accent-blue)' : 'transparent'}`, color: mobileTab === tab ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', textTransform: 'capitalize', fontFamily: 'var(--font-sans)' }}>
+            <button key={tab} onClick={() => setMobileTab(tab)} style={{ padding: '12px 16px', fontSize: 12, fontWeight: 600, background: 'transparent', border: 'none', borderBottom: `2px solid ${mobileTab === tab ? 'var(--accent-blue)' : 'transparent'}`, color: mobileTab === tab ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer', textTransform: 'capitalize', fontFamily: 'var(--font-sans)' }}>
               {tab === 'task' ? 'Task' : tab === 'suggestions' ? 'Suggestions' : 'Actions'}
             </button>
           ))}

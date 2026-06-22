@@ -31,7 +31,7 @@ export function Stepper({ currentStep }: StepperProps) {
                 width: 28, height: 28,
                 borderRadius: '50%',
                 background: done ? 'var(--accent-green)' : active ? 'var(--accent-blue)' : 'var(--bg-raised)',
-                border: done ? 'none' : active ? 'none' : '1px solid var(--border)',
+                border: done ? 'none' : active ? 'none' : '1px solid var(--hairline)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -51,7 +51,7 @@ export function Stepper({ currentStep }: StepperProps) {
                 <div style={{
                   width: 2,
                   height: 24,
-                  background: done ? 'var(--accent-green)' : 'var(--border)',
+                  background: done ? 'var(--accent-green)' : 'var(--hairline)',
                   transition: 'background 400ms ease',
                   margin: '4px 0',
                 }} />
@@ -59,7 +59,7 @@ export function Stepper({ currentStep }: StepperProps) {
             </div>
             <div style={{ paddingTop: 4, paddingBottom: isLast ? 0 : 24 }}>
               <span style={{
-                fontSize: 13,
+                fontSize: 12,
                 fontFamily: 'var(--font-sans)',
                 color: (done || active) ? 'var(--text-primary)' : 'var(--text-muted)',
                 fontWeight: active ? 500 : 400,

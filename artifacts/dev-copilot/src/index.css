@@ -70,6 +70,12 @@
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-xl: calc(var(--radius-lg) + 4px);
+
+  /* Replit-tight type scale — applies to every text-xs / text-sm in the app */
+  --text-xs: 0.6875rem;          /* 11px */
+  --text-xs--line-height: 1.45;
+  --text-sm: 0.8125rem;          /* 13px */
+  --text-sm--line-height: 1.45;
 }
 
 /* ---------------- DAY (light) ---------------- */
