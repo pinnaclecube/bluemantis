@@ -1,4 +1,4 @@
-import { Badge } from './Badge';
+import { Badge } from '@/components/ui/badge';
 
 export interface StackProfile {
   frontend: string;
@@ -13,23 +13,19 @@ interface StackBadgeProps {
   stackProfile: StackProfile | null;
 }
 
-function none(v?: string) {
-  return !v || v === 'none' || v === 'unknown';
+function label(v?: string) {
+  return !v || v === 'none' || v === 'unknown' ? 'Unknown' : v;
 }
 
 export function StackBadge({ stackProfile }: StackBadgeProps) {
   if (!stackProfile) {
-    return (
-      <span style={{ display: 'inline-flex', gap: 4 }}>
-        <Badge label="Unknown" variant="muted" />
-      </span>
-    );
+    return <Badge variant="secondary">Unknown</Badge>;
   }
   return (
-    <span style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap' }}>
-      <Badge label={none(stackProfile.frontend) ? 'Unknown' : stackProfile.frontend} variant="blue" />
-      <Badge label={none(stackProfile.backend) ? 'Unknown' : stackProfile.backend} variant="purple" />
-      <Badge label={none(stackProfile.database) ? 'Unknown' : stackProfile.database} variant="muted" />
+    <span className="inline-flex flex-wrap gap-1">
+      <Badge variant="secondary">{label(stackProfile.frontend)}</Badge>
+      <Badge variant="secondary">{label(stackProfile.backend)}</Badge>
+      <Badge variant="secondary">{label(stackProfile.database)}</Badge>
     </span>
   );
 }

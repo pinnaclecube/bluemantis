@@ -44,22 +44,22 @@ export default function Repositories() {
   );
 
   return (
-    <div className="flex flex-col gap-6 h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex h-full flex-col gap-4 px-5 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Repositories</h1>
-          <p className="text-muted-foreground mt-1 font-mono text-sm">Connected codebases and stack profiles</p>
+          <h1 className="text-lg font-semibold tracking-tight">Repositories</h1>
+          <p className="text-muted-foreground mt-1 text-xs">Connected codebases and stack profiles</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button data-testid="button-create-repo" className="font-mono uppercase tracking-wider text-xs">
+            <Button data-testid="button-create-repo" className="font-mono text-xs">
               <Plus className="mr-2 h-4 w-4" />
               Connect Repository
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px] border-primary/20 bg-background/95 backdrop-blur-xl">
             <DialogHeader>
-              <DialogTitle className="font-mono text-lg uppercase tracking-wider">Connect Repository</DialogTitle>
+              <DialogTitle className="font-mono text-lg">Connect Repository</DialogTitle>
             </DialogHeader>
             <CreateRepoForm onSuccess={() => setIsCreateOpen(false)} />
           </DialogContent>
@@ -89,7 +89,7 @@ export default function Repositories() {
         ) : !filteredRepos || filteredRepos.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-4">
             <Database className="h-12 w-12 opacity-20" />
-            <p className="font-mono text-sm uppercase tracking-wider">No repositories found</p>
+            <p className="font-mono text-sm">No repositories found</p>
             {search && (
               <Button variant="link" onClick={() => setSearch("")} className="font-mono text-xs">
                 Clear Search
@@ -185,7 +185,7 @@ function CreateRepoForm({ onSuccess }: { onSuccess: () => void }) {
             name="name"
             render={({ field }) => (
               <FormItem className="col-span-2 md:col-span-1">
-                <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Name</FormLabel>
+                <FormLabel className="font-mono text-xs text-muted-foreground">Name</FormLabel>
                 <FormControl>
                   <Input placeholder="e.g. core-api" {...field} className="font-mono bg-muted/50" />
                 </FormControl>
@@ -198,7 +198,7 @@ function CreateRepoForm({ onSuccess }: { onSuccess: () => void }) {
             name="provider"
             render={({ field }) => (
               <FormItem className="col-span-2 md:col-span-1">
-                <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Provider</FormLabel>
+                <FormLabel className="font-mono text-xs text-muted-foreground">Provider</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger className="font-mono bg-muted/50">
@@ -219,7 +219,7 @@ function CreateRepoForm({ onSuccess }: { onSuccess: () => void }) {
             name="url"
             render={({ field }) => (
               <FormItem className="col-span-2">
-                <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Repository URL</FormLabel>
+                <FormLabel className="font-mono text-xs text-muted-foreground">Repository URL</FormLabel>
                 <FormControl>
                   <Input placeholder="https://github.com/org/repo" {...field} className="font-mono bg-muted/50" />
                 </FormControl>
@@ -232,7 +232,7 @@ function CreateRepoForm({ onSuccess }: { onSuccess: () => void }) {
             name="defaultBranch"
             render={({ field }) => (
               <FormItem className="col-span-2 md:col-span-1">
-                <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Default Branch</FormLabel>
+                <FormLabel className="font-mono text-xs text-muted-foreground">Default Branch</FormLabel>
                 <FormControl>
                   <Input placeholder="main" {...field} className="font-mono bg-muted/50" />
                 </FormControl>
@@ -243,7 +243,7 @@ function CreateRepoForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
 
         <div className="border-t pt-4 space-y-4">
-          <h4 className="font-mono text-sm font-bold uppercase tracking-wider text-primary">Stack Profile</h4>
+          <h4 className="font-mono text-sm font-bold text-primary">Stack Profile</h4>
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
@@ -380,8 +380,8 @@ function CreateRepoForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="outline" onClick={onSuccess} className="font-mono text-xs uppercase tracking-wider">Cancel</Button>
-          <Button type="submit" disabled={createRepository.isPending} className="font-mono text-xs uppercase tracking-wider">
+          <Button type="button" variant="outline" onClick={onSuccess} className="font-mono text-xs">Cancel</Button>
+          <Button type="submit" disabled={createRepository.isPending} className="font-mono text-xs">
             {createRepository.isPending ? "Connecting..." : "Connect Repository"}
           </Button>
         </div>

@@ -47,10 +47,10 @@ export default function Dashboard() {
   const { data: activity, isLoading: activityLoading } = useGetRecentActivity();
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex flex-col gap-4 px-5 py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1 font-mono text-sm">System Overview</p>
+        <h1 className="text-lg font-semibold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground mt-1 text-xs">System Overview</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -87,7 +87,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="col-span-1 lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-sm font-mono text-muted-foreground uppercase tracking-wider">Tasks by Status</CardTitle>
+            <CardTitle className="text-sm font-mono text-muted-foreground">Tasks by Status</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
             {statusLoading ? (
@@ -114,7 +114,7 @@ export default function Dashboard() {
 
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle className="text-sm font-mono text-muted-foreground uppercase tracking-wider">Source Distribution</CardTitle>
+            <CardTitle className="text-sm font-mono text-muted-foreground">Source Distribution</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
             {sourceLoading ? (
@@ -156,7 +156,7 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-mono text-muted-foreground uppercase tracking-wider">Recent Activity</CardTitle>
+          <CardTitle className="text-sm font-mono text-muted-foreground">Recent Activity</CardTitle>
         </CardHeader>
         <CardContent>
           {activityLoading ? (
@@ -204,7 +204,7 @@ function StatCard({ title, value, icon: Icon, loading, testId }: { title: string
           {loading ? (
             <Skeleton className="h-8 w-16" />
           ) : (
-            <p className="text-3xl font-bold font-mono tracking-tight" data-testid={`stat-${testId}`}>{value}</p>
+            <p className="text-2xl font-semibold font-mono tracking-tight" data-testid={`stat-${testId}`}>{value}</p>
           )}
         </div>
         <div className="p-4 bg-primary/10 rounded-full text-primary">

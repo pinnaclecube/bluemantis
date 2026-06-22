@@ -3,6 +3,7 @@ import { Sidebar } from "./Sidebar";
 import { TabBar } from "./TabBar";
 import { TabsProvider } from "@/context/TabsContext";
 import { useConfig } from "@/context/ConfigContext";
+import { Toaster } from "@/components/ui/toaster";
 
 interface AppShellProps {
   children: ReactNode;
@@ -33,6 +34,7 @@ export function AppShell({ children }: AppShellProps) {
             {children}
           </main>
         </div>
+        <Toaster />
       </div>
     </TabsProvider>
   );

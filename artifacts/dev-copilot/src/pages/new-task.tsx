@@ -63,20 +63,20 @@ export default function NewTask() {
   };
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-500 pb-8 max-w-4xl mx-auto w-full">
+    <div className="flex flex-col gap-4 px-5 py-4 animate-in fade-in duration-500 pb-8 max-w-4xl mx-auto w-full">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => setLocation("/tasks")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Create Task</h1>
-          <p className="text-muted-foreground mt-1 font-mono text-sm">Add a new task manually or link an external issue</p>
+          <h1 className="text-lg font-semibold tracking-tight">Create Task</h1>
+          <p className="text-muted-foreground mt-1 text-xs">Add a new task manually or link an external issue</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+          <CardTitle className="text-lg font-mono text-muted-foreground flex items-center gap-2">
             <CheckSquare className="h-5 w-5 text-primary" /> Task Details
           </CardTitle>
         </CardHeader>
@@ -89,7 +89,7 @@ export default function NewTask() {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Title</FormLabel>
+                    <FormLabel className="font-mono text-xs text-muted-foreground">Title</FormLabel>
                     <FormControl><Input {...field} className="font-mono text-base bg-muted/30 h-12" placeholder="Brief summary of the task..." /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -102,7 +102,7 @@ export default function NewTask() {
                   name="source"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Source System</FormLabel>
+                      <FormLabel className="font-mono text-xs text-muted-foreground">Source System</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger className="font-mono bg-background"><SelectValue /></SelectTrigger>
@@ -124,7 +124,7 @@ export default function NewTask() {
                   name="externalId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">External ID (Optional)</FormLabel>
+                      <FormLabel className="font-mono text-xs text-muted-foreground">External ID (Optional)</FormLabel>
                       <FormControl><Input {...field} value={field.value || ""} className="font-mono bg-background" placeholder="e.g. PROJ-123 or #456" /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -138,7 +138,7 @@ export default function NewTask() {
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Status</FormLabel>
+                      <FormLabel className="font-mono text-xs text-muted-foreground">Status</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger className="font-mono text-xs bg-muted/30"><SelectValue /></SelectTrigger>
@@ -161,7 +161,7 @@ export default function NewTask() {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Priority</FormLabel>
+                      <FormLabel className="font-mono text-xs text-muted-foreground">Priority</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger className="font-mono text-xs bg-muted/30"><SelectValue /></SelectTrigger>
@@ -183,7 +183,7 @@ export default function NewTask() {
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Type</FormLabel>
+                      <FormLabel className="font-mono text-xs text-muted-foreground">Type</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger className="font-mono text-xs bg-muted/30"><SelectValue /></SelectTrigger>
@@ -205,7 +205,7 @@ export default function NewTask() {
                   name="repositoryId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Repository</FormLabel>
+                      <FormLabel className="font-mono text-xs text-muted-foreground">Repository</FormLabel>
                       <Select 
                         onValueChange={(val) => field.onChange(val === "none" ? null : parseInt(val))} 
                         defaultValue={field.value?.toString() || "none"}
@@ -231,7 +231,7 @@ export default function NewTask() {
                 name="linkedCommit"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Linked Commit SHA (Optional)</FormLabel>
+                    <FormLabel className="font-mono text-xs text-muted-foreground">Linked Commit SHA (Optional)</FormLabel>
                     <FormControl><Input {...field} value={field.value || ""} className="font-mono bg-muted/30" placeholder="e.g. a1b2c3d4" /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -243,7 +243,7 @@ export default function NewTask() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Description</FormLabel>
+                    <FormLabel className="font-mono text-xs text-muted-foreground">Description</FormLabel>
                     <FormControl><Textarea {...field} value={field.value || ""} className="min-h-[150px] font-mono text-sm bg-muted/30" placeholder="Detailed description of the task..." /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -255,7 +255,7 @@ export default function NewTask() {
                 name="acceptanceCriteria"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Acceptance Criteria</FormLabel>
+                    <FormLabel className="font-mono text-xs text-muted-foreground">Acceptance Criteria</FormLabel>
                     <FormControl><Textarea {...field} value={field.value || ""} className="min-h-[100px] font-mono text-sm bg-muted/30" placeholder="- Criteria 1&#10;- Criteria 2" /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -263,8 +263,8 @@ export default function NewTask() {
               />
 
               <div className="flex justify-end gap-3 pt-6 border-t">
-                <Button type="button" variant="outline" onClick={() => setLocation("/tasks")} className="font-mono text-xs uppercase tracking-wider w-32">Cancel</Button>
-                <Button type="submit" disabled={createTask.isPending} className="font-mono text-xs uppercase tracking-wider w-40">
+                <Button type="button" variant="outline" onClick={() => setLocation("/tasks")} className="font-mono text-xs w-32">Cancel</Button>
+                <Button type="submit" disabled={createTask.isPending} className="font-mono text-xs w-40">
                   {createTask.isPending ? "Creating..." : "Create Task"}
                 </Button>
               </div>

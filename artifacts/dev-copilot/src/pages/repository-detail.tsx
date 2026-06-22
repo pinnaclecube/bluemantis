@@ -90,7 +90,7 @@ export default function RepositoryDetail() {
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-500 pb-8">
+    <div className="flex flex-col gap-4 px-5 py-4 animate-in fade-in duration-500 pb-8">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => setLocation("/repositories")}>
           <ArrowLeft className="h-4 w-4" />
@@ -98,7 +98,7 @@ export default function RepositoryDetail() {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             {repo.provider === 'github' ? <SiGithub className="h-5 w-5 text-muted-foreground" /> : <Cloud className="h-5 w-5 text-blue-500" />}
-            <h1 className="text-2xl font-bold tracking-tight">{repo.name}</h1>
+            <h1 className="text-xl font-semibold tracking-tight">{repo.name}</h1>
           </div>
           <a href={repo.url} target="_blank" rel="noreferrer" className="text-sm font-mono text-primary hover:underline flex items-center gap-1 mt-1 w-fit">
             <LinkIcon className="h-3 w-3" />
@@ -108,12 +108,12 @@ export default function RepositoryDetail() {
         <div className="flex gap-2">
           <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="font-mono text-xs uppercase tracking-wider">
+              <Button variant="outline" size="sm" className="font-mono text-xs">
                 <Edit className="mr-2 h-4 w-4" /> Edit
               </Button>
             </DialogTrigger>
             <DialogContent className="border-primary/20 bg-background/95 backdrop-blur-xl">
-              <DialogHeader><DialogTitle className="font-mono uppercase tracking-wider">Edit Repository</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="font-mono">Edit Repository</DialogTitle></DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onEdit)} className="space-y-4">
                   <FormField
@@ -121,7 +121,7 @@ export default function RepositoryDetail() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Name</FormLabel>
+                        <FormLabel className="font-mono text-xs text-muted-foreground">Name</FormLabel>
                         <FormControl><Input {...field} className="font-mono" /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -132,7 +132,7 @@ export default function RepositoryDetail() {
                     name="defaultBranch"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Default Branch</FormLabel>
+                        <FormLabel className="font-mono text-xs text-muted-foreground">Default Branch</FormLabel>
                         <FormControl><Input {...field} className="font-mono" /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -149,12 +149,12 @@ export default function RepositoryDetail() {
 
           <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
             <DialogTrigger asChild>
-              <Button variant="destructive" size="sm" className="font-mono text-xs uppercase tracking-wider">
+              <Button variant="destructive" size="sm" className="font-mono text-xs">
                 <Trash2 className="mr-2 h-4 w-4" /> Delete
               </Button>
             </DialogTrigger>
             <DialogContent className="border-destructive/50 bg-background/95 backdrop-blur-xl">
-              <DialogHeader><DialogTitle className="font-mono uppercase tracking-wider text-destructive">Delete Repository</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="font-mono text-destructive">Delete Repository</DialogTitle></DialogHeader>
               <p className="text-sm text-muted-foreground">Are you sure you want to delete this repository? This action cannot be undone.</p>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDeleteOpen(false)} className="font-mono text-xs">Cancel</Button>
@@ -168,7 +168,7 @@ export default function RepositoryDetail() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle className="text-sm font-mono text-muted-foreground uppercase tracking-wider">Stack Profile</CardTitle>
+            <CardTitle className="text-sm font-mono text-muted-foreground">Stack Profile</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -184,7 +184,7 @@ export default function RepositoryDetail() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-mono text-muted-foreground uppercase tracking-wider">Details</CardTitle>
+            <CardTitle className="text-sm font-mono text-muted-foreground">Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3 text-sm">
@@ -204,7 +204,7 @@ export default function RepositoryDetail() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold tracking-tight">Linked Tasks</h2>
-          <Button variant="outline" size="sm" asChild className="font-mono text-xs uppercase tracking-wider">
+          <Button variant="outline" size="sm" asChild className="font-mono text-xs">
             <Link href={`/tasks/new?repositoryId=${repo.id}`}>Create Task</Link>
           </Button>
         </div>
@@ -251,7 +251,7 @@ function StackDetail({ icon: Icon, label, value }: { icon: any, label: string, v
     <div className="flex flex-col gap-1 p-3 border rounded-md bg-muted/20">
       <div className="flex items-center gap-2 text-muted-foreground mb-1">
         <Icon className="h-3.5 w-3.5" />
-        <span className="text-[10px] font-mono uppercase tracking-wider font-bold">{label}</span>
+        <span className="text-[10px] font-mono font-bold">{label}</span>
       </div>
       <span className="text-sm font-medium capitalize">{value}</span>
     </div>

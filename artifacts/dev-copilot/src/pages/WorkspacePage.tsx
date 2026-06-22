@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { Badge } from '@/components/dc/Badge';
-import { Button } from '@/components/dc/Button';
-import { Skeleton } from '@/components/dc/Skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { StackBadge } from '@/components/dc/StackBadge';
-import { ToastContainer } from '@/components/dc/Toast';
-import { useToast } from '@/components/dc/useToast';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 import { Stepper } from '@/components/workspace/Stepper';
 import { useRepo } from '@/context/RepoContext';
 import {
@@ -59,7 +59,7 @@ const DIVIDER: React.CSSProperties = {
 
 function SparkIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="var(--text-primary)">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
       <path d="M7 1l1.5 4.5L13 7l-4.5 1.5L7 13l-1.5-4.5L1 7l4.5-1.5L7 1z" />
     </svg>
   );
@@ -107,7 +107,7 @@ function LoadingDots({ color }: { color: string }) {
 export default function WorkspacePage() {
   const params = useParams<{ taskId: string }>();
   const [, navigate] = useLocation();
-  const { toasts, showSuccess, showError, dismiss } = useToast();
+  const { toast } = useToast();
   const { stackProfile } = useRepo();
   const taskId = Number(params.taskId);
 
@@ -142,13 +142,13 @@ export default function WorkspacePage() {
       const rec = data.find((s) => s.recommendation === 'Recommended');
       setActiveAgent(rec?.agent ?? data[0]?.agent ?? 'claude');
       setCurrentStep(1);
-      showSuccess('Suggestions generated');
+      toast({ title: 'Suggestions generated' });
     } catch (err) {
-      showError(`Failed to generate — ${err instanceof Error ? err.message : 'Unknown error'}`);
+      toast({ title: `Failed to generate — ${err instanceof Error ? err.message : 'Unknown error'}`, variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }
-  }, [taskId, showSuccess, showError]);
+  }, [taskId, toast]);
 
   useEffect(() => {
     let cancelled = false;
@@ -202,9 +202,9 @@ export default function WorkspacePage() {
       setCommitHash(ch);
       setPrUrl(pr);
       setCurrentStep(3);
-      showSuccess('PR opened successfully');
+      toast({ title: 'PR opened successfully' });
     } catch (err) {
-      showError(`Commit failed — ${err instanceof Error ? err.message : 'Unknown error'}`);
+      toast({ title: `Commit failed — ${err instanceof Error ? err.message : 'Unknown error'}`, variant: "destructive" });
     } finally {
       setIsCommitting(false);
     }
@@ -218,9 +218,9 @@ export default function WorkspacePage() {
       setIsComplete(true);
       setCurrentStep(4);
       setConfirmDialogOpen(false);
-      showSuccess(`Task closed in ${task?.source ?? 'tracker'}`);
+      toast({ title: `Task closed in ${task?.source ?? 'tracker'}` });
     } catch (err) {
-      showError(`Could not close task — ${err instanceof Error ? err.message : 'Unknown error'}`);
+      toast({ title: `Could not close task — ${err instanceof Error ? err.message : 'Unknown error'}`, variant: "destructive" });
     } finally {
       setIsCompleting(false);
     }
@@ -229,7 +229,7 @@ export default function WorkspacePage() {
   const copyToClipboard = async (text: string, key: string) => {
     await navigator.clipboard.writeText(text);
     setCopyFeedback(key);
-    showSuccess('Code copied');
+    toast({ title: 'Code copied' });
     setTimeout(() => setCopyFeedback(null), 2000);
   };
 
@@ -246,9 +246,9 @@ export default function WorkspacePage() {
   if (initLoading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 32 }}>
-        <Skeleton height={24} width={200} />
-        <Skeleton height={64} />
-        <Skeleton height={200} />
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-48 w-full" />
       </div>
     );
   }
@@ -257,7 +257,7 @@ export default function WorkspacePage() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 16, textAlign: 'center' }}>
         <p style={{ color: 'var(--accent-red)', fontSize: 14 }}>{initError ?? 'Task not found'}</p>
-        <Button label="← Back to tasks" variant="outline" size="md" onClick={() => navigate('/')} />
+        <Button variant="outline" size="sm" onClick={() => navigate('/')}>← Back to tasks</Button>
       </div>
     );
   }
@@ -284,8 +284,8 @@ export default function WorkspacePage() {
 
       {/* Task header */}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
-        <Badge label={SOURCE_LABELS[task.source] ?? task.source} variant={task.source === 'azure-devops' ? 'purple' : task.source === 'jira' ? 'blue' : 'muted'} />
-        <Badge label={TYPE_LABELS[task.type] ?? task.type} variant={task.type === 'bug' ? 'red' : task.type === 'story' ? 'blue' : 'muted'} />
+        <Badge variant="secondary">{SOURCE_LABELS[task.source] ?? task.source}</Badge>
+        <Badge variant="secondary">{TYPE_LABELS[task.type] ?? task.type}</Badge>
       </div>
       <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: '8px 0', fontFamily: 'var(--font-sans)', lineHeight: 1.4 }}>{task.title}</h2>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -375,14 +375,13 @@ export default function WorkspacePage() {
       </div>
       <div style={{ marginTop: 12 }}>
         <Button
-          label="Re-generate"
-          variant="primary"
-          size="md"
-          icon={<SparkIcon />}
-          loading={isGenerating}
+          className="w-full"
+          disabled={isGenerating}
           onClick={() => void doGenerate(refinementPrompt || undefined)}
-          style={{ width: '100%', justifyContent: 'center' }}
-        />
+        >
+          {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <SparkIcon />}
+          Re-generate
+        </Button>
       </div>
     </div>
   );
@@ -436,9 +435,9 @@ export default function WorkspacePage() {
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           {isGenerating ? (
             <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <Skeleton height={16} width="60%" />
-              <Skeleton height={200} />
-              <Skeleton height={16} width="40%" />
+              <Skeleton className="h-4 w-3/5" />
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-4 w-2/5" />
             </div>
           ) : activeSuggestion ? (
             <>
@@ -503,13 +502,12 @@ export default function WorkspacePage() {
               <div style={{ padding: 16, borderTop: '1px solid var(--hairline)', flexShrink: 0 }}>
                 <Button
                   data-testid={`btn-accept-${activeSuggestion.agent}`}
-                  label={acceptedSuggestion?.agent === activeSuggestion.agent ? '✓ Accepted' : 'Accept this suggestion'}
-                  variant="primary"
-                  size="md"
+                  className="w-full"
                   disabled={acceptedSuggestion?.agent === activeSuggestion.agent}
                   onClick={() => { setAcceptedSuggestion(activeSuggestion); setCurrentStep(2); }}
-                  style={{ width: '100%', justifyContent: 'center' }}
-                />
+                >
+                  {acceptedSuggestion?.agent === activeSuggestion.agent ? '✓ Accepted' : 'Accept this suggestion'}
+                </Button>
               </div>
             </>
           ) : (
@@ -569,7 +567,7 @@ export default function WorkspacePage() {
         {task.externalId ?? `TASK-${task.id}`}
       </p>
       <div style={{ marginTop: 20 }}>
-        <Button label="Back to backlog" variant="outline" size="md" onClick={() => navigate('/')} />
+        <Button variant="outline" size="sm" onClick={() => navigate('/')}>Back to backlog</Button>
       </div>
     </div>
   ) : (
@@ -621,15 +619,14 @@ export default function WorkspacePage() {
       />
       <div style={{ marginTop: 12 }}>
         <Button
-          label="Commit + open PR"
-          variant="primary"
-          size="md"
-          loading={isCommitting}
+          className="w-full"
           disabled={!acceptedSuggestion || isCommitting}
           onClick={() => void handleCommit()}
-          style={{ width: '100%', justifyContent: 'center' }}
           data-testid="btn-commit"
-        />
+        >
+          {isCommitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          Commit + open PR
+        </Button>
       </div>
       {prUrl && (
         <a href={prUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginTop: 8, fontSize: 12, color: 'var(--accent-blue)', wordBreak: 'break-all' }}>
@@ -642,15 +639,15 @@ export default function WorkspacePage() {
       {/* Complete task section */}
       <span style={SECTION_LABEL}>Complete Task</span>
       <Button
-        label="Mark task complete"
-        variant="primary"
-        size="md"
-        loading={isCompleting}
+        className="w-full"
         disabled={!prUrl || isCompleting}
         onClick={() => setConfirmDialogOpen(true)}
-        style={{ width: '100%', justifyContent: 'center', background: 'var(--accent-green)', color: '#0D0F12' }}
+        style={{ background: 'var(--accent-green)', color: '#0D0F12' }}
         data-testid="btn-mark-complete"
-      />
+      >
+        {isCompleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+        Mark task complete
+      </Button>
 
       {confirmDialogOpen && (
         <div style={{ background: 'var(--bg-raised)', border: '1px solid var(--hairline-strong)', borderRadius: 'var(--radius-md)', padding: 14, marginTop: 8 }}>
@@ -659,20 +656,22 @@ export default function WorkspacePage() {
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
             <Button
-              label="Confirm"
-              variant="primary"
               size="sm"
-              loading={isCompleting}
+              className="flex-1"
+              disabled={isCompleting}
               onClick={() => void handleComplete()}
-              style={{ flex: 1, justifyContent: 'center', background: 'var(--accent-green)', color: '#0D0F12' }}
-            />
+              style={{ background: 'var(--accent-green)', color: '#0D0F12' }}
+            >
+              Confirm
+            </Button>
             <Button
-              label="Cancel"
               variant="outline"
               size="sm"
+              className="flex-1"
               onClick={() => setConfirmDialogOpen(false)}
-              style={{ flex: 1, justifyContent: 'center' }}
-            />
+            >
+              Cancel
+            </Button>
           </div>
         </div>
       )}
@@ -756,7 +755,6 @@ export default function WorkspacePage() {
       </div>
 
       {ShortcutsPanel}
-      <ToastContainer toasts={toasts} dismiss={dismiss} />
     </>
   );
 }

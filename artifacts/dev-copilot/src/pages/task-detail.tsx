@@ -123,7 +123,7 @@ export default function TaskDetail() {
   };
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-500 pb-8">
+    <div className="flex flex-col gap-4 px-5 py-4 animate-in fade-in duration-500 pb-8">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => setLocation("/tasks")}>
           <ArrowLeft className="h-4 w-4" />
@@ -136,12 +136,12 @@ export default function TaskDetail() {
             <TaskStatusBadge status={task.status} />
             <Badge variant="outline" className="font-mono uppercase text-xs">{task.type}</Badge>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight mt-2">{task.title}</h1>
+          <h1 className="text-lg font-semibold tracking-tight mt-2">{task.title}</h1>
         </div>
         <div className="flex gap-2">
           <Button
             size="sm"
-            className="font-mono text-xs uppercase tracking-wider bg-primary hover:bg-primary/90"
+            className="font-mono text-xs bg-primary hover:bg-primary/90"
             onClick={() => setLocation(`/workspace/${task.id}`)}
           >
             <Zap className="mr-2 h-4 w-4" /> Generate Code
@@ -149,12 +149,12 @@ export default function TaskDetail() {
 
           <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="font-mono text-xs uppercase tracking-wider">
+              <Button variant="outline" size="sm" className="font-mono text-xs">
                 <Edit className="mr-2 h-4 w-4" /> Edit
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl border-primary/20 bg-background/95 backdrop-blur-xl h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle className="font-mono uppercase tracking-wider">Edit Task</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="font-mono">Edit Task</DialogTitle></DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onEdit)} className="space-y-4">
                   <FormField
@@ -162,7 +162,7 @@ export default function TaskDetail() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Title</FormLabel>
+                        <FormLabel className="font-mono text-xs text-muted-foreground">Title</FormLabel>
                         <FormControl><Input {...field} className="font-mono bg-muted/50" /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -175,7 +175,7 @@ export default function TaskDetail() {
                       name="status"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Status</FormLabel>
+                          <FormLabel className="font-mono text-xs text-muted-foreground">Status</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger className="font-mono text-xs bg-muted/50"><SelectValue /></SelectTrigger>
@@ -197,7 +197,7 @@ export default function TaskDetail() {
                       name="priority"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Priority</FormLabel>
+                          <FormLabel className="font-mono text-xs text-muted-foreground">Priority</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger className="font-mono text-xs bg-muted/50"><SelectValue /></SelectTrigger>
@@ -218,7 +218,7 @@ export default function TaskDetail() {
                       name="type"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Type</FormLabel>
+                          <FormLabel className="font-mono text-xs text-muted-foreground">Type</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger className="font-mono text-xs bg-muted/50"><SelectValue /></SelectTrigger>
@@ -239,7 +239,7 @@ export default function TaskDetail() {
                       name="repositoryId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Repository</FormLabel>
+                          <FormLabel className="font-mono text-xs text-muted-foreground">Repository</FormLabel>
                           <Select 
                             onValueChange={(val) => field.onChange(val === "none" ? null : parseInt(val))} 
                             defaultValue={field.value?.toString() || "none"}
@@ -265,7 +265,7 @@ export default function TaskDetail() {
                     name="linkedCommit"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Linked Commit SHA</FormLabel>
+                        <FormLabel className="font-mono text-xs text-muted-foreground">Linked Commit SHA</FormLabel>
                         <FormControl><Input {...field} value={field.value || ""} className="font-mono bg-muted/50" placeholder="e.g. a1b2c3d4" /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -277,7 +277,7 @@ export default function TaskDetail() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Description</FormLabel>
+                        <FormLabel className="font-mono text-xs text-muted-foreground">Description</FormLabel>
                         <FormControl><Textarea {...field} value={field.value || ""} className="min-h-[150px] font-mono text-sm bg-muted/50" /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -289,7 +289,7 @@ export default function TaskDetail() {
                     name="acceptanceCriteria"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Acceptance Criteria</FormLabel>
+                        <FormLabel className="font-mono text-xs text-muted-foreground">Acceptance Criteria</FormLabel>
                         <FormControl><Textarea {...field} value={field.value || ""} className="min-h-[100px] font-mono text-sm bg-muted/50" /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -307,12 +307,12 @@ export default function TaskDetail() {
 
           <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
             <DialogTrigger asChild>
-              <Button variant="destructive" size="sm" className="font-mono text-xs uppercase tracking-wider">
+              <Button variant="destructive" size="sm" className="font-mono text-xs">
                 <Trash2 className="mr-2 h-4 w-4" /> Delete
               </Button>
             </DialogTrigger>
             <DialogContent className="border-destructive/50 bg-background/95 backdrop-blur-xl">
-              <DialogHeader><DialogTitle className="font-mono uppercase tracking-wider text-destructive">Delete Task</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="font-mono text-destructive">Delete Task</DialogTitle></DialogHeader>
               <p className="text-sm text-muted-foreground">Are you sure you want to delete this task? This action cannot be undone.</p>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDeleteOpen(false)} className="font-mono text-xs">Cancel</Button>
@@ -347,7 +347,7 @@ export default function TaskDetail() {
         <div className="md:col-span-2 space-y-6">
           <Card>
             <CardHeader className="pb-3 border-b">
-              <CardTitle className="text-sm font-mono flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
+              <CardTitle className="text-sm font-mono flex items-center gap-2 text-muted-foreground">
                 <AlignLeft className="h-4 w-4" /> Description
               </CardTitle>
             </CardHeader>
@@ -364,7 +364,7 @@ export default function TaskDetail() {
 
           <Card>
             <CardHeader className="pb-3 border-b">
-              <CardTitle className="text-sm font-mono flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
+              <CardTitle className="text-sm font-mono flex items-center gap-2 text-muted-foreground">
                 <CheckSquare className="h-4 w-4" /> Acceptance Criteria
               </CardTitle>
             </CardHeader>
@@ -383,26 +383,26 @@ export default function TaskDetail() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-mono text-muted-foreground uppercase tracking-wider">Details</CardTitle>
+              <CardTitle className="text-sm font-mono text-muted-foreground">Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               
               <div className="flex flex-col gap-1 pb-3 border-b border-border/50">
-                <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider font-bold">Priority</span>
+                <span className="text-[10px] font-mono text-muted-foreground font-bold">Priority</span>
                 <span className={task.priority === 'high' || task.priority === 'critical' ? 'text-destructive font-mono font-bold uppercase text-sm' : 'font-mono uppercase text-sm'}>
                   {task.priority}
                 </span>
               </div>
 
               <div className="flex flex-col gap-1 pb-3 border-b border-border/50">
-                <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider font-bold">Source</span>
+                <span className="text-[10px] font-mono text-muted-foreground font-bold">Source</span>
                 <div className="flex items-center gap-2 text-sm font-medium capitalize">
                   <TaskSourceIcon source={task.source} /> {task.source.replace('-', ' ')}
                 </div>
               </div>
 
               <div className="flex flex-col gap-1 pb-3 border-b border-border/50">
-                <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider font-bold">Repository</span>
+                <span className="text-[10px] font-mono text-muted-foreground font-bold">Repository</span>
                 {task.repositoryId ? (
                   <div className="flex items-center gap-2 text-sm font-medium text-primary">
                     <Database className="h-4 w-4" />
@@ -455,7 +455,7 @@ export default function TaskDetail() {
               </div>
 
               <div className="flex flex-col gap-1 pb-3 border-b border-border/50">
-                <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider font-bold">Linked Commit</span>
+                <span className="text-[10px] font-mono text-muted-foreground font-bold">Linked Commit</span>
                 {task.linkedCommit ? (
                   <div className="flex items-center gap-2 text-sm font-mono bg-muted w-fit px-2 py-1 rounded">
                     <GitBranch className="h-3.5 w-3.5 text-muted-foreground" /> 
@@ -467,7 +467,7 @@ export default function TaskDetail() {
               </div>
 
               <div className="flex flex-col gap-1 pt-1">
-                <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider font-bold">Timestamps</span>
+                <span className="text-[10px] font-mono text-muted-foreground font-bold">Timestamps</span>
                 <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground mt-1">
                   <Clock className="h-3 w-3" /> Created: {format(new Date(task.createdAt), 'MMM d, yyyy HH:mm')}
                 </div>
