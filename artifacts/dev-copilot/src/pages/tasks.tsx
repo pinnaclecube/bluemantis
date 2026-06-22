@@ -186,22 +186,24 @@ function FilterSelect({
 export function TaskSourceIcon({ source }: { source: string }) {
   switch (source) {
     case "github": return <SiGithub className="h-4 w-4 shrink-0 text-muted-foreground" title="GitHub" />;
-    case "jira": return <SiJira className="h-4 w-4 shrink-0 text-[#4D9CFF]" title="Jira" />;
-    case "azure-devops": return <span title="Azure DevOps"><Cloud className="h-4 w-4 shrink-0 text-[#4D9CFF]" /></span>;
+    case "jira": return <SiJira className="h-4 w-4 shrink-0 text-muted-foreground" title="Jira" />;
+    case "azure-devops": return <span title="Azure DevOps"><Cloud className="h-4 w-4 shrink-0 text-muted-foreground" /></span>;
     default: return <span title="Manual"><CheckSquare className="h-4 w-4 shrink-0 text-muted-foreground" /></span>;
   }
 }
 
+const STATUS_DOT: Record<string, string> = {
+  open: "var(--text-muted)",
+  "in-progress": "#4d9cff",
+  review: "var(--accent-purple)",
+  done: "var(--accent-green)",
+  blocked: "var(--accent-red)",
+};
+
 export function TaskStatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    open: "bg-muted text-muted-foreground",
-    "in-progress": "bg-[#4D9CFF]/10 text-[#4D9CFF]",
-    review: "bg-[#8B7CF8]/10 text-[#8B7CF8]",
-    done: "bg-[#3DD68C]/10 text-[#3DD68C]",
-    blocked: "bg-destructive/10 text-destructive",
-  };
   return (
-    <span className={`rounded px-1.5 py-0.5 text-[11px] font-medium capitalize ${styles[status] ?? styles.open}`}>
+    <span className="inline-flex items-center gap-1.5 text-xs capitalize" style={{ color: "var(--text-secondary)" }}>
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: STATUS_DOT[status] ?? STATUS_DOT.open }} />
       {status.replace("-", " ")}
     </span>
   );

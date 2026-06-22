@@ -53,35 +53,11 @@ export default function Dashboard() {
         <p className="text-muted-foreground mt-1 text-xs">System Overview</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard 
-          title="Total Repositories" 
-          value={stats?.totalRepositories} 
-          icon={Database} 
-          loading={statsLoading}
-          testId="total-repositories"
-        />
-        <StatCard 
-          title="Active Tasks" 
-          value={(stats?.openTasks || 0) + (stats?.inProgressTasks || 0)} 
-          icon={Activity} 
-          loading={statsLoading}
-          testId="active-tasks"
-        />
-        <StatCard 
-          title="Completed Tasks" 
-          value={stats?.completedTasks} 
-          icon={CheckSquare} 
-          loading={statsLoading}
-          testId="completed-tasks"
-        />
-        <StatCard 
-          title="Linked Commits" 
-          value={stats?.linkedCommits} 
-          icon={GitCommit} 
-          loading={statsLoading}
-          testId="linked-commits"
-        />
+      <div className="grid grid-cols-2 divide-x divide-y divide-border overflow-hidden rounded-md border bg-card md:grid-cols-4 md:divide-y-0">
+        <Stat label="Repositories" value={stats?.totalRepositories} loading={statsLoading} testId="total-repositories" />
+        <Stat label="Active tasks" value={(stats?.openTasks || 0) + (stats?.inProgressTasks || 0)} loading={statsLoading} testId="active-tasks" />
+        <Stat label="Completed" value={stats?.completedTasks} loading={statsLoading} testId="completed-tasks" />
+        <Stat label="Linked commits" value={stats?.linkedCommits} loading={statsLoading} testId="linked-commits" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -174,7 +150,7 @@ export default function Dashboard() {
             <div className="space-y-4">
               {activity.map((item, i: number) => (
                 <div key={item.id ?? i} className="flex items-start gap-4 p-3 rounded-md hover:bg-muted/50 transition-colors border border-transparent hover:border-border" data-testid={`activity-item-${item.id}`}>
-                  <div className="mt-1 bg-primary/10 text-primary p-2 rounded-full">
+                  <div className="mt-0.5 text-muted-foreground">
                     {item.linkedCommit ? <GitCommit className="h-4 w-4" /> :
                      item.status === 'done' ? <CheckSquare className="h-4 w-4" /> :
                      <GitPullRequest className="h-4 w-4" />}
@@ -195,22 +171,15 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, icon: Icon, loading, testId }: { title: string; value?: number; icon: any; loading: boolean; testId: string }) {
+function Stat({ label, value, loading, testId }: { label: string; value?: number; loading: boolean; testId: string }) {
   return (
-    <Card>
-      <CardContent className="p-6 flex items-center justify-between">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          {loading ? (
-            <Skeleton className="h-8 w-16" />
-          ) : (
-            <p className="text-2xl font-semibold font-mono tracking-tight" data-testid={`stat-${testId}`}>{value}</p>
-          )}
-        </div>
-        <div className="p-4 bg-primary/10 rounded-full text-primary">
-          <Icon className="h-6 w-6" />
-        </div>
-      </CardContent>
-    </Card>
+    <div className="px-4 py-3.5">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      {loading ? (
+        <Skeleton className="mt-1.5 h-7 w-12" />
+      ) : (
+        <p className="mt-1 font-mono text-2xl font-semibold tracking-tight" data-testid={`stat-${testId}`}>{value ?? 0}</p>
+      )}
+    </div>
   );
 }
