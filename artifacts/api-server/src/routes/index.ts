@@ -5,11 +5,15 @@ import tasksRouter from "./tasks.js";
 import taskActionsRouter from "./taskActions.js";
 import statsRouter from "./stats.js";
 import configRouter from "./config.js";
+import waitlistRouter from "./waitlist.js";
 import { requireAuth } from "../middlewares/requireAuth.js";
 
 const router: IRouter = Router();
 
-// All routes require authentication (including health checks)
+// Public routes (no auth) — must be mounted BEFORE requireAuth.
+router.use(waitlistRouter);
+
+// All routes below require authentication (including health checks)
 router.use(requireAuth);
 
 router.use(healthRouter);
