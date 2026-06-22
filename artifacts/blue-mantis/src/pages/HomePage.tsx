@@ -61,7 +61,7 @@ function WaitlistForm() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "already" | "error">("idle");
   const [error, setError] = useState("");
 
   const submit = async (e: FormEvent) => {
@@ -75,16 +75,32 @@ function WaitlistForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, name, company }),
       });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; alreadyJoined?: boolean };
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error || "Something went wrong. Please try again.");
       }
-      setStatus("success");
+      setStatus(data.alreadyJoined ? "already" : "success");
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : "Something went wrong.");
     }
   };
+
+  if (status === "already") {
+    return (
+      <div className="wl-success">
+        <div className="wl-check" style={{ background: "rgba(77,148,216,0.15)", color: "var(--accent-blue)" }}>✓</div>
+        <h3 style={{ margin: "12px 0 4px", fontSize: 20 }}>You're already on the list</h3>
+        <p style={{ color: "var(--text-secondary)", margin: 0, fontSize: 15 }}>
+          <strong style={{ color: "var(--text-primary)" }}>{email}</strong> is already on the waitlist — we've got you.
+          We'll email you the moment Blue Mantis launches.
+        </p>
+        <a className="btn-linkedin" href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer" style={{ marginTop: 16 }}>
+          <LinkedInIcon /> Follow Venakan on LinkedIn
+        </a>
+      </div>
+    );
+  }
 
   if (status === "success") {
     return (
