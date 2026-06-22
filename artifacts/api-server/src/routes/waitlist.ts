@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { z } from "zod/v4";
 import { db, waitlistTable } from "@workspace/db";
-import { sendWaitlistNotification } from "../services/emailService.js";
+import { sendWaitlistNotification, sendWaitlistConfirmation } from "../services/emailService.js";
 
 const router: IRouter = Router();
 
@@ -39,10 +39,16 @@ router.post("/waitlist", async (req, res) => {
     })
     .returning();
 
-  // Fire-and-forget — never block (or fail) the signup on email delivery.
-  void sendWaitlistNotification({ email, name: clean(name), company: clean(company), role: clean(role) }).catch(
-    (err) => req.log.warn({ err }, "Waitlist notification email failed"),
-  );
+  // Await the emails so they finish before the serverless function freezes once
+  // the response is sent (fire-and-forget gets killed mid-connection on Vercel).
+  // Failures are logged but never fail the signup itself.
+  const entry = { email, name: clean(name), company: clean(company), role: clean(role) };
+  const [notify, confirm] = await Promise.allSettled([
+    sendWaitlistNotification(entry),
+    sendWaitlistConfirmation(entry),
+  ]);
+  if (notify.status === "rejected") req.log.warn({ err: notify.reason }, "Waitlist notification email failed");
+  if (confirm.status === "rejected") req.log.warn({ err: confirm.reason }, "Waitlist confirmation email failed");
 
   return res.status(201).json({ ok: true, id: row?.id });
 });
