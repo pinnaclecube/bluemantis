@@ -1,8 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 /* ──────────────────────────────────────────────────────────────────────────
-   Launch countdown target. ~10 days out — adjust this single constant to move
-   the launch date.
+   Launch countdown target — adjust this single constant to move the date.
    ────────────────────────────────────────────────────────────────────────── */
 const LAUNCH_DATE = new Date("2026-07-02T17:00:00Z");
 const LINKEDIN_URL = "https://www.linkedin.com/company/venakan/";
@@ -40,11 +39,17 @@ function useCountdown(target: Date) {
   };
 }
 
-function CountUnit({ value, label }: { value: number; label: string }) {
+function HeaderCountdown() {
+  const cd = useCountdown(LAUNCH_DATE);
+  if (cd.done) return <div className="cs-countdown"><span className="cdm-live">We're live 🎉</span></div>;
+  const pad = (n: number) => String(n).padStart(2, "0");
   return (
-    <div className="cd-unit">
-      <span className="cd-num">{String(value).padStart(2, "0")}</span>
-      <span className="cd-label">{label}</span>
+    <div className="cs-countdown" aria-label="Time until launch">
+      <span className="cdm-lead">Launching in</span>
+      <span className="cdm"><b>{pad(cd.days)}</b>d</span>
+      <span className="cdm"><b>{pad(cd.hours)}</b>h</span>
+      <span className="cdm"><b>{pad(cd.minutes)}</b>m</span>
+      <span className="cdm"><b>{pad(cd.seconds)}</b>s</span>
     </div>
   );
 }
@@ -90,13 +95,13 @@ function WaitlistForm() {
     return (
       <div className="wl-success">
         <div className="wl-check" style={{ background: "rgba(77,148,216,0.15)", color: "var(--accent-blue)" }}>✓</div>
-        <h3 style={{ margin: "12px 0 4px", fontSize: 20 }}>You're already on the list</h3>
-        <p style={{ color: "var(--text-secondary)", margin: 0, fontSize: 15 }}>
+        <h3 style={{ margin: "12px 0 4px", fontSize: 19 }}>You're already on the list</h3>
+        <p style={{ color: "var(--text-secondary)", margin: 0, fontSize: 14 }}>
           <strong style={{ color: "var(--text-primary)" }}>{email}</strong> is already on the waitlist — we've got you.
-          We'll email you the moment Blue Mantis launches.
+          We'll email you the moment we launch.
         </p>
         <a className="btn-linkedin" href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer" style={{ marginTop: 16 }}>
-          <LinkedInIcon /> Follow Venakan on LinkedIn
+          <LinkedInIcon /> Follow on LinkedIn
         </a>
       </div>
     );
@@ -106,12 +111,12 @@ function WaitlistForm() {
     return (
       <div className="wl-success">
         <div className="wl-check">✓</div>
-        <h3 style={{ margin: "12px 0 4px", fontSize: 20 }}>You're on the list</h3>
-        <p style={{ color: "var(--text-secondary)", margin: 0, fontSize: 15 }}>
-          We'll email you the moment Blue Mantis goes live. In the meantime, follow our journey:
+        <h3 style={{ margin: "12px 0 4px", fontSize: 19 }}>You're on the list</h3>
+        <p style={{ color: "var(--text-secondary)", margin: 0, fontSize: 14 }}>
+          We'll email you the moment Blue Mantis goes live. In the meantime, follow along:
         </p>
         <a className="btn-linkedin" href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer" style={{ marginTop: 16 }}>
-          <LinkedInIcon /> Follow Venakan on LinkedIn
+          <LinkedInIcon /> Follow on LinkedIn
         </a>
       </div>
     );
@@ -119,21 +124,17 @@ function WaitlistForm() {
 
   return (
     <form className="wl-form" onSubmit={submit}>
-      <div className="wl-row">
-        <input
-          className="wl-input"
-          type="email"
-          required
-          placeholder="Work email *"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          aria-label="Work email"
-        />
-      </div>
-      <div className="wl-row-2">
-        <input className="wl-input" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} aria-label="Name" />
-        <input className="wl-input" placeholder="Company" value={company} onChange={(e) => setCompany(e.target.value)} aria-label="Company" />
-      </div>
+      <input
+        className="wl-input"
+        type="email"
+        required
+        placeholder="Work email *"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        aria-label="Work email"
+      />
+      <input className="wl-input" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} aria-label="Name" />
+      <input className="wl-input" placeholder="Company" value={company} onChange={(e) => setCompany(e.target.value)} aria-label="Company" />
       <button className="wl-submit" type="submit" disabled={status === "loading"}>
         {status === "loading" ? "Joining…" : "Join the waitlist"}
       </button>
@@ -178,7 +179,6 @@ function AgentAnimation() {
 }
 
 export default function HomePage() {
-  const cd = useCountdown(LAUNCH_DATE);
   const base = import.meta.env.BASE_URL;
 
   return (
@@ -187,9 +187,10 @@ export default function HomePage() {
 
       <header className="cs-top">
         <div className="cs-brand">
-          <img src={`${base}logo.png`} alt="Blue Mantis" style={{ height: 26, width: "auto" }} />
+          <img src={`${base}logo.png`} alt="Blue Mantis" style={{ height: 24, width: "auto" }} />
           <span className="cs-word">Blue Mantis</span>
         </div>
+        <HeaderCountdown />
         <div className="cs-topright">
           <a className="btn-linkedin sm" href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
             <LinkedInIcon /> Follow
@@ -198,43 +199,28 @@ export default function HomePage() {
       </header>
 
       <main className="cs-main">
-        <span className="cs-badge">
-          <span className="cs-badge-dot" /> Private beta · launching soon
-        </span>
+        <section className="cs-hero">
+          <div className="cs-hero-left">
+            <h1 className="cs-h1">
+              The AI dev team that <span className="cs-em">ships your backlog</span>.
+            </h1>
+            <p className="cs-sub">
+              Blue Mantis connects to your PLMs and code repositories, picks up open work autonomously,
+              and hands you the authority to review and deploy — cutting delivery time on routine work
+              from days to minutes. Built for dev teams and enterprises managing real workloads.
+            </p>
+          </div>
 
-        <h1 className="cs-h1">
-          The AI dev team that <span className="cs-em">ships your backlog</span>.
-        </h1>
-
-        <p className="cs-sub">
-          Blue Mantis connects to your PLMs and code repositories, picks up open work autonomously,
-          and hands you the authority to review and deploy — cutting delivery time on routine work
-          from days to minutes. Built for dev teams and enterprises managing real workloads.
-        </p>
-
-        <div className="cd">
-          {cd.done ? (
-            <span className="cd-live">We're live 🎉</span>
-          ) : (
-            <>
-              <CountUnit value={cd.days} label="Days" />
-              <span className="cd-sep">:</span>
-              <CountUnit value={cd.hours} label="Hours" />
-              <span className="cd-sep">:</span>
-              <CountUnit value={cd.minutes} label="Min" />
-              <span className="cd-sep">:</span>
-              <CountUnit value={cd.seconds} label="Sec" />
-            </>
-          )}
-        </div>
+          <div className="cs-hero-right">
+            <div className="wl-card" id="waitlist">
+              <h2 className="wl-title">Join the waitlist</h2>
+              <p className="wl-desc">Be first in line for early access at launch.</p>
+              <WaitlistForm />
+            </div>
+          </div>
+        </section>
 
         <AgentAnimation />
-
-        <div className="wl-card" id="waitlist">
-          <h2 className="wl-title">Be first in line</h2>
-          <p className="wl-desc">Join the waitlist for early access when we launch.</p>
-          <WaitlistForm />
-        </div>
 
         <div className="feat">
           {FEATURES.map((f) => (
@@ -263,15 +249,29 @@ const CS_STYLES = `
 .cs {
   min-height: 100vh; position: relative; overflow: hidden;
   background:
-    radial-gradient(900px 500px at 50% -10%, rgba(2,184,160,0.16), transparent 70%),
-    radial-gradient(700px 400px at 85% 10%, rgba(77,148,216,0.12), transparent 70%),
+    radial-gradient(900px 500px at 30% -10%, rgba(2,184,160,0.16), transparent 70%),
+    radial-gradient(700px 400px at 90% 0%, rgba(77,148,216,0.12), transparent 70%),
     var(--bg-app);
   display: flex; flex-direction: column;
 }
-.cs-top { display: flex; align-items: center; justify-content: space-between; padding: 20px 28px; max-width: 1120px; margin: 0 auto; width: 100%; box-sizing: border-box; }
-.cs-brand { display: flex; align-items: center; gap: 10px; }
-.cs-word { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
-.cs-topright { display: flex; align-items: center; gap: 16px; }
+.cs-top {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  padding: 16px 28px; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box;
+}
+.cs-brand { display: flex; align-items: center; gap: 10px; justify-self: start; }
+.cs-word { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.cs-topright { justify-self: end; }
+
+/* compact header countdown */
+.cs-countdown {
+  justify-self: center; display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--border); background: var(--bg-surface);
+  padding: 5px 12px; border-radius: 999px;
+  font-family: var(--font-mono); font-size: 12.5px; color: var(--text-muted); white-space: nowrap;
+}
+.cdm-lead { font-family: var(--font-sans); color: var(--text-muted); font-size: 12px; margin-right: 1px; }
+.cdm b { color: var(--text-primary); font-weight: 700; }
+.cdm-live { color: var(--accent-teal); font-weight: 700; font-family: var(--font-sans); }
 
 .btn-linkedin {
   display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
@@ -281,35 +281,40 @@ const CS_STYLES = `
 .btn-linkedin:hover { filter: brightness(1.08); }
 .btn-linkedin.sm { padding: 7px 12px; font-size: 13px; }
 
-.cs-main { flex: 1; max-width: 880px; margin: 0 auto; width: 100%; box-sizing: border-box; padding: 32px 28px 64px; text-align: center; }
+.cs-main { flex: 1; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box; padding: 28px 28px 64px; }
 
-.cs-badge {
-  display: inline-flex; align-items: center; gap: 8px;
-  border: 1px solid var(--border-bright); border-radius: 999px;
-  padding: 6px 14px; font-size: 13px; color: var(--text-secondary);
-  background: rgba(2,184,160,0.06); animation: fadeInUp 0.5s ease both;
-}
-.cs-badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-teal); animation: pulseDot 1.8s infinite; }
-
+/* two-pane hero: 70% messaging / 30% form */
+.cs-hero { display: grid; grid-template-columns: minmax(0, 7fr) minmax(312px, 3fr); gap: 48px; align-items: center; margin: 24px 0 8px; }
+.cs-hero-left { text-align: left; }
 .cs-h1 {
   font-family: var(--font-serif); font-weight: 600; line-height: 1.05;
-  font-size: clamp(36px, 6vw, 60px); letter-spacing: -0.02em;
-  margin: 22px 0 0; animation: fadeInUp 0.5s ease 0.05s both;
+  font-size: clamp(34px, 4.4vw, 56px); letter-spacing: -0.02em;
+  margin: 0; animation: fadeInUp 0.5s ease both;
 }
 .cs-em { color: var(--accent-teal); font-style: italic; }
 .cs-sub {
-  max-width: 620px; margin: 18px auto 0; color: var(--text-secondary);
-  font-size: clamp(15px, 2vw, 18px); line-height: 1.6; animation: fadeInUp 0.5s ease 0.1s both;
+  max-width: 560px; margin: 18px 0 0; color: var(--text-secondary);
+  font-size: clamp(15px, 1.4vw, 18px); line-height: 1.6; animation: fadeInUp 0.5s ease 0.08s both;
 }
 
-.cd { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 32px 0 8px; animation: fadeInUp 0.5s ease 0.15s both; }
-.cd-unit { display: flex; flex-direction: column; align-items: center; min-width: 72px; padding: 12px 8px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-surface); }
-.cd-num { font-family: var(--font-mono); font-size: clamp(28px, 5vw, 40px); font-weight: 700; color: var(--text-primary); line-height: 1; }
-.cd-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); margin-top: 8px; }
-.cd-sep { font-size: 28px; color: var(--text-muted); font-family: var(--font-mono); }
-.cd-live { font-size: 24px; font-weight: 700; color: var(--accent-teal); }
+.cs-hero-right { animation: fadeInUp 0.5s ease 0.14s both; }
+.wl-card { border: 1px solid var(--border); background: var(--bg-surface); border-radius: var(--radius-lg); padding: 24px; }
+.wl-title { font-size: 19px; font-weight: 700; margin: 0; }
+.wl-desc { color: var(--text-secondary); margin: 6px 0 16px; font-size: 13.5px; }
+.wl-form { display: flex; flex-direction: column; gap: 10px; }
+.wl-input { width: 100%; box-sizing: border-box; background: var(--bg-app); border: 1px solid var(--border-bright); border-radius: var(--radius-md); padding: 11px 13px; color: var(--text-primary); font-size: 14px; font-family: var(--font-sans); outline: none; }
+.wl-input:focus { border-color: var(--accent-teal); }
+.wl-input::placeholder { color: var(--text-muted); }
+.wl-submit { margin-top: 2px; background: var(--accent-teal); color: #04221d; border: none; border-radius: var(--radius-md); padding: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font-sans); }
+.wl-submit:hover:not(:disabled) { filter: brightness(1.06); }
+.wl-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.wl-error { color: var(--accent-red); font-size: 13px; margin: 4px 0 0; }
+.wl-fine { color: var(--text-muted); font-size: 12px; margin: 6px 0 0; }
+.wl-success { text-align: center; padding: 8px 0; display: flex; flex-direction: column; align-items: center; }
+.wl-check { width: 46px; height: 46px; border-radius: 50%; background: rgba(2,184,160,0.15); color: var(--accent-teal); display: flex; align-items: center; justify-content: center; font-size: 23px; font-weight: 700; }
 
-.agents { margin: 40px auto 8px; max-width: 720px; animation: fadeInUp 0.5s ease 0.2s both; }
+/* agents */
+.agents { margin: 36px auto 8px; max-width: 760px; animation: fadeInUp 0.5s ease 0.2s both; }
 .agents-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .agent { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-surface); padding: 12px; text-align: left; animation: fadeInUp 0.5s ease both; }
 .agent-head { display: flex; align-items: center; gap: 8px; }
@@ -327,27 +332,11 @@ const CS_STYLES = `
 .pipe-link { position: absolute; top: 5px; left: 50%; width: 100%; height: 2px; background: var(--border-bright); z-index: 0; }
 .pipe-flow { position: absolute; top: 3px; left: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-teal); box-shadow: 0 0 10px var(--accent-teal); animation: flow 3.2s linear infinite; }
 
-.wl-card { margin: 48px auto 0; max-width: 460px; border: 1px solid var(--border); background: var(--bg-surface); border-radius: var(--radius-lg); padding: 28px; animation: fadeInUp 0.5s ease 0.25s both; }
-.wl-title { font-size: 22px; font-weight: 700; margin: 0; }
-.wl-desc { color: var(--text-secondary); margin: 6px 0 18px; font-size: 14px; }
-.wl-form { display: flex; flex-direction: column; gap: 10px; }
-.wl-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.wl-input { width: 100%; box-sizing: border-box; background: var(--bg-app); border: 1px solid var(--border-bright); border-radius: var(--radius-md); padding: 11px 13px; color: var(--text-primary); font-size: 14px; font-family: var(--font-sans); outline: none; }
-.wl-input:focus { border-color: var(--accent-teal); }
-.wl-input::placeholder { color: var(--text-muted); }
-.wl-submit { margin-top: 4px; background: var(--accent-teal); color: #04221d; border: none; border-radius: var(--radius-md); padding: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font-sans); }
-.wl-submit:hover:not(:disabled) { filter: brightness(1.06); }
-.wl-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-.wl-error { color: var(--accent-red); font-size: 13px; margin: 4px 0 0; }
-.wl-fine { color: var(--text-muted); font-size: 12px; margin: 6px 0 0; }
-.wl-success { text-align: center; padding: 8px 0; display: flex; flex-direction: column; align-items: center; }
-.wl-check { width: 48px; height: 48px; border-radius: 50%; background: rgba(2,184,160,0.15); color: var(--accent-teal); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; }
-
-.feat { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 56px auto 0; text-align: left; animation: fadeInUp 0.5s ease 0.3s both; }
+.feat { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 52px auto 0; text-align: left; animation: fadeInUp 0.5s ease 0.3s both; }
 .feat-title { font-size: 14px; font-weight: 700; margin: 0 0 6px; }
 .feat-body { font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.5; }
 
-.cs-foot { border-top: 1px solid var(--border); padding: 22px 28px; display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; max-width: 1120px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+.cs-foot { border-top: 1px solid var(--border); padding: 22px 28px; display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box; }
 .cs-foot-link { display: inline-flex; align-items: center; gap: 7px; color: var(--text-secondary); text-decoration: none; font-size: 13px; }
 .cs-foot-link:hover { color: var(--text-primary); }
 .cs-foot-powered { font-size: 13px; color: var(--text-secondary); }
@@ -359,10 +348,15 @@ const CS_STYLES = `
 @keyframes load { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
 @keyframes flow { 0% { left: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { left: 100%; opacity: 0; } }
 
+@media (max-width: 900px) {
+  .cs-hero { grid-template-columns: 1fr; gap: 28px; }
+  .cs-hero-right { max-width: 460px; }
+}
 @media (max-width: 680px) {
+  .cs-countdown { display: none; }
+  .cs-top { grid-template-columns: 1fr auto; }
   .agents-grid { grid-template-columns: repeat(2, 1fr); }
   .feat { grid-template-columns: repeat(2, 1fr); }
   .pipe-label { font-size: 10px; }
-  .cd-unit { min-width: 60px; }
 }
 `;
