@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
    Launch countdown target. ~10 days out — adjust this single constant to move
    the launch date.
    ────────────────────────────────────────────────────────────────────────── */
-const LAUNCH_DATE = new Date("2026-07-01T17:00:00Z");
+const LAUNCH_DATE = new Date("2026-07-02T17:00:00Z");
 const LINKEDIN_URL = "https://www.linkedin.com/company/venakan/";
 
 const AGENTS = [
