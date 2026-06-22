@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -13,7 +13,7 @@ export const waitlistTable = pgTable(
     source: text("source"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("waitlist_email_idx").on(t.email)],
+  (t) => [uniqueIndex("waitlist_email_idx").on(t.email)],
 );
 
 export const insertWaitlistSchema = createInsertSchema(waitlistTable).omit({

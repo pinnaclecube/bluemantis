@@ -50,7 +50,13 @@ router.post("/waitlist", async (req, res) => {
       role: clean(role),
       source: "getbluemantis.com",
     })
+    .onConflictDoNothing({ target: waitlistTable.email })
     .returning();
+
+  // Lost a race to a concurrent insert (unique index on email) → already joined.
+  if (!row) {
+    return res.status(200).json({ ok: true, alreadyJoined: true });
+  }
 
   // Await the emails so they finish before the serverless function freezes once
   // the response is sent (fire-and-forget gets killed mid-connection on Vercel).
