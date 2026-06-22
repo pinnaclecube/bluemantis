@@ -1,7 +1,7 @@
 import { logger } from "../lib/logger.js";
 
 /** Where new waitlist signups are emailed. */
-const NOTIFY_TO = "arvind.kandula@devcare.com";
+const NOTIFY_TO = "arvind.kandula@venakaninfo.com";
 
 export interface WaitlistEntry {
   email: string;

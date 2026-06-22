@@ -178,7 +178,6 @@ export default function HomePage() {
           <a className="btn-linkedin sm" href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
             <LinkedInIcon /> Follow
           </a>
-          <a className="cs-signin" href="/app/sign-in">Sign in</a>
         </div>
       </header>
 
@@ -257,8 +256,6 @@ const CS_STYLES = `
 .cs-brand { display: flex; align-items: center; gap: 10px; }
 .cs-word { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
 .cs-topright { display: flex; align-items: center; gap: 16px; }
-.cs-signin { color: var(--text-secondary); font-size: 14px; text-decoration: none; }
-.cs-signin:hover { color: var(--text-primary); }
 
 .btn-linkedin {
   display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
