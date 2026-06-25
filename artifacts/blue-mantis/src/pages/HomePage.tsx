@@ -3,7 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 /* ──────────────────────────────────────────────────────────────────────────
    Launch countdown target — adjust this single constant to move the date.
    ────────────────────────────────────────────────────────────────────────── */
-const LAUNCH_DATE = new Date("2026-07-02T17:00:00Z");
+const LAUNCH_DATE = new Date("2026-07-05T17:00:00Z");
 const LINKEDIN_URL = "https://www.linkedin.com/company/venakan/";
 
 const AGENTS = [
