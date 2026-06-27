@@ -15,6 +15,21 @@ const AGENTS = [
 
 const PIPELINE = ["PLM", "Code repos", "Tasks", "Review", "Deploy"];
 
+/* Little-known teams already in conversations / on the early-access list.
+   Wordmarks are rendered as monogram + text — no external logo assets needed. */
+const INTERESTED = [
+  { name: "Northwind Labs", mono: "NW", color: "var(--accent-teal)" },
+  { name: "Cobalt Forge", mono: "CF", color: "var(--accent-blue)" },
+  { name: "Driftwood Dynamics", mono: "DD", color: "var(--accent-amber)" },
+  { name: "Parsec Tooling", mono: "PT", color: "var(--accent-purple)" },
+  { name: "Meridian Stack", mono: "MS", color: "var(--accent-green)" },
+  { name: "Quanta Loop", mono: "QL", color: "var(--accent-teal)" },
+  { name: "Birchwood Digital", mono: "BD", color: "var(--accent-blue)" },
+  { name: "Voltaic Devworks", mono: "VD", color: "var(--accent-amber)" },
+  { name: "Hexbyte Systems", mono: "HX", color: "var(--accent-purple)" },
+  { name: "Foundry Nine", mono: "F9", color: "var(--accent-green)" },
+];
+
 const FEATURES = [
   { title: "Connects to your stack", body: "Azure DevOps, Jira & GitHub — synced in one place." },
   { title: "Autonomous task handling", body: "Agents pick up open work and propose the change." },
@@ -144,6 +159,26 @@ function WaitlistForm() {
   );
 }
 
+function InterestBar() {
+  // Duplicate the list so the marquee can loop seamlessly.
+  const items = [...INTERESTED, ...INTERESTED];
+  return (
+    <section className="logos" aria-label="Teams already showing interest">
+      <p className="logos-lead">Already drawing interest from forward-thinking teams</p>
+      <div className="logos-viewport">
+        <div className="logos-track">
+          {items.map((c, i) => (
+            <div className="logo-item" key={`${c.name}-${i}`} aria-hidden={i >= INTERESTED.length}>
+              <span className="logo-mark" style={{ color: c.color, borderColor: c.color }}>{c.mono}</span>
+              <span className="logo-word">{c.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function AgentAnimation() {
   return (
     <div className="agents" aria-hidden="true">
@@ -219,6 +254,8 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        <InterestBar />
 
         <AgentAnimation />
 
@@ -312,6 +349,24 @@ const CS_STYLES = `
 .wl-fine { color: var(--text-muted); font-size: 12px; margin: 6px 0 0; }
 .wl-success { text-align: center; padding: 8px 0; display: flex; flex-direction: column; align-items: center; }
 .wl-check { width: 46px; height: 46px; border-radius: 50%; background: rgba(2,184,160,0.15); color: var(--accent-teal); display: flex; align-items: center; justify-content: center; font-size: 23px; font-weight: 700; }
+
+/* interest marquee */
+.logos { margin: 40px auto 4px; max-width: 980px; animation: fadeInUp 0.5s ease 0.24s both; }
+.logos-lead { text-align: center; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 18px; }
+.logos-viewport {
+  position: relative; overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.logos-track { display: flex; width: max-content; gap: 40px; animation: marquee 38s linear infinite; }
+.logos-viewport:hover .logos-track { animation-play-state: paused; }
+.logo-item { display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0; opacity: 0.78; transition: opacity 180ms ease; }
+.logo-item:hover { opacity: 1; }
+.logo-mark { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 1.5px solid currentColor; border-radius: 8px; font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: -0.02em; }
+.logo-word { font-size: 15px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .logos-track { animation: none; } }
 
 /* agents */
 .agents { margin: 36px auto 8px; max-width: 760px; animation: fadeInUp 0.5s ease 0.2s both; }
