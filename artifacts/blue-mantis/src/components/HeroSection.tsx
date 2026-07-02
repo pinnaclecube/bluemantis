@@ -1,9 +1,9 @@
 import AnimatedCodeWindow from './AnimatedCodeWindow';
 
 const stats = [
-  { number: '73%', color: 'var(--accent-blue)', label: 'Task close rate', sub: 'vs 31% Copilot benchmark' },
-  { number: '78%', color: 'var(--accent-teal)', label: 'Faster to first PR', sub: '43 min avg vs 3.2 hrs' },
-  { number: 'NPS 67', color: 'var(--accent-green)', label: 'Developer satisfaction', sub: 'after first sprint' },
+  { number: '4', color: 'var(--accent-blue)', label: 'AI agents per task', sub: 'Claude · GPT-4o · Copilot · AntiGravity' },
+  { number: '1 click', color: 'var(--accent-teal)', label: 'Task → commit → PR', sub: 'Branch, PR and ticket close, automated' },
+  { number: '3', color: 'var(--accent-green)', label: 'Systems, one workflow', sub: 'JIRA · Azure DevOps · GitHub' },
 ];
 
 export default function HeroSection() {
@@ -97,7 +97,7 @@ export default function HeroSection() {
               position: 'relative',
               display: 'inline-block',
             }}>
-              58%
+              half
             </span>
             <br />
             of every developer's week.

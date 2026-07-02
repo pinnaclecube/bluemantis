@@ -1,11 +1,11 @@
 import { useScrollReveal } from '../hooks/useScrollReveal';
 
 const cards = [
-  { number: '73%', color: 'var(--accent-blue)', accentBar: 'var(--accent-blue)', label: 'task close rate', context: 'vs GitHub Copilot benchmark of 31%', subtext: 'More than twice the completion rate of the most-used AI tool.' },
-  { number: '78%', color: 'var(--accent-teal)', accentBar: 'var(--accent-teal)', label: 'faster to first PR', context: '43 min avg, down from 3.2 hrs', subtext: 'Not incremental improvement. A different category of tool.' },
-  { number: 'NPS 67', color: 'var(--accent-green)', accentBar: 'var(--accent-green)', label: 'developer satisfaction', context: 'Measured after the first sprint', subtext: '"I actually trust the recommendation badge."' },
-  { number: '61%', color: 'var(--accent-amber)', accentBar: 'var(--accent-amber)', label: 'chose a different agent', context: 'Than the #1-ranked recommendation', subtext: 'This is the number that proves the multi-agent debate layer works.' },
-  { number: '3 LOIs', color: 'var(--accent-blue)', accentBar: 'var(--accent-blue)', label: '$240K ARR pipeline', context: 'Converting to paid contracts on GA launch', subtext: 'Enterprise conversations in progress. Average potential ACV $380K.' },
+  { number: '4', color: 'var(--accent-blue)', accentBar: 'var(--accent-blue)', label: 'agents on every task', context: 'Claude · GPT-4o · Copilot · AntiGravity', subtext: 'Four independent attempts at every change — not one autocomplete guess.' },
+  { number: '1 click', color: 'var(--accent-teal)', accentBar: 'var(--accent-teal)', label: 'task → PR → closed', context: 'Branch, commit, PR and ticket close', subtext: 'The busywork between a ticket and a commit, fully automated.' },
+  { number: '3', color: 'var(--accent-green)', accentBar: 'var(--accent-green)', label: 'systems, one loop', context: 'JIRA · Azure DevOps · GitHub', subtext: 'Your backlog and your repository, finally connected.' },
+  { number: 'Ranked', color: 'var(--accent-amber)', accentBar: 'var(--accent-amber)', label: 'every suggestion scored', context: 'Correctness · readability · minimal diff · convention', subtext: 'A synthesis pass ranks all four and explains why the top one won.' },
+  { number: 'Yours', color: 'var(--accent-blue)', accentBar: 'var(--accent-blue)', label: 'your code stays yours', context: 'Only the active task’s file context is sent', subtext: 'Credentials stay in your environment. We never store your code.' },
 ];
 
 function MetricCard({ card, wide = false }: { card: typeof cards[0]; wide?: boolean }) {
@@ -40,9 +40,9 @@ export default function ProofSection() {
     <section id="proof" style={{ background: 'var(--bg-app)', padding: '96px 24px' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <div ref={header.ref as any} style={header.style}>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--accent-teal)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 12px' }}>Proof</p>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 44px)', color: 'var(--text-primary)', margin: 0 }}>Real signal from real developers.</h2>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: 'var(--text-muted)', marginTop: 12 }}>Pre-revenue. 120 developers across 14 teams. Beta validated.</p>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--accent-teal)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 12px' }}>Why it's different</p>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 44px)', color: 'var(--text-primary)', margin: 0 }}>Not another autocomplete.</h2>
+          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: 'var(--text-muted)', marginTop: 12 }}>A structured, multi-agent review loop — connected to the task and the repo, with you in control.</p>
         </div>
 
         <div ref={row1.ref as any} style={{ display: 'flex', gap: 20, marginTop: 48, flexWrap: 'wrap', ...row1.style }}>
@@ -57,12 +57,12 @@ export default function ProofSection() {
           borderLeft: '4px solid var(--accent-blue)', borderRadius: 'var(--radius-md)',
           padding: '28px 32px', marginTop: 32, ...insight.style,
         }}>
-          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10, letterSpacing: '0.1em', color: 'var(--accent-blue)' }}>KEY FINDING</div>
+          <div style={{ fontFamily: 'var(--font-sans)', fontSize: 10, letterSpacing: '0.1em', color: 'var(--accent-blue)' }}>THE CORE IDEA</div>
           <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 20, color: 'var(--text-primary)', marginTop: 8 }}>
-            Why 61% is the most important number on this page.
+            Why four opinions beat one.
           </div>
           <p style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: 'var(--text-secondary)', marginTop: 12, maxWidth: 700, lineHeight: 1.7 }}>
-            If developers always accepted the top-ranked suggestion, Blue Mantis would just be a Copilot wrapper with a nicer interface. The fact that 61% of the time they choose a different agent — after reviewing all four — proves that seeing multiple opinions changes the decision. That is the product working exactly as designed.
+            A single AI suggestion is a guess you have to trust. Blue Mantis runs four agents in parallel, has them critique and score each other, and shows you all four side by side with the strongest ranked first — and a plain-English reason it won. You review real alternatives, then you decide. That review loop is the product.
           </p>
         </div>
       </div>

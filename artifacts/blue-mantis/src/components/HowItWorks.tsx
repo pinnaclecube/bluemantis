@@ -156,9 +156,9 @@ export default function HowItWorks() {
               borderRadius: 'var(--radius-md)', padding: '24px 28px',
               borderLeft: '4px solid var(--accent-teal)',
             }}>
-              <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 42, color: 'var(--accent-teal)', lineHeight: 1 }}>43 min</div>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--text-secondary)', marginTop: 6 }}>Average task to PR</div>
-              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontStyle: 'italic', color: 'var(--text-muted)', marginTop: 4 }}>Down from 3.2 hrs self-reported</div>
+              <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 42, color: 'var(--accent-teal)', lineHeight: 1 }}>Minutes</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--text-secondary)', marginTop: 6 }}>From task to open PR</div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontStyle: 'italic', color: 'var(--text-muted)', marginTop: 4 }}>The busywork between ticket and commit, automated</div>
             </div>
             <div style={{
               flex: 1, minWidth: 240, background: 'var(--bg-surface)', border: '1px solid var(--border)',

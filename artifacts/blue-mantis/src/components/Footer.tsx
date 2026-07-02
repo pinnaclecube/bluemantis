@@ -14,8 +14,8 @@ const Logo = () => (
 const cols = [
   {
     title: 'Product',
-    links: ['How it works', 'Integrations', 'Security', 'Docs', 'Changelog'],
-    hrefs: ['#how-it-works', '#integrations', '/security', '#docs', '#docs'],
+    links: ['How it works', 'Integrations', 'Security'],
+    hrefs: ['#how-it-works', '#integrations', '/security'],
   },
   {
     title: 'Pricing',
@@ -24,13 +24,8 @@ const cols = [
   },
   {
     title: 'Company',
-    links: ['About', 'Blog', 'Careers', 'Contact'],
-    hrefs: ['#', '#blog', '#', 'mailto:sales@getbluemantis.com'],
-  },
-  {
-    title: 'Legal',
-    links: ['Privacy policy', 'Terms of service', 'Security brief'],
-    hrefs: ['#', '#', '/security'],
+    links: ['Security', 'Contact'],
+    hrefs: ['/security', 'mailto:sales@getbluemantis.com'],
   },
 ];
 
@@ -71,9 +66,11 @@ export default function Footer() {
           <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--text-muted)' }}>
             © 2026 Blue Mantis. All rights reserved.
           </span>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--text-muted)' }}>
-            +1 (800) BLU-MANT
-          </span>
+          <a href="mailto:sales@getbluemantis.com" style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>
+            sales@getbluemantis.com
+          </a>
         </div>
       </div>
     </footer>

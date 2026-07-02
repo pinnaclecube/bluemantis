@@ -81,7 +81,7 @@ export default function ROICalculator() {
               ))}
             </div>
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontStyle: 'italic', color: 'var(--text-muted)', marginTop: 16 }}>
-              Conservative estimate. Beta teams have seen up to 78% improvement.
+              These are your inputs — adjust them to match your team and stack.
             </p>
           </div>
 

@@ -2,8 +2,8 @@ import { useScrollReveal } from '../hooks/useScrollReveal';
 
 const stats = [
   {
-    number: '58%', color: 'var(--accent-blue)',
-    label: 'of every developer week is non-coding work',
+    number: 'Half', color: 'var(--accent-blue)',
+    label: 'of every developer week goes to non-coding work',
     sub: 'Context switching, ticket admin, PR overhead.',
   },
   {
@@ -12,8 +12,8 @@ const stats = [
     sub: 'None of these tools talk to each other.',
   },
   {
-    number: '$47K', color: 'var(--accent-amber)',
-    label: 'lost per developer per year',
+    number: 'Days', color: 'var(--accent-amber)',
+    label: 'of delivery time lost to handoffs each sprint',
     sub: 'Not from complexity. From administrative friction alone.',
   },
 ];
