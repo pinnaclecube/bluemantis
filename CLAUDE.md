@@ -352,11 +352,37 @@ Direct `fetch` calls in `src/services/api.ts`. No Axios. URLs are relative (`/ap
 --font-serif:     'Fraunces', serif
 ```
 
-### Page sections (in order)
+### Launch state — routing + the `LAUNCHED` switch
+The marketing site currently ships in **pre-launch (waitlist) mode**. Routing lives in `src/App.tsx`, gated by a single flag:
+
+```ts
+const LAUNCHED = false; // flip to true at launch
+```
+
+| Route | `LAUNCHED = false` (now) | `LAUNCHED = true` (launch) |
+|---|---|---|
+| `/` | Waitlist / coming-soon page (`HomePage.tsx`) | Full marketing landing page (`LandingPage.tsx`) |
+| `/preview` | Full landing page (for review) | Full landing page |
+| `/waitlist` | Waitlist page | Waitlist page |
+| `/security` | `SecurityPage.tsx` | `SecurityPage.tsx` |
+
+- `HomePage.tsx` = waitlist page (countdown + `POST /api/waitlist`), the live homepage today.
+- `LandingPage.tsx` = the full marketing site, assembled from the section components below. It is **prepped but not active** — flip `LAUNCHED`, commit, and redeploy (Replit autoscale, via the Deploy pane) to go live.
+
+### Page sections (in order) — `LandingPage.tsx`
 `Navbar` → `HeroSection` → `StatsBar` → `HowItWorks` → `ProductSection` → `ProofSection` → `ROICalculator` → `IntegrationsSection` → `PricingSection` → `Footer`
+(`CTASection.tsx` exists but is intentionally excluded from the assembly.)
+
+### Marketing claims — keep them defensible
+Landing-page copy must avoid **fabricated metrics / traction** (e.g. exact close rates, NPS, "$X ARR", "N beta teams", LOIs). Use product-fact / directional framing instead (number of agents, one-click flow, integrations). Earlier drafts had invented figures; these were softened for launch — do not reintroduce hard numbers unless they're real and sourced.
+
+### Pre-launch to-do (not blocking, tracked here)
+- Real **Privacy policy** and **Terms of service** pages — currently hidden from nav/footer, not stubbed.
+- Confirm `sales@getbluemantis.com` is a monitored inbox (used across footer/pricing CTAs).
 
 ### CTA routing
 All "Start free" / "Sign up" buttons route to `/app/sign-up`. "Sign in" routes to `/app/sign-in`.
+Pricing/contact CTAs open `mailto:sales@getbluemantis.com`.
 
 ### Scroll reveal
 `useScrollReveal` hook uses `react-intersection-observer` — elements start at `opacity: 0` until they enter the viewport. **Do not apply this to the HeroSection** (hero is always in view and will appear blank in screenshots).
