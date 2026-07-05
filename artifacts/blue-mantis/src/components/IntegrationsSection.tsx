@@ -42,9 +42,7 @@ export default function IntegrationsSection() {
   return (
     <section id="integrations" className="lp-section">
       <div className="lp-container">
-        <div ref={header.ref as any} style={{ textAlign: 'center', ...header.style }}>
-          <p className="lp-eyebrow lp-center">Integrations</p>
-          <h2 className="lp-h2">No rip and replace.</h2>
+        <div ref={header.ref as any} style={{ textAlign: 'center', ...header.style }}>          <h2 className="lp-h2">No rip and replace.</h2>
           <p className="lp-lead">Blue Mantis sits on top of what your team already uses.</p>
         </div>
 

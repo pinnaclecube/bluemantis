@@ -43,9 +43,7 @@ export default function ROICalculator() {
   return (
     <section id="roi" className="lp-section">
       <div className="lp-container">
-        <div ref={header.ref as any} style={{ textAlign: 'center', ...header.style }}>
-          <p className="lp-eyebrow lp-center">Return on investment</p>
-          <h2 className="lp-h2">What does this mean <span className="lp-grad">for your team?</span></h2>
+        <div ref={header.ref as any} style={{ textAlign: 'center', ...header.style }}>          <h2 className="lp-h2">What does this mean <span className="lp-grad">for your team?</span></h2>
           <p className="lp-lead">Drag the sliders. See your return — live.</p>
         </div>
 

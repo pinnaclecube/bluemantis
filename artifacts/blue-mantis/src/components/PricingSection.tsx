@@ -76,9 +76,7 @@ export default function PricingSection() {
   return (
     <section id="pricing" className="lp-section">
       <div className="lp-container">
-        <div ref={header.ref as any} style={{ textAlign: 'center', ...header.style }}>
-          <p className="lp-eyebrow lp-center">Pricing</p>
-          <h2 className="lp-h2">Start free. <span className="lp-grad">Upgrade when it works.</span></h2>
+        <div ref={header.ref as any} style={{ textAlign: 'center', ...header.style }}>          <h2 className="lp-h2">Start free. <span className="lp-grad">Upgrade when it works.</span></h2>
           <p className="lp-lead">Most teams upgrade after their first sprint. No pressure.</p>
         </div>
 

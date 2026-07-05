@@ -27,9 +27,7 @@ export default function HowItWorks() {
   return (
     <section id="how-it-works" className="lp-section">
       <div className="lp-container">
-        <div ref={header.ref as any} style={{ textAlign: 'center', marginBottom: 52, ...header.style }}>
-          <p className="lp-eyebrow lp-center">How it works</p>
-          <h2 className="lp-h2">Task to committed PR — <span className="lp-grad">one loop</span>.</h2>
+        <div ref={header.ref as any} style={{ textAlign: 'center', marginBottom: 52, ...header.style }}>          <h2 className="lp-h2">Task to committed PR — <span className="lp-grad">one loop</span>.</h2>
           <p className="lp-lead">Seven steps. The developer makes exactly one decision.</p>
         </div>
 

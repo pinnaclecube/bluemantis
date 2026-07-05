@@ -13,9 +13,7 @@ export default function StatsBar() {
   return (
     <section className="lp-section" style={{ paddingTop: 'clamp(48px, 6vw, 72px)', paddingBottom: 'clamp(48px, 6vw, 72px)' }}>
       <div className="lp-container">
-        <div ref={header.ref as any} style={{ textAlign: 'center', ...header.style }}>
-          <p className="lp-eyebrow lp-center">The problem</p>
-          <h2 className="lp-h2 lp-narrow" style={{ fontSize: 'clamp(26px, 3.6vw, 40px)' }}>
+        <div ref={header.ref as any} style={{ textAlign: 'center', ...header.style }}>          <h2 className="lp-h2 lp-narrow" style={{ fontSize: 'clamp(26px, 3.6vw, 40px)' }}>
             Your developers aren&rsquo;t slow.<br />Your tools are <span className="lp-grad">disconnected</span>.
           </h2>
         </div>
