@@ -1,19 +1,13 @@
 import { useState } from 'react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 
-function Check({ color }: { color: string }) {
+function FeatureItem({ text }: { text: string }) {
   return (
-    <div style={{ width: 16, height: 16, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <span style={{ fontSize: 10, color: '#050D14', fontWeight: 700 }}>✓</span>
-    </div>
-  );
-}
-
-function FeatureItem({ text, color }: { text: string; color: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <Check color={color} />
-      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-secondary)' }}>{text}</span>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+      <svg width="16" height="16" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 3 }}>
+        <path d="M2.5 7L5.5 10L11.5 4" stroke="var(--accent-teal)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.45 }}>{text}</span>
     </div>
   );
 }
@@ -27,115 +21,99 @@ const faqItems = [
 ];
 
 function FAQ() {
-  const [open, setOpen] = useState<number | null>(null);
+  const [open, setOpen] = useState<number | null>(0);
   return (
     <div style={{ maxWidth: 800, margin: '80px auto 0' }}>
-      <h3 style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 28, color: 'var(--text-primary)', textAlign: 'center', marginBottom: 32 }}>
+      <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'clamp(24px, 3vw, 30px)', letterSpacing: '-0.02em', color: 'var(--text-primary)', textAlign: 'center', marginBottom: 28 }}>
         Frequently asked questions
       </h3>
-      {faqItems.map((item, i) => (
-        <div key={i} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', marginBottom: 8 }}>
-          <button
-            onClick={() => setOpen(open === i ? null : i)}
-            style={{
-              width: '100%', padding: '18px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
-              fontFamily: 'var(--font-sans)', fontSize: 15, fontWeight: 600, color: 'var(--text-primary)',
-            }}
-          >
-            <span>{item.q}</span>
-            <span style={{ transition: 'transform 200ms', transform: open === i ? 'rotate(180deg)' : 'none', color: 'var(--text-muted)', fontSize: 18, flexShrink: 0, marginLeft: 16 }}>
-              ▾
-            </span>
-          </button>
-          {open === i && (
-            <div style={{ padding: '0 24px 18px', fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-              {item.a}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {faqItems.map((item, i) => {
+          const isOpen = open === i;
+          return (
+            <div key={i} className="lp-glass" style={{ borderRadius: 14, overflow: 'hidden', borderColor: isOpen ? 'rgba(77,148,216,0.3)' : undefined }}>
+              <button
+                onClick={() => setOpen(isOpen ? null : i)}
+                aria-expanded={isOpen}
+                style={{ width: '100%', padding: '18px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-sans)', fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}
+              >
+                <span>{item.q}</span>
+                <span style={{ transition: 'transform 220ms cubic-bezier(0.16,1,0.3,1)', transform: isOpen ? 'rotate(180deg)' : 'none', color: isOpen ? 'var(--accent-blue)' : 'var(--text-muted)', fontSize: 16, flexShrink: 0 }}>▾</span>
+              </button>
+              <div style={{ maxHeight: isOpen ? 200 : 0, overflow: 'hidden', transition: 'max-height 260ms ease' }}>
+                <div style={{ padding: '0 22px 18px', fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>{item.a}</div>
+              </div>
             </div>
-          )}
-        </div>
-      ))}
+          );
+        })}
+      </div>
     </div>
   );
 }
+
+const plans = [
+  {
+    name: 'Free', price: '$0', unit: '/ forever', sub: 'For individuals and small teams', color: 'var(--text-secondary)', featured: false,
+    features: ['Up to 5 developers', '1 PLM integration (Jira or Azure DevOps)', '1 Git repository', 'Unlimited AI suggestions', 'Community support'],
+    cta: 'Start free — no card needed', mailto: 'mailto:sales@getbluemantis.com?subject=Free tier signup', foot: 'No time limit. Use it as long as you need.',
+  },
+  {
+    name: 'Growth', price: '$99', unit: '/ seat / month', sub: 'For teams of 20–100 developers', color: 'var(--accent-blue)', featured: true,
+    features: ['Unlimited PLM integrations', 'Unlimited repositories', 'Team analytics dashboard', 'Stack auto-detection', 'Email support + SLA'],
+    cta: 'Start Growth trial', mailto: 'mailto:sales@getbluemantis.com?subject=Growth trial', foot: 'Most teams upgrade after their first sprint.',
+  },
+  {
+    name: 'Enterprise', price: 'Custom', unit: '', sub: 'For 100+ developer organisations', color: 'var(--accent-teal)', featured: false,
+    features: ['Everything in Growth', 'SSO and audit logging', 'Private cloud deployment', 'Custom AI model weighting', 'Dedicated customer success manager'],
+    cta: 'Talk to us', mailto: 'mailto:sales@getbluemantis.com?subject=Enterprise enquiry', foot: "We'll scope a trial for your security requirements.",
+  },
+];
 
 export default function PricingSection() {
   const header = useScrollReveal();
   const cards = useScrollReveal(150);
 
   return (
-    <section id="pricing" style={{ background: 'var(--bg-surface)', padding: '96px 24px' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <section id="pricing" className="lp-section">
+      <div className="lp-container">
         <div ref={header.ref as any} style={{ textAlign: 'center', ...header.style }}>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--accent-teal)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 12px' }}>Pricing</p>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 44px)', color: 'var(--text-primary)', margin: 0 }}>
-            Simple pricing. Start free, upgrade when it works.
-          </h2>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: 'var(--text-secondary)', marginTop: 16 }}>
-            Most teams upgrade after their first sprint. No pressure.
-          </p>
+          <p className="lp-eyebrow lp-center">Pricing</p>
+          <h2 className="lp-h2">Start free. <span className="lp-grad">Upgrade when it works.</span></h2>
+          <p className="lp-lead">Most teams upgrade after their first sprint. No pressure.</p>
         </div>
 
-        <div ref={cards.ref as any} style={{ maxWidth: 1100, margin: '64px auto 0', display: 'flex', gap: 24, flexWrap: 'wrap', ...cards.style }}>
-          {/* Free */}
-          <div style={{ flex: 1, minWidth: 260, background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 36 }}>
-            <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 20, color: 'var(--text-muted)' }}>Free</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 12 }}>
-              <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 52, color: 'var(--text-primary)' }}>$0</span>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-muted)' }}>/ forever</span>
+        <div ref={cards.ref as any} style={{ margin: '52px auto 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 22, alignItems: 'stretch', ...cards.style }}>
+          {plans.map(plan => (
+            <div key={plan.name} className={`lp-glass ${plan.featured ? '' : 'lp-hoverable'}`} style={{
+              padding: 'clamp(28px, 3vw, 36px)', display: 'flex', flexDirection: 'column', position: 'relative',
+              background: plan.featured ? 'linear-gradient(168deg, rgba(77,148,216,0.2), rgba(12,30,46,0.4))' : undefined,
+              borderColor: plan.featured ? 'rgba(77,148,216,0.4)' : undefined,
+              boxShadow: plan.featured ? '0 30px 70px -30px rgba(77,148,216,0.5)' : undefined,
+              transform: plan.featured ? 'translateY(-8px)' : undefined,
+            }}>
+              {plan.featured && (
+                <div style={{ position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)', background: 'var(--lp-grad-cta)', color: '#06121C', fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', padding: '5px 14px', borderRadius: 20, whiteSpace: 'nowrap' }}>RECOMMENDED</div>
+              )}
+              <div style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 18, color: plan.color }}>{plan.name}</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: plan.price === 'Custom' ? 38 : 50, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>{plan.price}</span>
+                {plan.unit && <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-muted)' }}>{plan.unit}</span>}
+              </div>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>{plan.sub}</div>
+              <div className="lp-divider" style={{ margin: '20px 0' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+                {plan.features.map(f => <FeatureItem key={f} text={f} />)}
+              </div>
+              <button
+                onClick={() => { window.location.href = plan.mailto; }}
+                className={plan.featured ? 'lp-btn lp-btn-primary' : 'lp-btn lp-btn-ghost'}
+                style={{ width: '100%', justifyContent: 'center', marginTop: 26 }}
+              >
+                {plan.cta}
+              </button>
+              <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginTop: 10 }}>{plan.foot}</p>
             </div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>For individuals and small teams</div>
-            <div style={{ height: 1, background: 'var(--border)', margin: '20px 0' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {['Up to 5 developers', '1 PLM integration (JIRA or Azure DevOps)', '1 Git repository', 'Unlimited AI suggestions', 'Community support'].map(f => (
-                <FeatureItem key={f} text={f} color="var(--accent-teal)" />
-              ))}
-            </div>
-            <button onClick={() => { window.location.href = 'mailto:sales@getbluemantis.com?subject=Free tier signup'; }} style={{ width: '100%', marginTop: 28, padding: 12, background: 'none', border: '1px solid var(--accent-blue)', color: 'var(--accent-blue)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600 }}>
-              Start free — no card needed
-            </button>
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginTop: 10 }}>No time limit. Use it as long as you need.</p>
-          </div>
-
-          {/* Growth — highlighted */}
-          <div style={{ flex: 1, minWidth: 260, background: 'var(--bg-raised)', border: '1px solid var(--accent-blue)', borderTop: '4px solid var(--accent-blue)', borderRadius: 'var(--radius-lg)', padding: 36, position: 'relative', boxShadow: '0 12px 40px rgba(77,148,216,0.15)' }}>
-            <div style={{ position: 'absolute', top: -14, right: 20, background: 'var(--accent-blue)', color: '#0C1E2E', fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', padding: '4px 12px', borderRadius: 20 }}>RECOMMENDED</div>
-            <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 20, color: 'var(--accent-blue)' }}>Growth</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 12, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 52, color: 'var(--text-primary)' }}>$99</span>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-muted)' }}>/ seat / month</span>
-            </div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>For teams of 20–100 developers</div>
-            <div style={{ height: 1, background: 'var(--border)', margin: '20px 0' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {['Unlimited PLM integrations', 'Unlimited repositories', 'Team analytics dashboard', 'Stack auto-detection', 'Email support + SLA'].map(f => (
-                <FeatureItem key={f} text={f} color="var(--accent-teal)" />
-              ))}
-            </div>
-            <button onClick={() => { window.location.href = 'mailto:sales@getbluemantis.com?subject=Growth trial'; }} style={{ width: '100%', marginTop: 28, padding: 12, background: 'var(--accent-blue)', border: 'none', color: '#0C1E2E', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600 }}>
-              Start Growth trial
-            </button>
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginTop: 10 }}>Most teams upgrade after their first sprint.</p>
-          </div>
-
-          {/* Enterprise */}
-          <div style={{ flex: 1, minWidth: 260, background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 36 }}>
-            <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 20, color: 'var(--accent-teal)' }}>Enterprise</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 12 }}>
-              <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 40, color: 'var(--text-primary)' }}>Custom</span>
-            </div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>For 100+ developer organisations</div>
-            <div style={{ height: 1, background: 'var(--border)', margin: '20px 0' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {['Everything in Growth', 'SSO and audit logging', 'Private cloud deployment', 'Custom AI model weighting', 'Dedicated customer success manager'].map(f => (
-                <FeatureItem key={f} text={f} color="var(--accent-teal)" />
-              ))}
-            </div>
-            <button onClick={() => { window.location.href = 'mailto:sales@getbluemantis.com?subject=Enterprise enquiry'; }} style={{ width: '100%', marginTop: 28, padding: 12, background: 'none', border: '1px solid var(--accent-teal)', color: 'var(--accent-teal)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600 }}>
-              Talk to us
-            </button>
-            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginTop: 10 }}>We'll scope a trial for your security requirements.</p>
-          </div>
+          ))}
         </div>
 
         <FAQ />

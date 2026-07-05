@@ -106,22 +106,24 @@ export default function AnimatedCodeWindow() {
 
   return (
     <div style={{
-      borderRadius: 'var(--radius-md)', border: '1px solid var(--border)',
-      background: '#050D14', overflow: 'hidden',
-      boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
-      width: '100%', maxWidth: 520,
+      borderRadius: 16, border: '1px solid rgba(120,170,210,0.16)',
+      background: 'linear-gradient(180deg, rgba(6,15,22,0.94), rgba(6,15,22,0.98))',
+      overflow: 'hidden',
+      boxShadow: '0 40px 90px -30px rgba(0,0,0,0.85), inset 0 1px 0 rgba(180,220,255,0.06)',
+      backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+      width: '100%', maxWidth: 540,
     }}>
       <div style={{
-        height: 36, background: '#0A1520', borderBottom: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px',
+        height: 40, background: 'rgba(10,21,32,0.9)', borderBottom: '1px solid rgba(120,170,210,0.12)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px',
       }}>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 7 }}>
           {['#F07070', '#F2F995', '#A2F0C5'].map((color, i) => (
-            <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: color }} />
+            <div key={i} style={{ width: 11, height: 11, borderRadius: '50%', background: color, boxShadow: `0 0 8px ${color}55` }} />
           ))}
         </div>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)' }}>
-          Blue Mantis Workspace
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.04em', color: 'var(--text-secondary)' }}>
+          blue-mantis · workspace
         </span>
         <div style={{ width: 40 }} />
       </div>

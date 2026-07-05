@@ -158,50 +158,54 @@ export default function ProductSection() {
   const tab = tabs[activeTab];
 
   return (
-    <section id="product" style={{ background: 'var(--bg-surface)', padding: '96px 24px' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <section id="product" className="lp-section">
+      <div className="lp-container">
         <div ref={header.ref as any} style={{ textAlign: 'center', ...header.style }}>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--accent-teal)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 12px' }}>The Product</p>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 44px)', color: 'var(--text-primary)', margin: 0 }}>
-            Three screens. Zero context switching.
-          </h2>
+          <p className="lp-eyebrow lp-center">The product</p>
+          <h2 className="lp-h2">Three screens. <span className="lp-grad">Zero context switching.</span></h2>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 48, borderBottom: '1px solid var(--border)' }}>
-          {tabs.map((t, i) => (
-            <button key={t.label} onClick={() => switchTab(i)} style={{
-              padding: '14px 32px', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600,
-              cursor: 'pointer', background: 'none', border: 'none',
-              color: i === activeTab ? 'var(--text-primary)' : 'var(--text-muted)',
-              borderBottom: i === activeTab ? '2px solid var(--accent-blue)' : '2px solid transparent',
-              marginBottom: -1,
-            }}
-              onMouseEnter={e => { if (i !== activeTab) e.currentTarget.style.color = 'var(--text-secondary)'; }}
-              onMouseLeave={e => { if (i !== activeTab) e.currentTarget.style.color = 'var(--text-muted)'; }}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* Glass pill tab bar */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 44 }}>
+          <div className="lp-glass" style={{ display: 'inline-flex', flexWrap: 'wrap', justifyContent: 'center', gap: 4, padding: 5, borderRadius: 100 }}>
+            {tabs.map((t, i) => (
+              <button key={t.label} onClick={() => switchTab(i)} style={{
+                padding: '10px 22px', fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 600,
+                cursor: 'pointer', border: 'none', borderRadius: 100,
+                color: i === activeTab ? '#06121C' : 'var(--text-secondary)',
+                background: i === activeTab ? 'var(--lp-grad-cta)' : 'transparent',
+                boxShadow: i === activeTab ? '0 6px 18px -6px rgba(2,184,160,0.6)' : 'none',
+                transition: 'all 220ms cubic-bezier(0.16,1,0.3,1)',
+              }}
+                onMouseEnter={e => { if (i !== activeTab) e.currentTarget.style.color = 'var(--text-primary)'; }}
+                onMouseLeave={e => { if (i !== activeTab) e.currentTarget.style.color = 'var(--text-secondary)'; }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div style={{
-          maxWidth: 1200, margin: '48px auto 0',
-          display: 'flex', gap: 64, flexWrap: 'wrap',
-          opacity: fading ? 0 : 1, transition: 'opacity 200ms',
-        }}>
-          <div style={{ flex: '0 0 340px', minWidth: 240 }}>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 28, color: 'var(--text-primary)', margin: 0 }}>{tab.headline}</h3>
+          margin: '44px auto 0',
+          display: 'grid', gridTemplateColumns: 'minmax(280px, 360px) 1fr', gap: 'clamp(32px, 5vw, 64px)', alignItems: 'center',
+          opacity: fading ? 0 : 1, transform: fading ? 'translateY(8px)' : 'none', transition: 'opacity 220ms ease, transform 220ms ease',
+        }}
+          className="lp-product-grid"
+        >
+          <div style={{ minWidth: 0 }}>
+            <h3 style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 28px)', letterSpacing: '-0.02em', color: 'var(--text-primary)', margin: 0 }}>{tab.headline}</h3>
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: 16, color: 'var(--text-secondary)', marginTop: 16, lineHeight: 1.7 }}>{tab.body}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 20 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 22 }}>
               {tab.bullets.map(b => (
-                <div key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-blue)', flexShrink: 0, marginTop: 7 }} />
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-secondary)' }}>{b}</span>
+                <div key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <svg width="16" height="16" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 3 }}><path d="M2.5 7L5.5 10L11.5 4" stroke="var(--accent-teal)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{b}</span>
                 </div>
               ))}
             </div>
           </div>
-          <div style={{ flex: 1, minWidth: 280 }}>
+          <div className="lp-glass" style={{ minWidth: 0, padding: 14, borderRadius: 18 }}>
             <tab.Mock />
           </div>
         </div>

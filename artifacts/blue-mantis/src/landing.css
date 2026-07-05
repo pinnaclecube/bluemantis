@@ -1,0 +1,135 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Blue Mantis — Landing page design system (cinematic dark + glass)
+   Scoped to the marketing landing page. All classes are `lp-` prefixed.
+   Reuses the brand tokens from index.css (navy + teal/blue/green/purple).
+   ────────────────────────────────────────────────────────────────────────── */
+
+.lp-root {
+  --lp-max: 1180px;
+  --lp-grad-tbp: linear-gradient(120deg, #6FD3C4 0%, #4D94D8 48%, #8B7CF8 100%);
+  --lp-grad-cta: linear-gradient(135deg, #02B8A0 0%, #4D94D8 100%);
+  --lp-glass-bg: linear-gradient(158deg, rgba(20, 53, 82, 0.58), rgba(12, 30, 46, 0.34));
+  --lp-glass-border: rgba(120, 170, 210, 0.14);
+  position: relative;
+  isolation: isolate;
+  background: var(--bg-app);
+  overflow-x: clip;
+}
+
+/* ── Ambient background: fixed aurora blobs + grid + grain ─────────────── */
+.lp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lp-grid {
+  position: absolute;
+  inset: -2px;
+  background-image:
+    linear-gradient(rgba(120, 170, 210, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 170, 210, 0.05) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(ellipse 90% 65% at 50% 0%, #000 20%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 65% at 50% 0%, #000 20%, transparent 78%);
+}
+.lp-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.5;
+  will-change: transform;
+}
+.lp-blob-1 { top: -14%; left: -8%; width: 46vw; height: 46vw; background: radial-gradient(circle, rgba(2, 184, 160, 0.5), transparent 68%); animation: lp-drift-a 22s ease-in-out infinite; }
+.lp-blob-2 { top: 12%; right: -12%; width: 44vw; height: 44vw; background: radial-gradient(circle, rgba(77, 148, 216, 0.45), transparent 68%); animation: lp-drift-b 26s ease-in-out infinite; }
+.lp-blob-3 { bottom: -18%; left: 28%; width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(139, 124, 248, 0.34), transparent 70%); animation: lp-drift-c 30s ease-in-out infinite; }
+
+@keyframes lp-drift-a { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(6%, 8%) scale(1.08); } }
+@keyframes lp-drift-b { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-7%, 5%) scale(1.1); } }
+@keyframes lp-drift-c { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(4%, -6%) scale(1.06); } }
+
+/* ── Layout helpers ───────────────────────────────────────────────────── */
+.lp-section { position: relative; z-index: 1; padding: clamp(72px, 10vw, 128px) 24px; }
+.lp-container { max-width: var(--lp-max); margin: 0 auto; }
+.lp-narrow { max-width: 760px; margin-left: auto; margin-right: auto; }
+.lp-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border-bright), transparent); border: 0; }
+
+/* ── Type ─────────────────────────────────────────────────────────────── */
+.lp-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-teal);
+  margin: 0 0 18px;
+}
+.lp-eyebrow::before { content: ""; width: 22px; height: 1px; background: var(--accent-teal); opacity: 0.6; }
+.lp-eyebrow.lp-center { justify-content: center; }
+
+.lp-h2 {
+  font-family: var(--font-sans); font-weight: 800; letter-spacing: -0.02em;
+  font-size: clamp(30px, 4.4vw, 50px); line-height: 1.06; color: var(--text-primary); margin: 0;
+}
+.lp-lead { font-family: var(--font-sans); font-size: clamp(16px, 2vw, 19px); color: var(--text-secondary); line-height: 1.6; margin: 18px 0 0; }
+.lp-grad { background: var(--lp-grad-tbp); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ── Glass surface ────────────────────────────────────────────────────── */
+.lp-glass {
+  position: relative;
+  background: var(--lp-glass-bg);
+  border: 1px solid var(--lp-glass-border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.7);
+}
+.lp-glass::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(160deg, rgba(180, 220, 255, 0.28), transparent 42%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.lp-hoverable { transition: transform 220ms cubic-bezier(0.16,1,0.3,1), border-color 220ms, box-shadow 220ms; }
+.lp-hoverable:hover { transform: translateY(-4px); border-color: rgba(120, 170, 210, 0.32); box-shadow: 0 30px 70px -28px rgba(0,0,0,0.8); }
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+.lp-btn { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-sans); font-weight: 600; font-size: 15px; border-radius: var(--radius-md); cursor: pointer; text-decoration: none; transition: transform 160ms cubic-bezier(0.16,1,0.3,1), box-shadow 160ms, background 160ms; border: 1px solid transparent; }
+.lp-btn-primary { padding: 13px 26px; background: var(--lp-grad-cta); color: #06121C; box-shadow: 0 10px 30px -8px rgba(2, 184, 160, 0.55); }
+.lp-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -8px rgba(77, 148, 216, 0.6); }
+.lp-btn-ghost { padding: 13px 22px; background: rgba(120,170,210,0.06); border-color: var(--border-bright); color: var(--text-primary); }
+.lp-btn-ghost:hover { transform: translateY(-2px); border-color: var(--accent-blue); background: rgba(77,148,216,0.12); }
+
+/* ── Pill / chip ──────────────────────────────────────────────────────── */
+.lp-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 100px; border: 1px solid var(--lp-glass-border); background: rgba(2,184,160,0.08); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; color: var(--accent-teal); }
+.lp-dot-live { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-teal); box-shadow: 0 0 0 0 rgba(2,184,160,0.6); animation: lp-ping 2s ease-out infinite; }
+@keyframes lp-ping { 0% { box-shadow: 0 0 0 0 rgba(2,184,160,0.5);} 70%,100% { box-shadow: 0 0 0 7px rgba(2,184,160,0);} }
+
+/* ── Range slider ─────────────────────────────────────────────────────── */
+.lp-range {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 6px; border-radius: 6px; outline: none; cursor: pointer;
+}
+.lp-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #EAF4FF; border: 3px solid var(--accent-blue);
+  box-shadow: 0 2px 10px rgba(77,148,216,0.6); cursor: pointer;
+  transition: transform 120ms ease;
+}
+.lp-range::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.lp-range::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #EAF4FF; border: 3px solid var(--accent-blue);
+  box-shadow: 0 2px 10px rgba(77,148,216,0.6); cursor: pointer;
+}
+.lp-range:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--accent-teal); outline-offset: 2px; }
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .lp-product-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── Reduced motion ───────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .lp-blob, .lp-dot-live { animation: none !important; }
+  .lp-hoverable, .lp-btn { transition: none !important; }
+}

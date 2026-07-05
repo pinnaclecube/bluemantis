@@ -1,226 +1,109 @@
 import AnimatedCodeWindow from './AnimatedCodeWindow';
+import { BrandLogo, brandOrder, brandLabels } from './BrandLogos';
 
 const stats = [
   { number: '4', color: 'var(--accent-blue)', label: 'AI agents per task', sub: 'Claude · GPT-4o · Copilot · AntiGravity' },
-  { number: '1 click', color: 'var(--accent-teal)', label: 'Task → commit → PR', sub: 'Branch, PR and ticket close, automated' },
-  { number: '3', color: 'var(--accent-green)', label: 'Systems, one workflow', sub: 'JIRA · Azure DevOps · GitHub' },
+  { number: '1 click', color: 'var(--accent-teal)', label: 'Task → commit → PR', sub: 'Branch, PR & ticket close, automated' },
+  { number: '3', color: 'var(--accent-green)', label: 'Systems, one workflow', sub: 'Jira · Azure DevOps · GitHub' },
 ];
 
 export default function HeroSection() {
   return (
-    <section style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      background: 'var(--bg-app)',
-      paddingTop: 80,
-      position: 'relative',
-      overflow: 'hidden',
-    }}>
-      {/* Background glow — gives depth behind the headline */}
-      <div style={{
-        position: 'absolute',
-        top: '-10%',
-        left: '-5%',
-        width: '55%',
-        height: '70%',
-        background: 'radial-gradient(ellipse at top left, rgba(77,148,216,0.12) 0%, transparent 65%)',
-        pointerEvents: 'none',
-      }} />
-      <div style={{
-        position: 'absolute',
-        bottom: '5%',
-        right: '10%',
-        width: '40%',
-        height: '40%',
-        background: 'radial-gradient(ellipse at bottom right, rgba(2,184,160,0.08) 0%, transparent 65%)',
-        pointerEvents: 'none',
-      }} />
+    <section className="lp-section" style={{ paddingTop: 'clamp(128px, 16vh, 180px)', paddingBottom: 'clamp(64px, 8vw, 96px)' }}>
+      <div className="lp-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'clamp(40px, 5vw, 72px)', alignItems: 'center' }}>
 
-      <div style={{
-        maxWidth: 1200,
-        margin: '0 auto',
-        padding: '56px 24px',
-        display: 'flex',
-        gap: 64,
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        position: 'relative',
-        zIndex: 1,
-      }}>
-        {/* Left column */}
-        <div style={{ flex: 1, maxWidth: 580, minWidth: 280 }}>
-
-          {/* Eyebrow badge */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            background: 'rgba(2,184,160,0.12)',
-            border: '1px solid rgba(2,184,160,0.35)',
-            borderRadius: 100,
-            padding: '5px 14px',
-            marginBottom: 24,
-          }}>
-            <span style={{
-              width: 6, height: 6,
-              borderRadius: '50%',
-              background: 'var(--accent-teal)',
-              boxShadow: '0 0 6px var(--accent-teal)',
-              flexShrink: 0,
-            }} />
-            <span style={{
-              fontFamily: 'var(--font-sans)',
-              fontSize: 12,
-              fontWeight: 600,
-              letterSpacing: '0.06em',
-              color: 'var(--accent-teal)',
-              textTransform: 'uppercase',
-            }}>
-              Orchestrated AI Developer Co-Pilot
-            </span>
+        {/* ── Left column ── */}
+        <div style={{ minWidth: 0 }}>
+          <div className="lp-chip" style={{ marginBottom: 26 }}>
+            <span className="lp-dot-live" />
+            Orchestrated AI developer co-pilot
           </div>
 
-          {/* Headline */}
           <h1 style={{
-            fontFamily: 'var(--font-serif)',
-            fontWeight: 900,
-            fontSize: 'clamp(42px, 5vw, 64px)',
-            lineHeight: 1.08,
-            color: 'var(--text-primary)',
-            margin: 0,
-            marginBottom: 24,
+            fontFamily: 'var(--font-sans)', fontWeight: 800, letterSpacing: '-0.03em',
+            fontSize: 'clamp(40px, 5.4vw, 66px)', lineHeight: 1.02, color: 'var(--text-primary)', margin: 0,
           }}>
-            Stop losing{' '}
-            <span style={{
-              color: 'var(--accent-blue)',
-              position: 'relative',
-              display: 'inline-block',
-            }}>
-              half
-            </span>
-            <br />
-            of every developer's week.
+            Stop losing <span className="lp-grad">half</span> of every developer&rsquo;s week.
           </h1>
 
-          {/* Description */}
           <p style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: 18,
-            color: '#C8DDF0',
-            maxWidth: 520,
-            margin: 0,
-            marginBottom: 40,
-            lineHeight: 1.65,
+            fontFamily: 'var(--font-sans)', fontSize: 'clamp(16px, 2vw, 19px)', color: 'var(--text-secondary)',
+            maxWidth: 540, margin: '26px 0 0', lineHeight: 1.65,
           }}>
-            Blue Mantis connects your JIRA or Azure DevOps tasks directly to your Git
-            repository — with four AI agents writing, debating, and recommending the
-            best code. One click commits, opens a PR, and closes the ticket.
+            Blue Mantis wires your Jira and Azure DevOps tasks straight into your Git repository —
+            with four AI agents writing, debating, and ranking the best change. One click commits it,
+            opens the PR, and closes the ticket.
           </p>
 
-          {/* CTAs */}
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-            <a
-              href="/app/sign-up"
-              style={{
-                display: 'inline-block',
-                padding: '14px 28px',
-                background: 'var(--accent-blue)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-sans)',
-                fontSize: 15,
-                fontWeight: 700,
-                textDecoration: 'none',
-                boxShadow: '0 0 24px rgba(77,148,216,0.35)',
-                transition: 'all 150ms ease',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = '#5BA8E8';
-                e.currentTarget.style.boxShadow = '0 0 36px rgba(77,148,216,0.55)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'var(--accent-blue)';
-                e.currentTarget.style.boxShadow = '0 0 24px rgba(77,148,216,0.35)';
-                e.currentTarget.style.transform = 'none';
-              }}
-            >
-              Start free — no card needed
-            </a>
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', marginTop: 36 }}>
+            <a href="/app/sign-up" className="lp-btn lp-btn-primary">Start free — no card needed</a>
             <button
+              className="lp-btn lp-btn-ghost"
               onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-sans)',
-                fontSize: 14,
-                color: 'var(--text-secondary)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                transition: 'color 150ms ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
             >
               See how it works ↓
             </button>
           </div>
 
-          {/* Stats row */}
-          <div style={{ display: 'flex', gap: 36, marginTop: 52, flexWrap: 'wrap' }}>
-            {stats.map((stat, i) => (
-              <div key={stat.label} style={{ display: 'flex', gap: 36, alignItems: 'stretch' }}>
-                {i > 0 && (
-                  <div style={{ width: 1, background: 'var(--border)' }} />
-                )}
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontWeight: 700,
-                    fontSize: stat.number.length > 3 ? 30 : 38,
-                    color: stat.color,
-                    lineHeight: 1,
-                  }}>
-                    {stat.number}
-                  </span>
-                  <span style={{
-                    fontFamily: 'var(--font-sans)',
-                    fontSize: 12,
-                    color: 'var(--text-secondary)',
-                    marginTop: 5,
-                    fontWeight: 500,
-                  }}>
-                    {stat.label}
-                  </span>
-                  <span style={{
-                    fontFamily: 'var(--font-sans)',
-                    fontSize: 11,
-                    color: 'var(--text-muted)',
-                    fontStyle: 'italic',
-                    marginTop: 2,
-                  }}>
-                    {stat.sub}
-                  </span>
+          {/* Trust row — real integration logos */}
+          <div style={{ marginTop: 44 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 16 }}>
+              Works with the tools your team already uses
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 22, flexWrap: 'wrap' }}>
+              {brandOrder.map(name => (
+                <div key={name} title={brandLabels[name]} style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: 0.85 }}>
+                  <BrandLogo name={name} size={22} />
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{brandLabels[name]}</span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Right column — code window */}
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minWidth: 280,
+        {/* ── Right column — glowing glass code window ── */}
+        <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', minWidth: 0 }}>
+          <div aria-hidden="true" style={{
+            position: 'absolute', inset: '-8%', borderRadius: 32,
+            background: 'radial-gradient(circle at 60% 40%, rgba(77,148,216,0.28), transparent 62%)',
+            filter: 'blur(30px)', pointerEvents: 'none',
+          }} />
+          <div style={{ position: 'relative', width: '100%', maxWidth: 540 }}>
+            <AnimatedCodeWindow />
+
+            {/* Floating "PR opened" badge */}
+            <div className="lp-glass" style={{
+              position: 'absolute', bottom: -22, left: -18, padding: '12px 16px', borderRadius: 14,
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <BrandLogo name="github" size={18} />
+              <div>
+                <div style={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>PR #1287 opened</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent-green)' }}>ticket closed automatically</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stat strip */}
+      <div className="lp-container" style={{ marginTop: 'clamp(56px, 7vw, 88px)' }}>
+        <div className="lp-glass" style={{
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          padding: 4, borderRadius: 18,
         }}>
-          <AnimatedCodeWindow />
+          {stats.map((stat, i) => (
+            <div key={stat.label} style={{
+              padding: '22px 26px',
+              borderLeft: i > 0 ? '1px solid var(--lp-glass-border)' : 'none',
+            }}>
+              <span style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: stat.number.length > 3 ? 28 : 36, color: stat.color, lineHeight: 1, letterSpacing: '-0.02em' }}>
+                {stat.number}
+              </span>
+              <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--text-primary)', marginTop: 8, fontWeight: 600 }}>{stat.label}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>{stat.sub}</div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
