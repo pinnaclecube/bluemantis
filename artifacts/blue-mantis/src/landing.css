@@ -50,7 +50,7 @@
 @keyframes lp-drift-c { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(4%, -6%) scale(1.06); } }
 
 /* ── Layout helpers ───────────────────────────────────────────────────── */
-.lp-section { position: relative; z-index: 1; padding: clamp(72px, 10vw, 128px) 24px; }
+.lp-section { position: relative; z-index: 1; padding: clamp(40px, 5vw, 72px) 24px; }
 .lp-container { max-width: var(--lp-max); margin: 0 auto; }
 .lp-narrow { max-width: 760px; margin-left: auto; margin-right: auto; }
 .lp-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border-bright), transparent); border: 0; }

@@ -9,7 +9,7 @@ const stats = [
 
 export default function HeroSection() {
   return (
-    <section className="lp-section" style={{ paddingTop: 'clamp(128px, 16vh, 180px)', paddingBottom: 'clamp(64px, 8vw, 96px)' }}>
+    <section className="lp-section" style={{ paddingTop: 'clamp(120px, 15vh, 168px)', paddingBottom: 'clamp(36px, 5vw, 64px)' }}>
       <div className="lp-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'clamp(40px, 5vw, 72px)', alignItems: 'center' }}>
 
         {/* ── Left column ── */}
