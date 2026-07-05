@@ -160,9 +160,7 @@ export default function ProductSection() {
   return (
     <section id="product" className="lp-section">
       <div className="lp-container">
-        <div ref={header.ref as any} style={{ textAlign: 'center', ...header.style }}>
-          <p className="lp-eyebrow lp-center">The product</p>
-          <h2 className="lp-h2">Three screens. <span className="lp-grad">Zero context switching.</span></h2>
+        <div ref={header.ref as any} style={{ textAlign: 'center', ...header.style }}>          <h2 className="lp-h2">Three screens. <span className="lp-grad">Zero context switching.</span></h2>
         </div>
 
         {/* Glass pill tab bar */}

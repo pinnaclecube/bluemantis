@@ -56,15 +56,6 @@
 .lp-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border-bright), transparent); border: 0; }
 
 /* ── Type ─────────────────────────────────────────────────────────────── */
-.lp-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
-  letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-teal);
-  margin: 0 0 18px;
-}
-.lp-eyebrow::before { content: ""; width: 22px; height: 1px; background: var(--accent-teal); opacity: 0.6; }
-.lp-eyebrow.lp-center { justify-content: center; }
-
 .lp-h2 {
   font-family: var(--font-sans); font-weight: 800; letter-spacing: -0.02em;
   font-size: clamp(30px, 4.4vw, 50px); line-height: 1.06; color: var(--text-primary); margin: 0;

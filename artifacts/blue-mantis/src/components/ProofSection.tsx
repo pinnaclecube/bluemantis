@@ -29,9 +29,7 @@ export default function ProofSection() {
   return (
     <section id="proof" className="lp-section">
       <div className="lp-container">
-        <div ref={header.ref as any} style={header.style}>
-          <p className="lp-eyebrow">Why it&rsquo;s different</p>
-          <h2 className="lp-h2">Not another <span className="lp-grad">autocomplete</span>.</h2>
+        <div ref={header.ref as any} style={header.style}>          <h2 className="lp-h2">Not another <span className="lp-grad">autocomplete</span>.</h2>
           <p className="lp-lead" style={{ maxWidth: 620 }}>A structured, multi-agent review loop — connected to the task and the repo, with you in control.</p>
         </div>
 
