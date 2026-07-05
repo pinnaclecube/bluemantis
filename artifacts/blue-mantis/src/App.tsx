@@ -11,7 +11,7 @@ import SecurityPage from './pages/SecurityPage';
    true  → full marketing landing page becomes the homepage (`/`).
            The waitlist page remains reachable at `/waitlist`.
    ────────────────────────────────────────────────────────────────────────── */
-const LAUNCHED = false;
+const LAUNCHED = true;
 
 function App() {
   return (
