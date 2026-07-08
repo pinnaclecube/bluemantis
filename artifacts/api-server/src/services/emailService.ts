@@ -2,6 +2,8 @@ import { logger } from "../lib/logger.js";
 
 /** Where new waitlist signups are emailed (internal team notification). */
 const NOTIFY_TO = "arvind.kandula@venakaninfo.com";
+/** Where website contact / walkthrough submissions are emailed. */
+const CONTACT_TO = ["arvind.kandula@venakaninfo.com", "accounts@venakaninfo.com"];
 const LINKEDIN_URL = "https://www.linkedin.com/company/venakan/";
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
@@ -138,6 +140,45 @@ export async function sendWaitlistConfirmation(entry: WaitlistEntry): Promise<vo
     subject: "You're on the Blue Mantis waitlist 🎉",
     text,
     html,
+  });
+}
+
+export interface ContactSubmission {
+  type: "request-access" | "walkthrough";
+  name: string;
+  email: string;
+  company: string;
+  teamSize?: string | null;
+  preferredTime?: string | null;
+  message?: string | null;
+}
+
+/**
+ * Notify the team about a website "Request access" or "Book a walkthrough"
+ * submission. Sends to both internal recipients; reply-to is the prospect.
+ */
+export async function sendContactEmail(sub: ContactSubmission): Promise<void> {
+  const label = sub.type === "walkthrough" ? "Book a walkthrough" : "Request access";
+  const text = [
+    `New Blue Mantis ${label} submission`,
+    "",
+    `Name:    ${sub.name}`,
+    `Email:   ${sub.email}`,
+    `Company: ${sub.company}`,
+    sub.teamSize ? `Team size:      ${sub.teamSize}` : null,
+    sub.preferredTime ? `Preferred time: ${sub.preferredTime}` : null,
+    sub.message ? `\nMessage:\n${sub.message}` : null,
+    "",
+    "— getbluemantis.com",
+  ]
+    .filter((l) => l !== null)
+    .join("\n");
+
+  await sendViaResend({
+    to: CONTACT_TO,
+    reply_to: sub.email,
+    subject: `${label}: ${sub.company} (${sub.email})`,
+    text,
   });
 }
 
