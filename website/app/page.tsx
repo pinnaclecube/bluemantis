@@ -4,6 +4,8 @@ import ActivityFeed from '@/components/ActivityFeed';
 import IntegrationLogos from '@/components/IntegrationLogos';
 import Faq from '@/components/Faq';
 import Reveal from '@/components/Reveal';
+import ContactForm from '@/components/ContactForm';
+import { RequestAccessButton } from '@/components/AccessButtons';
 import { STEPS, BENEFITS, HOME_FAQ } from '@/lib/site';
 
 export default function Home() {
@@ -11,18 +13,22 @@ export default function Home() {
     <>
       {/* Hero */}
       <section className="hero blueprint">
-        <div className="container">
-          <h1>Your teams work exactly as they do today. The engineering just gets done faster.</h1>
-          <p className="lead">
-            Blue Mantis connects to your ticketing system and code repositories, builds and tests the
-            change with a team of specialist agents, and returns a finished pull request for your
-            engineers to approve.
-          </p>
-          <div className="btn-row">
-            <Link href="/contact" className="btn btn-primary">Request early access</Link>
-            <Link href="/how-it-works" className="btn btn-outline">See how it works</Link>
+        <div className="container hero-grid">
+          <div className="hero-copy">
+            <h1>Your teams work exactly as they do today. The engineering just gets done faster.</h1>
+            <p className="lead">
+              Blue Mantis connects to your ticketing system and code repositories, builds and tests the
+              change with a team of specialist agents, and returns a finished pull request for your
+              engineers to approve.
+            </p>
+            <p className="mono" style={{ marginTop: 22 }}>No new tools. Same tickets, same reviews, same repo.</p>
+            <p style={{ marginTop: 20 }}>
+              <Link href="/how-it-works" className="textlink">See how it works →</Link>
+            </p>
           </div>
-          <p className="mono">No new tools. Same tickets, same reviews, same repo.</p>
+          <div className="hero-form">
+            <ContactForm variant="request-access" heading="Request access" />
+          </div>
         </div>
       </section>
 
@@ -141,7 +147,7 @@ export default function Home() {
             </p>
           </div>
           <div className="btn-row" style={{ marginTop: 28 }}>
-            <Link href="/contact" className="btn btn-primary">Request early access</Link>
+            <RequestAccessButton className="btn btn-primary">Request early access</RequestAccessButton>
           </div>
         </div>
       </section>

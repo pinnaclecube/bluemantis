@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { NAV_LINKS } from '@/lib/site';
+import { useModals } from './ModalProvider';
 
 export default function Nav() {
+  const { openRequestAccess } = useModals();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -41,9 +43,9 @@ export default function Nav() {
         <div className="nav-cta">
           {/* Plain anchor: leaves the Next site and loads the authenticated app SPA. */}
           <a href="/app/sign-in" className="nav-signin nav-desktop">Sign in</a>
-          <Link href="/contact" className="btn btn-primary nav-desktop">
+          <button type="button" className="btn btn-primary nav-desktop" onClick={openRequestAccess}>
             Request access
-          </Link>
+          </button>
           <button
             className="nav-toggle"
             aria-expanded={open}
@@ -69,9 +71,16 @@ export default function Nav() {
             </Link>
           ))}
           <a href="/app/sign-in" onClick={() => setOpen(false)}>Sign in</a>
-          <Link href="/contact" className="btn btn-primary" onClick={() => setOpen(false)}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              setOpen(false);
+              openRequestAccess();
+            }}
+          >
             Request access
-          </Link>
+          </button>
         </nav>
       )}
     </header>

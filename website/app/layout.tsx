@@ -4,6 +4,7 @@ import './globals.css';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 import AnnouncementBar from '@/components/AnnouncementBar';
+import ModalProvider from '@/components/ModalProvider';
 import { JsonLd, organizationLd, softwareApplicationLd } from '@/lib/jsonld';
 import { SITE } from '@/lib/site';
 
@@ -64,10 +65,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: `document.documentElement.classList.add('js')` }}
         />
         <a className="skip" href="#main">Skip to content</a>
-        <AnnouncementBar />
-        <Nav />
-        <main id="main">{children}</main>
-        <Footer />
+        <ModalProvider>
+          <AnnouncementBar />
+          <Nav />
+          <main id="main">{children}</main>
+          <Footer />
+        </ModalProvider>
         <JsonLd data={organizationLd} />
         <JsonLd data={softwareApplicationLd} />
       </body>
