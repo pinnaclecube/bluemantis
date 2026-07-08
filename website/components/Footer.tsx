@@ -15,7 +15,11 @@ export default function Footer() {
   return (
     <footer className="footer">
       <div className="container footer-inner">
-        <div className="footer-left">Blue Mantis · A Venakan Info Solutions product</div>
+        <div className="footer-left footer-brand">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="" className="footer-logo" />
+          <span>Blue Mantis · A Venakan Info Solutions product</span>
+        </div>
         <nav className="footer-nav" aria-label="Footer">
           {links.map((l) => (
             <Link key={l.href} href={l.href}>

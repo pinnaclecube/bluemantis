@@ -25,7 +25,9 @@ export default function Nav() {
     <header className={`nav${scrolled ? ' scrolled' : ''}`}>
       <div className="container nav-inner">
         <Link href="/" className="wordmark" aria-label="Blue Mantis home">
-          Blue Mantis
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="" className="wordmark-logo" />
+          <span>Blue Mantis</span>
         </Link>
 
         <nav className="nav-links" aria-label="Primary">
