@@ -26,6 +26,7 @@ export default function Footer() {
               {l.label}
             </Link>
           ))}
+          <a href="/app/sign-in">Sign in</a>
           <a href={SITE.linkedin} target="_blank" rel="noopener noreferrer">
             LinkedIn
           </a>

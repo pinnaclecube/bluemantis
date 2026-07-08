@@ -187,6 +187,8 @@ section.wide { padding-block: clamp(60px, 8vw, 104px); }
 .nav-links a { color: var(--text-dim); font-size: 0.95rem; }
 .nav-links a:hover { color: var(--text); }
 .nav-cta { display: flex; align-items: center; gap: 20px; }
+.nav-signin { color: var(--text-dim); font-size: 0.95rem; }
+.nav-signin:hover { color: var(--text); }
 .nav-toggle { display: none; background: none; border: none; color: var(--text); cursor: pointer; padding: 8px; }
 .nav-mobile { display: none; }
 

@@ -39,6 +39,8 @@ export default function Nav() {
         </nav>
 
         <div className="nav-cta">
+          {/* Plain anchor: leaves the Next site and loads the authenticated app SPA. */}
+          <a href="/app/sign-in" className="nav-signin nav-desktop">Sign in</a>
           <Link href="/contact" className="btn btn-primary nav-desktop">
             Request access
           </Link>
@@ -66,6 +68,7 @@ export default function Nav() {
               {l.label}
             </Link>
           ))}
+          <a href="/app/sign-in" onClick={() => setOpen(false)}>Sign in</a>
           <Link href="/contact" className="btn btn-primary" onClick={() => setOpen(false)}>
             Request access
           </Link>
