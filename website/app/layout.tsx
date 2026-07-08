@@ -33,7 +33,7 @@ const HOME_DESC =
   'Blue Mantis turns tickets into reviewed pull requests. Orchestrated AI agents build, test, and secure the change; your engineers approve it. No new tools.';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE.url), // TODO: confirm production domain
+  metadataBase: new URL(SITE.url),
   title: { default: HOME_TITLE, template: '%s | Blue Mantis' },
   description: HOME_DESC,
   applicationName: 'Blue Mantis',

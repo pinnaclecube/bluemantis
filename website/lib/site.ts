@@ -3,7 +3,7 @@
 export const SITE = {
   name: 'Blue Mantis',
   company: 'Venakan Info Solutions',
-  url: 'https://www.bluemantis.ai',
+  url: 'https://getbluemantis.com',
   linkedin: 'https://linkedin.com/company/venakan',
   email: 'hello@venakan.com',
   // Placeholder until a real scheduling URL is provided (spec §6.5).
