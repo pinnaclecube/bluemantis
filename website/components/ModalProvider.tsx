@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import Modal from './Modal';
 import ContactForm from './ContactForm';
 
@@ -23,6 +23,23 @@ export default function ModalProvider({ children }: { children: ReactNode }) {
   const close = useCallback(() => setWhich(null), []);
   const openRequestAccess = useCallback(() => setWhich('request-access'), []);
   const openWalkthrough = useCallback(() => setWhich('walkthrough'), []);
+
+  // Deep link: /?request-access or /?walkthrough (e.g. from the app's sign-in
+  // page) opens the matching modal, then strips the param so a refresh is clean.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const target = params.has('request-access')
+      ? 'request-access'
+      : params.has('walkthrough')
+        ? 'walkthrough'
+        : null;
+    if (!target) return;
+    setWhich(target);
+    params.delete('request-access');
+    params.delete('walkthrough');
+    const qs = params.toString();
+    window.history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''));
+  }, []);
 
   return (
     <ModalCtx.Provider value={{ openRequestAccess, openWalkthrough, close }}>
