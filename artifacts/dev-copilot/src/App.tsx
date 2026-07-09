@@ -124,6 +124,15 @@ function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
           forceRedirectUrl={`${basePath}/dashboard`}
         />
       )}
+      {mode === "sign-in" && (
+        <p style={{ color: "#8b92a5", fontSize: 14, fontFamily: "'Inter', sans-serif", marginTop: 4, textAlign: "center" }}>
+          Don't have account?{" "}
+          {/* Full-page navigation to the marketing site, which opens the Request Access modal. */}
+          <a href="/?request-access=1" style={{ color: "#4d9cff", fontWeight: 600, textDecoration: "none" }}>
+            Request Your Access
+          </a>
+        </p>
+      )}
     </div>
   );
 }

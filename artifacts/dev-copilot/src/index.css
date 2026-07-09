@@ -367,3 +367,16 @@
   0%, 100% { transform: scale(1); }
   50%      { transform: scale(1.15); }
 }
+
+/* ---- Clerk auth: hide social logins, divider, default footer, dev badge ----
+   Uses Clerk's stable cl-* selectors + localization-key hooks. "for now" —
+   remove these once social providers / a production Clerk instance are wanted. */
+.cl-socialButtons,
+.cl-socialButtonsBlockButton,
+.cl-socialButtonsIconButton,
+.cl-dividerRow,
+.cl-footerAction { display: none !important; }
+/* development-mode pill (dev Clerk instance) — target both the localization
+   hook and the badge class so it is hidden across Clerk versions. */
+.cl-badge,
+[data-localization-key="badge__developmentMode"] { display: none !important; }
