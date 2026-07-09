@@ -14,6 +14,7 @@ import { dark } from "@clerk/themes";
 import { useTheme } from "next-themes";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { HideClerkDevBadge } from "@/components/HideClerkDevBadge";
 import { AppShell } from "@/components/layout/AppShell";
 import { RepoProvider } from "@/context/RepoContext";
 import { ConfigProvider, useConfig } from "@/context/ConfigContext";
@@ -101,6 +102,7 @@ function AuthPage({ mode }: { mode: "sign-in" | "sign-up" }) {
         gap: 24,
       }}
     >
+      <HideClerkDevBadge />
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
         <img src={`${basePath}/logo.png`} alt="Blue Mantis" style={{ width: 32, height: 32, objectFit: "contain" }} />
         <span style={{ color: "var(--text-primary)", fontSize: 20, fontWeight: 700, fontFamily: "var(--font-sans)" }}>
