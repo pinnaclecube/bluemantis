@@ -5,6 +5,7 @@ import tasksRouter from "./tasks.js";
 import taskActionsRouter from "./taskActions.js";
 import statsRouter from "./stats.js";
 import configRouter from "./config.js";
+import projectsRouter from "./projects.js";
 import waitlistRouter from "./waitlist.js";
 import contactRouter from "./contact.js";
 import { requireAuth } from "../middlewares/requireAuth.js";
@@ -22,6 +23,7 @@ router.use(healthRouter);
 router.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 router.use(repositoriesRouter);
+router.use(projectsRouter);
 router.use(tasksRouter);
 router.use(taskActionsRouter);
 router.use(statsRouter);
