@@ -28,6 +28,8 @@ import NewTask from "@/pages/new-task";
 import NotFound from "@/pages/not-found";
 import HistoryPage from "@/pages/HistoryPage";
 import SettingsPage from "@/pages/SettingsPage";
+import NewProject from "@/pages/new-project";
+import ProjectBoard from "@/pages/project-board";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -194,6 +196,8 @@ function ProtectedApp() {
     <RequireAuth>
       <AppShell>
         <Switch>
+          <Route path="/projects/new" component={NewProject} />
+          <Route path="/p/:projectId/board" component={ProjectBoard} />
           <Route path="/workspace/:taskId" component={WorkspacePage} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/repositories" component={Repositories} />
