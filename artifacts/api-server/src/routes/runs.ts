@@ -1,0 +1,248 @@
+import { Router, type IRouter } from "express";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { db, runsTable, tasksTable, suggestionsTable } from "@workspace/db";
+import { z } from "zod/v4";
+import { executeRun, commitFromSuggestion, RunError } from "../services/runService.js";
+
+const router: IRouter = Router();
+
+const IdParam = z.object({ id: z.coerce.number().int().positive() });
+const WorkItemIdParam = z.object({ id: z.coerce.number().int().positive() });
+
+const MAX_SCHEDULE_DAYS = 30;
+const MAX_PENDING_SCHEDULED = 20;
+
+const CreateRunBody = z.object({
+  refinePrompt: z.string().max(2000).optional(),
+  autoCommit: z.boolean().optional().default(false),
+  // ISO-8601 UTC instant; only present for scheduled runs.
+  scheduledAt: z.string().datetime({ offset: true }).optional(),
+});
+
+const CommitRunBody = z.object({
+  suggestionId: z.coerce.number().int().positive(),
+  commitMessage: z.string().min(1).max(500).optional(),
+});
+
+const ListRunsQuery = z.object({
+  projectId: z.coerce.number().int().positive().optional(),
+  status: z
+    .enum(["scheduled", "queued", "running", "succeeded", "failed", "canceled"])
+    .optional(),
+});
+
+// ---------------------------------------------------------------------------
+// POST /work-items/:id/runs — create a run (inline or scheduled)
+// ---------------------------------------------------------------------------
+// No scheduledAt → run inline in this request, respond with the completed run
+// + suggestions. With scheduledAt → persist a scheduled run, respond 202 with
+// the run id; the cron dispatcher picks it up when due (spec §3.3).
+router.post("/work-items/:id/runs", async (req, res): Promise<void> => {
+  const params = WorkItemIdParam.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid work item id" });
+    return;
+  }
+  const parsed = CreateRunBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid submission" });
+    return;
+  }
+
+  const [workItem] = await db
+    .select()
+    .from(tasksTable)
+    .where(and(eq(tasksTable.id, params.data.id), eq(tasksTable.userId, req.userId)));
+  if (!workItem) {
+    res.status(404).json({ error: "Work item not found" });
+    return;
+  }
+  if (workItem.projectId == null) {
+    res.status(422).json({ error: "Work item is not attached to a project — cannot run." });
+    return;
+  }
+
+  const { refinePrompt, autoCommit, scheduledAt } = parsed.data;
+
+  // --- Scheduled path -------------------------------------------------------
+  if (scheduledAt) {
+    const when = new Date(scheduledAt);
+    const now = Date.now();
+    if (when.getTime() <= now) {
+      res.status(422).json({ error: "scheduledAt must be in the future." });
+      return;
+    }
+    if (when.getTime() > now + MAX_SCHEDULE_DAYS * 24 * 60 * 60 * 1000) {
+      res.status(422).json({ error: `scheduledAt cannot be more than ${MAX_SCHEDULE_DAYS} days out.` });
+      return;
+    }
+
+    const [{ pending }] = await db
+      .select({ pending: sql<number>`count(*)::int` })
+      .from(runsTable)
+      .where(and(eq(runsTable.userId, req.userId), inArray(runsTable.status, ["scheduled", "queued"])));
+    if (pending >= MAX_PENDING_SCHEDULED) {
+      res.status(429).json({ error: `You already have ${MAX_PENDING_SCHEDULED} pending runs. Wait for some to finish.` });
+      return;
+    }
+
+    const [run] = await db
+      .insert(runsTable)
+      .values({
+        userId: req.userId,
+        projectId: workItem.projectId,
+        workItemId: workItem.id,
+        status: "scheduled",
+        trigger: "scheduled",
+        refinePrompt: refinePrompt ?? null,
+        autoCommit,
+        scheduledAt: when,
+      })
+      .returning();
+    req.log.info({ runId: run.id, workItemId: workItem.id, scheduledAt }, "Run scheduled");
+    res.status(202).json(run);
+    return;
+  }
+
+  // --- Inline path ----------------------------------------------------------
+  const [run] = await db
+    .insert(runsTable)
+    .values({
+      userId: req.userId,
+      projectId: workItem.projectId,
+      workItemId: workItem.id,
+      status: "queued",
+      trigger: "manual",
+      refinePrompt: refinePrompt ?? null,
+      autoCommit,
+    })
+    .returning();
+
+  req.log.info({ runId: run.id, workItemId: workItem.id, autoCommit }, "Run started inline");
+  await executeRun(run.id);
+
+  const [finished] = await db.select().from(runsTable).where(eq(runsTable.id, run.id));
+  const suggestions = await db
+    .select()
+    .from(suggestionsTable)
+    .where(eq(suggestionsTable.runId, run.id))
+    .orderBy(desc(suggestionsTable.score));
+  res.status(201).json({ run: finished, suggestions });
+});
+
+// ---------------------------------------------------------------------------
+// GET /runs — list runs (optionally filtered by project / status)
+// ---------------------------------------------------------------------------
+router.get("/runs", async (req, res): Promise<void> => {
+  const query = ListRunsQuery.safeParse(req.query);
+  if (!query.success) {
+    res.status(400).json({ error: query.error.issues[0]?.message ?? "Invalid query" });
+    return;
+  }
+  const conds = [eq(runsTable.userId, req.userId)];
+  if (query.data.projectId != null) conds.push(eq(runsTable.projectId, query.data.projectId));
+  if (query.data.status) conds.push(eq(runsTable.status, query.data.status));
+
+  const runs = await db
+    .select()
+    .from(runsTable)
+    .where(and(...conds))
+    .orderBy(desc(runsTable.createdAt))
+    .limit(200);
+  res.json(runs);
+});
+
+// ---------------------------------------------------------------------------
+// GET /runs/:id — a run with its suggestions
+// ---------------------------------------------------------------------------
+router.get("/runs/:id", async (req, res): Promise<void> => {
+  const params = IdParam.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid run id" });
+    return;
+  }
+  const [run] = await db
+    .select()
+    .from(runsTable)
+    .where(and(eq(runsTable.id, params.data.id), eq(runsTable.userId, req.userId)));
+  if (!run) {
+    res.status(404).json({ error: "Run not found" });
+    return;
+  }
+  const suggestions = await db
+    .select()
+    .from(suggestionsTable)
+    .where(eq(suggestionsTable.runId, run.id))
+    .orderBy(desc(suggestionsTable.score));
+  res.json({ run, suggestions });
+});
+
+// ---------------------------------------------------------------------------
+// POST /runs/:id/cancel — cancel a scheduled/queued run
+// ---------------------------------------------------------------------------
+// Only pending runs can be canceled; a running/finished run is left as-is.
+router.post("/runs/:id/cancel", async (req, res): Promise<void> => {
+  const params = IdParam.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid run id" });
+    return;
+  }
+  const [run] = await db
+    .select()
+    .from(runsTable)
+    .where(and(eq(runsTable.id, params.data.id), eq(runsTable.userId, req.userId)));
+  if (!run) {
+    res.status(404).json({ error: "Run not found" });
+    return;
+  }
+  if (run.status !== "scheduled" && run.status !== "queued") {
+    res.status(409).json({ error: `A ${run.status} run cannot be canceled.` });
+    return;
+  }
+  const [updated] = await db
+    .update(runsTable)
+    .set({ status: "canceled", finishedAt: new Date() })
+    .where(and(eq(runsTable.id, run.id), inArray(runsTable.status, ["scheduled", "queued"])))
+    .returning();
+  if (!updated) {
+    // Lost the race to the dispatcher — it's already running.
+    res.status(409).json({ error: "Run is already in progress." });
+    return;
+  }
+  req.log.info({ runId: run.id }, "Run canceled");
+  res.json(updated);
+});
+
+// ---------------------------------------------------------------------------
+// POST /runs/:id/commit — commit a persisted suggestion from this run
+// ---------------------------------------------------------------------------
+router.post("/runs/:id/commit", async (req, res): Promise<void> => {
+  const params = IdParam.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid run id" });
+    return;
+  }
+  const parsed = CommitRunBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid submission" });
+    return;
+  }
+  try {
+    const result = await commitFromSuggestion(
+      req.userId,
+      params.data.id,
+      parsed.data.suggestionId,
+      parsed.data.commitMessage,
+    );
+    req.log.info({ runId: params.data.id, ...result }, "Run suggestion committed");
+    res.json(result);
+  } catch (err) {
+    if (err instanceof RunError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
+});
+
+export default router;

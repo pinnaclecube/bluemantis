@@ -182,6 +182,45 @@ export async function sendContactEmail(sub: ContactSubmission): Promise<void> {
   });
 }
 
+const APP_BASE = process.env.APP_BASE_URL || "https://getbluemantis.com";
+
+/** Notify the run owner that a scheduled run finished (§5.5). */
+export async function sendRunCompleted(
+  to: string,
+  d: { itemTitle: string; itemKey?: string | null; runId: number; agentCount: number; topScore?: number | null; prUrl?: string | null },
+): Promise<void> {
+  const text = [
+    "Your scheduled Blue Mantis run finished.",
+    "",
+    `Work item: ${d.itemKey ? `${d.itemKey} — ` : ""}${d.itemTitle}`,
+    `Agents: ${d.agentCount}${d.topScore != null ? `, top score ${d.topScore}/10` : ""}`,
+    d.prUrl ? `Pull request: ${d.prUrl}` : "Suggestions are ready for your review.",
+    "",
+    `Review the run: ${APP_BASE}/app/runs/${d.runId}`,
+    "",
+    "— getbluemantis.com",
+  ].join("\n");
+  await sendViaResend({ to: [to], subject: `Run finished: ${d.itemTitle}`, text });
+}
+
+/** Notify the run owner that a scheduled run failed (§5.5). */
+export async function sendRunFailed(
+  to: string,
+  d: { itemTitle: string; runId: number; error: string },
+): Promise<void> {
+  const text = [
+    "Your scheduled Blue Mantis run did not complete.",
+    "",
+    `Work item: ${d.itemTitle}`,
+    `Reason: ${d.error}`,
+    "",
+    `Details: ${APP_BASE}/app/runs/${d.runId}`,
+    "",
+    "— getbluemantis.com",
+  ].join("\n");
+  await sendViaResend({ to: [to], subject: `Run failed: ${d.itemTitle}`, text });
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
