@@ -12,51 +12,11 @@ import {
   GetTaskResponse,
   UpdateTaskResponse,
 } from "@workspace/api-zod";
-import { PLMService } from "../services/plmService.js";
-import { getConfigs } from "../services/configService.js";
-import type { DevCopilotTask } from "../../../../shared/types/task.js";
-
 const router: IRouter = Router();
 
 // ---------------------------------------------------------------------------
-// PLM task → DB row mapping
-// ---------------------------------------------------------------------------
-
-const PLM_TYPE_MAP: Record<string, string> = {
-  epic: "feature",
-  feature: "feature",
-  story: "story",
-  task: "chore",
-  bug: "bug",
-};
-
-const PLM_PRIORITY_MAP: Record<number, string> = {
-  1: "critical",
-  2: "high",
-  3: "medium",
-  4: "low",
-};
-
-function plmTaskToInsert(
-  task: DevCopilotTask,
-  userId: string,
-): typeof tasksTable.$inferInsert {
-  return {
-    userId,
-    externalId: task.id,
-    source: task.source,
-    type: PLM_TYPE_MAP[task.type] ?? "chore",
-    title: task.title,
-    description: task.description || null,
-    acceptanceCriteria:
-      task.acceptanceCriteria.length > 0 ? task.acceptanceCriteria.join("\n") : null,
-    priority: PLM_PRIORITY_MAP[task.priority] ?? "medium",
-    status: "open",
-  };
-}
-
-// ---------------------------------------------------------------------------
-// GET /tasks — sync from PLM then return DB tasks (scoped to user)
+// GET /tasks — list the user's tasks (scoped). PLM hierarchy sync now happens
+// per-project via POST /api/projects/:id/sync (Phase 2), not on every GET.
 // ---------------------------------------------------------------------------
 
 router.get("/tasks", async (req, res): Promise<void> => {
@@ -67,53 +27,6 @@ router.get("/tasks", async (req, res): Promise<void> => {
   }
   const { repositoryId, status, source, type } = parsed.data;
   const userId = req.userId;
-
-  // PLM sync: fetch with user's credentials, find new tasks, batch-insert
-  try {
-    const userCreds = await getConfigs(userId, [
-      "AZURE_DEVOPS_ORG",
-      "AZURE_DEVOPS_PROJECT",
-      "AZURE_DEVOPS_PAT",
-      "JIRA_DOMAIN",
-      "JIRA_EMAIL",
-      "JIRA_API_TOKEN",
-    ]);
-
-    const plmSvc = new PLMService({
-      azureOrg: userCreds.AZURE_DEVOPS_ORG,
-      azureProject: userCreds.AZURE_DEVOPS_PROJECT,
-      azurePat: userCreds.AZURE_DEVOPS_PAT,
-      jiraDomain: userCreds.JIRA_DOMAIN,
-      jiraEmail: userCreds.JIRA_EMAIL,
-      jiraToken: userCreds.JIRA_API_TOKEN,
-    });
-
-    const plmTasks = await plmSvc.fetchAllTasks();
-
-    if (plmTasks.length > 0) {
-      const existing = await db
-        .select({ externalId: tasksTable.externalId, source: tasksTable.source })
-        .from(tasksTable)
-        .where(eq(tasksTable.userId, userId));
-
-      const existingSet = new Set(
-        existing
-          .filter((r) => r.externalId)
-          .map((r) => `${r.source}:${r.externalId}`),
-      );
-
-      const newTasks = plmTasks
-        .filter((t) => !existingSet.has(`${t.source}:${t.id}`))
-        .map((t) => plmTaskToInsert(t, userId));
-
-      if (newTasks.length > 0) {
-        await db.insert(tasksTable).values(newTasks);
-        req.log.info({ count: newTasks.length }, "PLM tasks synced to DB");
-      }
-    }
-  } catch (err) {
-    req.log.warn({ err }, "PLM sync failed — returning DB tasks only");
-  }
 
   const conditions: SQL[] = [eq(tasksTable.userId, userId)];
   if (repositoryId != null) conditions.push(eq(tasksTable.repositoryId, repositoryId));
