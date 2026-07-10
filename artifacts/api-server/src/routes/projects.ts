@@ -3,6 +3,7 @@ import { and, eq, isNull, inArray, sql } from "drizzle-orm";
 import { db, projectsTable, repositoriesTable, tasksTable, runsTable } from "@workspace/db";
 import { z } from "zod/v4";
 import { listPlmProjects, validatePlmProject, PlmError } from "../services/plmProjects.js";
+import { syncProject } from "../services/syncService.js";
 
 const router: IRouter = Router();
 
@@ -285,6 +286,33 @@ router.delete("/projects/:id", async (req, res): Promise<void> => {
     return;
   }
   res.sendStatus(204);
+});
+
+// --- Hierarchy sync (Phase 2) -----------------------------------------------
+router.post("/projects/:id/sync", async (req, res): Promise<void> => {
+  const params = IdParam.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid project id" });
+    return;
+  }
+  const [proj] = await db
+    .select({ id: projectsTable.id })
+    .from(projectsTable)
+    .where(and(eq(projectsTable.id, params.data.id), eq(projectsTable.userId, req.userId)));
+  if (!proj) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+  try {
+    const summary = await syncProject(req.userId, params.data.id);
+    res.json(summary);
+  } catch (err) {
+    if (err instanceof PlmError) {
+      res.status(err.code === "not_connected" ? 424 : 502).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
 });
 
 // --- Work items (flat, project-scoped) --------------------------------------

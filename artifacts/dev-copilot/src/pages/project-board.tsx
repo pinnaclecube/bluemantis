@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { RefreshCw, ExternalLink, Plus } from "lucide-react";
 import {
   fetchProject,
   fetchProjectWorkItems,
+  syncProject,
   ApiError,
   type Project,
   type WorkItem,
@@ -29,13 +31,16 @@ const TYPE_STYLE: Record<string, string> = {
 export default function ProjectBoard() {
   const params = useParams<{ projectId: string }>();
   const projectId = Number(params.projectId);
+  const { toast } = useToast();
 
   const [project, setProject] = useState<Project | null>(null);
   const [items, setItems] = useState<WorkItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [epicFilter, setEpicFilter] = useState<number | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!Number.isFinite(projectId)) return;
     setLoading(true);
     setError(null);
@@ -47,6 +52,31 @@ export default function ProjectBoard() {
       .catch((err) => setError(err instanceof ApiError ? err.message : "Could not load the project."))
       .finally(() => setLoading(false));
   }, [projectId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onSync = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const s = await syncProject(projectId);
+      toast({
+        title: "Sync complete",
+        description: `${s.created} added, ${s.updated} updated, ${s.unchanged} unchanged${s.conflicts ? `, ${s.conflicts} run(s) canceled` : ""}.`,
+      });
+      const it = await fetchProjectWorkItems(projectId);
+      setItems(it);
+    } catch (err) {
+      toast({
+        title: "Sync failed",
+        description: err instanceof ApiError ? err.message : "Could not sync from the PLM.",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncing(false);
+    }
+  }, [projectId, toast]);
 
   if (loading) {
     return (
@@ -73,6 +103,24 @@ export default function ProjectBoard() {
   }
 
   const all = items ?? [];
+  const epics = all.filter((it) => it.itemType === "epic");
+  const parentOf = new Map(all.map((it) => [it.id, it.parentId]));
+  const inEpic = (it: WorkItem, epicId: number): boolean => {
+    let cur: number | null | undefined = it.id;
+    const seen = new Set<number>();
+    while (cur != null && !seen.has(cur)) {
+      if (cur === epicId) return true;
+      seen.add(cur);
+      cur = parentOf.get(cur) ?? null;
+    }
+    return false;
+  };
+  const visible = epicFilter == null ? all : all.filter((it) => inEpic(it, epicFilter));
+
+  const pill = (active: boolean) =>
+    `rounded-full border px-2.5 py-1 text-xs transition-colors ${
+      active ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:text-foreground"
+    }`;
 
   return (
     <div className="flex h-full flex-col gap-4 px-5 py-4">
@@ -87,12 +135,18 @@ export default function ProjectBoard() {
             </span>
             <span>·</span>
             <span>{all.length} work items</span>
+            {project.lastSyncedAt && (
+              <>
+                <span>·</span>
+                <span>synced {new Date(project.lastSyncedAt).toLocaleString()}</span>
+              </>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled title="Hierarchy sync arrives in Phase 2">
-            <RefreshCw className="mr-2 h-3.5 w-3.5" />
-            Sync
+          <Button variant="outline" size="sm" onClick={onSync} disabled={syncing}>
+            <RefreshCw className={`mr-2 h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Syncing…" : "Sync"}
           </Button>
           <Button size="sm" disabled title="Create arrives in a later phase">
             <Plus className="mr-2 h-3.5 w-3.5" />
@@ -101,18 +155,33 @@ export default function ProjectBoard() {
         </div>
       </div>
 
+      {/* Epic filter */}
+      {epics.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button className={pill(epicFilter == null)} onClick={() => setEpicFilter(null)}>
+            All epics
+          </button>
+          {epics.map((e) => (
+            <button key={e.id} className={pill(epicFilter === e.id)} onClick={() => setEpicFilter(e.id)} title={e.title}>
+              {e.title.length > 28 ? `${e.title.slice(0, 28)}…` : e.title}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Board */}
       {all.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border text-center">
           <p className="text-sm text-muted-foreground">No work items in this project yet.</p>
           <p className="text-xs text-muted-foreground">
-            Hierarchy sync from {project.plmProvider === "jira" ? "Jira" : "Azure DevOps"} arrives in the next phase.
+            Click <span className="font-medium">Sync</span> to pull the hierarchy from{" "}
+            {project.plmProvider === "jira" ? "Jira" : "Azure DevOps"}.
           </p>
         </div>
       ) : (
         <div className="grid flex-1 grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2 xl:grid-cols-4">
           {COLUMNS.map((col) => {
-            const colItems = all.filter((it) => col.statuses.includes(it.status));
+            const colItems = visible.filter((it) => col.statuses.includes(it.status));
             return (
               <div key={col.key} className="flex min-h-0 flex-col rounded-md border border-border bg-card/40">
                 <div className="flex items-center justify-between border-b border-border px-3 py-2">

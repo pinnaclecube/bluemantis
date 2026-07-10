@@ -185,3 +185,14 @@ export function backfillProjects(): Promise<{ created: number; attached: number;
     method: 'POST',
   });
 }
+
+export interface SyncSummary {
+  created: number;
+  updated: number;
+  unchanged: number;
+  conflicts: number;
+}
+
+export function syncProject(projectId: number): Promise<SyncSummary> {
+  return request<SyncSummary>(`/api/projects/${projectId}/sync`, { method: 'POST' });
+}
