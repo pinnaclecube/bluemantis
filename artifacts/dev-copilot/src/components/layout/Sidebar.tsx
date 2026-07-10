@@ -1,7 +1,9 @@
 import { useLocation } from "wouter";
+import { useState, useEffect } from "react";
 import { useUser, useClerk } from "@clerk/react";
 import { useRepo } from "@/context/RepoContext";
 import { useTabs } from "@/context/TabsContext";
+import { fetchProjects, type Project } from "@/services/api";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import {
   DropdownMenu,
@@ -42,6 +44,14 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
   const { repos, activeRepository, setActiveRepository } = useRepo();
   const { user } = useUser();
   const { signOut } = useClerk();
+  const [projects, setProjects] = useState<Project[]>([]);
+  useEffect(() => {
+    fetchProjects()
+      .then(setProjects)
+      .catch(() => {
+        /* projects are optional in the sidebar */
+      });
+  }, []);
 
   const initials = user
     ? ((user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? user.username?.[0] ?? "")).toUpperCase() || "BM"
@@ -140,8 +150,29 @@ export function Sidebar({ isAzureConnected, isJiraConnected }: SidebarProps) {
           <span className="dc-sb-word">Blue Mantis</span>
         </div>
 
-        {/* Repo switcher + primary action + search */}
+        {/* Project switcher + repo switcher + primary action + search */}
         <div className="dc-sb-sec">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="dc-repo-switch" data-testid="project-switcher" title="Projects" style={{ marginBottom: 8 }}>
+                <DashIcon />
+                <span className="dc-repo-name">Projects</span>
+                <span className="dc-repo-chev" style={{ color: "var(--text-muted)", display: "inline-flex" }}><ChevronIcon /></span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuLabel>Projects</DropdownMenuLabel>
+              {projects.length === 0 && <DropdownMenuItem disabled>No projects yet</DropdownMenuItem>}
+              {projects.map((p) => (
+                <DropdownMenuItem key={p.id} onSelect={() => open(`/p/${p.id}/board`)} style={{ fontSize: "var(--fs-sm)" }}>
+                  {p.name}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => open("/projects/new")}>New project…</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="dc-repo-switch" data-testid="repo-switcher" title={activeRepository?.name ?? "Select repository"}>

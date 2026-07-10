@@ -287,4 +287,30 @@ router.delete("/projects/:id", async (req, res): Promise<void> => {
   res.sendStatus(204);
 });
 
+// --- Work items (flat, project-scoped) --------------------------------------
+// Phase 1: flat list for the board. Phase 2 extends this with tree/filter params
+// and full hierarchy sync. Returns raw rows (incl. project_id, item_type,
+// parent_id, plm_url, plm_status) — unlike GET /api/tasks which strips them.
+router.get("/projects/:id/work-items", async (req, res): Promise<void> => {
+  const params = IdParam.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid project id" });
+    return;
+  }
+  const [proj] = await db
+    .select({ id: projectsTable.id })
+    .from(projectsTable)
+    .where(and(eq(projectsTable.id, params.data.id), eq(projectsTable.userId, req.userId)));
+  if (!proj) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+  const items = await db
+    .select()
+    .from(tasksTable)
+    .where(and(eq(tasksTable.projectId, params.data.id), eq(tasksTable.userId, req.userId)))
+    .orderBy(tasksTable.createdAt);
+  res.json(items);
+});
+
 export default router;

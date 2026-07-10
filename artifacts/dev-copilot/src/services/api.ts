@@ -107,3 +107,81 @@ export function completeTask(taskId: number, commitHash: string): Promise<{ succ
     body: JSON.stringify({ commitHash }),
   });
 }
+
+/* ---- Projects / PLM hierarchy (Phase 1) ---- */
+
+export type PlmProvider = 'jira' | 'azure-devops';
+
+export interface Project {
+  id: number;
+  name: string;
+  plmProvider: PlmProvider;
+  plmProjectKey: string | null;
+  plmProjectName: string | null;
+  repositoryId: number;
+  defaultTarget: 'story' | 'task';
+  lastSyncedAt: string | null;
+  createdAt: string;
+  counts?: { open: number; running: number; review: number };
+}
+
+export interface PlmProjectRef {
+  key: string;
+  name: string;
+}
+
+export interface WorkItem {
+  id: number;
+  externalId: string | null;
+  source: string;
+  type: string;
+  itemType: 'epic' | 'story' | 'task' | 'bug' | 'test_case';
+  title: string;
+  description: string | null;
+  acceptanceCriteria: string | null;
+  priority: string;
+  status: string;
+  linkedCommit: string | null;
+  repositoryId: number | null;
+  projectId: number | null;
+  parentId: number | null;
+  plmUrl: string | null;
+  plmStatus: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function fetchProjects(): Promise<Project[]> {
+  return request<Project[]>('/api/projects');
+}
+
+export function fetchProject(id: number): Promise<Project> {
+  return request<Project>(`/api/projects/${id}`);
+}
+
+export function createProject(data: {
+  name: string;
+  plmProvider: PlmProvider;
+  plmProjectKey: string;
+  repositoryId: number;
+}): Promise<Project> {
+  return request<Project>('/api/projects', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export function fetchPlmProjects(provider: PlmProvider): Promise<PlmProjectRef[]> {
+  return request<PlmProjectRef[]>(`/api/plm/${provider}/projects`);
+}
+
+export function fetchProjectWorkItems(projectId: number): Promise<WorkItem[]> {
+  return request<WorkItem[]>(`/api/projects/${projectId}/work-items`);
+}
+
+export function backfillProjects(): Promise<{ created: number; attached: number; skipped: number }> {
+  return request<{ created: number; attached: number; skipped: number }>('/api/projects/backfill', {
+    method: 'POST',
+  });
+}
