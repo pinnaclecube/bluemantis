@@ -96,25 +96,34 @@ export async function executeRun(runId: number): Promise<void> {
     const raw = await orchestrator.generateSuggestions(devTask, codeContext, stack);
     const ranked = await synth.synthesize(raw, stack);
 
+    // Persist suggestions and keep the inserted rows so we can record which one
+    // gets committed (index-aligned with `ranked`).
+    let inserted: (typeof suggestionsTable.$inferSelect)[] = [];
     if (ranked.length > 0) {
-      await db.insert(suggestionsTable).values(
-        ranked.map((s) => ({
-          runId,
-          agent: s.agent,
-          code: s.code,
-          explanation: s.explanation,
-          filePath: s.filePath,
-          language: s.language,
-          score: s.score != null ? Math.round(s.score) : null,
-          recommendation: s.recommendation ?? null,
-        })),
-      );
+      inserted = await db
+        .insert(suggestionsTable)
+        .values(
+          ranked.map((s) => ({
+            runId,
+            agent: s.agent,
+            code: s.code,
+            explanation: s.explanation,
+            filePath: s.filePath,
+            language: s.language,
+            score: s.score != null ? Math.round(s.score) : null,
+            recommendation: s.recommendation ?? null,
+          })),
+        )
+        .returning();
     }
 
     let prUrl: string | null = null;
     let commitHash: string | null = null;
+    let committedSuggestionId: number | null = null;
     if (run.autoCommit) {
-      const top = ranked.find((s) => s.recommendation === "Recommended") ?? ranked[0];
+      const topIndex = ranked.findIndex((s) => s.recommendation === "Recommended");
+      const idx = topIndex >= 0 ? topIndex : ranked.length > 0 ? 0 : -1;
+      const top = idx >= 0 ? ranked[idx] : undefined;
       if (top) {
         const git = await GitService.forRepo(repo.id, {
           githubToken: creds.GITHUB_TOKEN,
@@ -133,13 +142,14 @@ export async function executeRun(runId: number): Promise<void> {
           head: branchName,
           base: git.defaultBranch,
         });
+        committedSuggestionId = inserted[idx]?.id ?? null;
         await db.update(tasksTable).set({ status: "review", linkedCommit: commitHash }).where(eq(tasksTable.id, workItem.id));
       }
     }
 
     await db
       .update(runsTable)
-      .set({ status: "succeeded", finishedAt: new Date(), prUrl, commitHash })
+      .set({ status: "succeeded", finishedAt: new Date(), prUrl, commitHash, committedSuggestionId })
       .where(eq(runsTable.id, runId));
 
     if (run.trigger === "scheduled") {
@@ -223,6 +233,9 @@ export async function commitFromSuggestion(
   });
 
   await db.update(tasksTable).set({ status: "review", linkedCommit: commitHash }).where(eq(tasksTable.id, workItem.id));
-  await db.update(runsTable).set({ prUrl, commitHash }).where(eq(runsTable.id, runId));
+  await db
+    .update(runsTable)
+    .set({ prUrl, commitHash, committedSuggestionId: sug.id })
+    .where(eq(runsTable.id, runId));
   return { commitHash, prUrl };
 }

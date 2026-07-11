@@ -1,0 +1,287 @@
+import { Router, type IRouter } from "express";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
+import {
+  db,
+  tasksTable,
+  projectsTable,
+  repositoriesTable,
+  runsTable,
+  suggestionsTable,
+} from "@workspace/db";
+import { z } from "zod/v4";
+import { getConfigs } from "../services/configService.js";
+import { GitService } from "../services/gitService.js";
+import { generateTests, AIFormatError } from "../services/aiService.js";
+import { createPlmTestCase } from "../services/plmWrite.js";
+import { PlmError } from "../services/plmProjects.js";
+import type { StackProfile } from "../stack/detector.js";
+
+const router: IRouter = Router();
+
+const IdParam = z.object({ id: z.coerce.number().int().positive() });
+
+type Context =
+  | { ok: false; status: number; message: string }
+  | {
+      ok: true;
+      workItem: typeof tasksTable.$inferSelect;
+      project: typeof projectsTable.$inferSelect;
+      repo: typeof repositoriesTable.$inferSelect | undefined;
+    };
+
+// Load the work item (user-scoped), its project, and repo in one place.
+async function loadContext(userId: string, workItemId: number): Promise<Context> {
+  const [workItem] = await db
+    .select()
+    .from(tasksTable)
+    .where(and(eq(tasksTable.id, workItemId), eq(tasksTable.userId, userId)));
+  if (!workItem) return { ok: false, status: 404, message: "Work item not found" };
+  if (workItem.projectId == null) {
+    return { ok: false, status: 422, message: "Work item is not attached to a project." };
+  }
+
+  const [project] = await db
+    .select()
+    .from(projectsTable)
+    .where(eq(projectsTable.id, workItem.projectId));
+  if (!project) return { ok: false, status: 404, message: "Project not found." };
+
+  const [repo] = await db
+    .select()
+    .from(repositoriesTable)
+    .where(eq(repositoriesTable.id, project.repositoryId));
+
+  return { ok: true, workItem, project, repo };
+}
+
+// The most recent committed run for a work item, plus its chosen suggestion.
+async function latestCommittedRun(userId: string, workItemId: number) {
+  const [run] = await db
+    .select()
+    .from(runsTable)
+    .where(
+      and(
+        eq(runsTable.userId, userId),
+        eq(runsTable.workItemId, workItemId),
+        isNotNull(runsTable.commitHash),
+      ),
+    )
+    .orderBy(desc(runsTable.createdAt))
+    .limit(1);
+  if (!run) return null;
+
+  let suggestion: typeof suggestionsTable.$inferSelect | undefined;
+  if (run.committedSuggestionId != null) {
+    [suggestion] = await db
+      .select()
+      .from(suggestionsTable)
+      .where(eq(suggestionsTable.id, run.committedSuggestionId));
+  }
+  if (!suggestion) {
+    // Fallback: highest-scored suggestion of that run.
+    [suggestion] = await db
+      .select()
+      .from(suggestionsTable)
+      .where(eq(suggestionsTable.runId, run.id))
+      .orderBy(desc(suggestionsTable.score))
+      .limit(1);
+  }
+  return { run, suggestion };
+}
+
+// ---------------------------------------------------------------------------
+// POST /work-items/:id/tests/generate — Given/When/Then cases + a test script.
+// Proposals only; nothing is committed or pushed here (spec §3.4 / §6).
+// ---------------------------------------------------------------------------
+router.post("/work-items/:id/tests/generate", async (req, res): Promise<void> => {
+  const params = IdParam.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid work item id" });
+    return;
+  }
+  const ctx = await loadContext(req.userId, params.data.id);
+  if (!ctx.ok) {
+    res.status(ctx.status).json({ error: ctx.message });
+    return;
+  }
+  const { workItem, repo } = ctx;
+
+  const committed = await latestCommittedRun(req.userId, workItem.id);
+  if (!committed || !committed.suggestion) {
+    res.status(422).json({ error: "Commit a suggestion for this work item before generating tests." });
+    return;
+  }
+
+  const creds = await getConfigs(req.userId, ["ANTHROPIC_API_KEY"]);
+  if (!creds.ANTHROPIC_API_KEY) {
+    res.status(424).json({ error: "Add your Anthropic API key in Integrations to generate tests." });
+    return;
+  }
+
+  const stack = (repo?.stackProfile as StackProfile) ?? null;
+  try {
+    const tests = await generateTests(
+      {
+        title: workItem.title,
+        acceptanceCriteria: workItem.acceptanceCriteria
+          ? workItem.acceptanceCriteria.split(/\n/).map((s) => s.trim()).filter(Boolean)
+          : [],
+        suggestionCode: committed.suggestion.code,
+        suggestionExplanation: committed.suggestion.explanation,
+        framework: stack?.testFramework ?? "",
+      },
+      { anthropicApiKey: creds.ANTHROPIC_API_KEY },
+      stack,
+    );
+    req.log.info({ workItemId: workItem.id, cases: tests.testCases.length }, "Tests generated");
+    res.json(tests);
+  } catch (err) {
+    if (err instanceof AIFormatError) {
+      res.status(422).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /work-items/:id/tests/commit-script — commit the test script to the
+// SAME branch as the implementation PR (adds a commit to the open PR; no new
+// PR). Reuses the run-commit branch convention `task/<workItemId>` (spec §3.4).
+// ---------------------------------------------------------------------------
+const CommitScriptBody = z.object({
+  filePath: z.string().min(1).max(300),
+  code: z.string().min(1),
+});
+
+router.post("/work-items/:id/tests/commit-script", async (req, res): Promise<void> => {
+  const params = IdParam.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid work item id" });
+    return;
+  }
+  const parsed = CommitScriptBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid submission" });
+    return;
+  }
+  const ctx = await loadContext(req.userId, params.data.id);
+  if (!ctx.ok) {
+    res.status(ctx.status).json({ error: ctx.message });
+    return;
+  }
+  const { workItem, repo } = ctx;
+  if (!repo) {
+    res.status(422).json({ error: "Project has no repository." });
+    return;
+  }
+
+  const committed = await latestCommittedRun(req.userId, workItem.id);
+  if (!committed) {
+    res.status(422).json({ error: "Commit a suggestion for this work item before adding tests." });
+    return;
+  }
+
+  const gitCreds = await getConfigs(req.userId, ["GITHUB_TOKEN", "AZURE_REPOS_TOKEN"]);
+  const git = await GitService.forRepo(repo.id, {
+    githubToken: gitCreds.GITHUB_TOKEN,
+    azureReposToken: gitCreds.AZURE_REPOS_TOKEN,
+  });
+  const branchName = `task/${workItem.id}`;
+
+  // Stack the test commit ON the branch's current HEAD so the implementation
+  // commit is preserved and both show up in the existing PR.
+  const headSha = await git.branchHeadSha(branchName);
+  const commitHash = await git.commitChanges({
+    branchName,
+    baseSha: headSha,
+    message: `Blue Mantis: tests for ${workItem.title}`,
+    files: [{ path: parsed.data.filePath, content: parsed.data.code }],
+  });
+
+  req.log.info({ workItemId: workItem.id, commitHash }, "Test script committed to branch");
+  res.json({ commitHash, prUrl: committed.run.prUrl });
+});
+
+// ---------------------------------------------------------------------------
+// POST /work-items/:id/tests/push — push selected cases to the PLM and mirror
+// them locally as test_case items under the parent (spec §3.4 / §6).
+// ---------------------------------------------------------------------------
+const PushTestsBody = z.object({
+  testCases: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(200),
+        given: z.string().optional(),
+        when: z.string().optional(),
+        then: z.string().optional(),
+      }),
+    )
+    .min(1)
+    .max(20),
+});
+
+router.post("/work-items/:id/tests/push", async (req, res): Promise<void> => {
+  const params = IdParam.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid work item id" });
+    return;
+  }
+  const parsed = PushTestsBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid submission" });
+    return;
+  }
+  const ctx = await loadContext(req.userId, params.data.id);
+  if (!ctx.ok) {
+    res.status(ctx.status).json({ error: ctx.message });
+    return;
+  }
+  const { workItem, project } = ctx;
+  if (!workItem.externalId || (workItem.source !== "jira" && workItem.source !== "azure-devops")) {
+    res.status(422).json({ error: "This work item isn't linked to a PLM story, so test cases can't be pushed." });
+    return;
+  }
+
+  const created: { externalId: string; plmUrl: string; title: string }[] = [];
+  try {
+    for (const tc of parsed.data.testCases) {
+      const result = await createPlmTestCase(
+        req.userId,
+        { plmProvider: project.plmProvider, plmProjectKey: project.plmProjectKey },
+        { ...tc, parentExternalId: workItem.externalId },
+      );
+      // Mirror locally as a test_case under the parent. externalId set so a
+      // later sync upserts rather than duplicates.
+      await db.insert(tasksTable).values({
+        userId: req.userId,
+        projectId: project.id,
+        repositoryId: project.repositoryId,
+        externalId: result.externalId,
+        source: project.plmProvider,
+        type: "task",
+        itemType: "test_case",
+        title: tc.title,
+        description: [tc.given && `Given: ${tc.given}`, tc.when && `When: ${tc.when}`, tc.then && `Then: ${tc.then}`]
+          .filter(Boolean)
+          .join("\n") || null,
+        priority: "medium",
+        status: "open",
+        parentId: workItem.id,
+        plmUrl: result.plmUrl,
+      });
+      created.push({ externalId: result.externalId, plmUrl: result.plmUrl, title: tc.title });
+    }
+  } catch (err) {
+    if (err instanceof PlmError) {
+      res.status(err.code === "not_connected" ? 424 : 502).json({ error: err.message, created });
+      return;
+    }
+    throw err;
+  }
+
+  req.log.info({ workItemId: workItem.id, count: created.length }, "Test cases pushed to PLM");
+  res.json({ created });
+});
+
+export default router;

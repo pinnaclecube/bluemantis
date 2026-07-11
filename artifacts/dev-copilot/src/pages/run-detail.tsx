@@ -13,6 +13,7 @@ import {
   XCircle,
   Clock,
 } from "lucide-react";
+import { TestStage } from "@/components/tests/TestStage";
 import {
   fetchRun,
   commitRunSuggestion,
@@ -229,6 +230,10 @@ export default function RunDetailPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {run.status === "succeeded" && run.commitHash && (
+        <TestStage workItemId={run.workItemId} canPushToPlm={true} />
       )}
     </div>
   );

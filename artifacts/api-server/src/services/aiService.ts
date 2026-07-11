@@ -351,6 +351,95 @@ export async function generateBreakdown(
   throw new AIFormatError("The AI breakdown could not be parsed. Please try again.");
 }
 
+// ---------------------------------------------------------------------------
+// AI test generation (spec §6 / §3.4 POST /work-items/:id/tests/generate)
+// ---------------------------------------------------------------------------
+
+const TestCaseSchema = z.object({
+  title: z.string().min(1).max(200),
+  given: z.string().default(""),
+  when: z.string().default(""),
+  then: z.string().default(""),
+});
+const TestScriptSchema = z.object({
+  filePath: z.string().min(1).max(300),
+  code: z.string().min(1),
+  framework: z.string().default(""),
+});
+const TestGenSchema = z.object({
+  testCases: z.array(TestCaseSchema).min(1).max(20),
+  testScript: TestScriptSchema,
+});
+export type GeneratedTestCase = z.infer<typeof TestCaseSchema>;
+export type GeneratedTestScript = z.infer<typeof TestScriptSchema>;
+export type GeneratedTests = z.infer<typeof TestGenSchema>;
+
+export interface TestGenInput {
+  title: string;
+  acceptanceCriteria: string[];
+  suggestionCode: string;
+  suggestionExplanation: string;
+  framework: string;
+}
+
+function buildTestPrompt(input: TestGenInput, stack: StackProfile | null, strict: boolean): string {
+  const fw = input.framework || stack?.testFramework || "the project's test framework";
+  const lang = stack?.language ?? "the implementation language";
+  return `You are a senior engineer writing tests for a change that has just been implemented.
+
+## Acceptance criteria
+${input.acceptanceCriteria.length ? input.acceptanceCriteria.map((c) => `- ${c}`).join("\n") : "(none provided)"}
+
+## Implemented change
+${input.suggestionExplanation}
+
+\`\`\`
+${input.suggestionCode.slice(0, 6000)}
+\`\`\`
+
+## Task
+1. Write Given/When/Then test cases covering the acceptance criteria and the implemented change.
+2. Write one runnable automated test file using ${fw} in ${lang}, matching the project's conventions. Choose a sensible filePath next to the code under test.
+
+## Output format
+Respond with ONLY a JSON object, no prose, no markdown fences:
+{
+  "testCases": [ { "title": "...", "given": "...", "when": "...", "then": "..." } ],
+  "testScript": { "filePath": "...", "code": "...", "framework": "${fw}" }
+}
+${strict ? "\nIMPORTANT: Your previous response was not valid JSON matching this schema. Return ONLY the raw JSON object with the exact keys shown." : ""}`;
+}
+
+/**
+ * Generate Given/When/Then cases + a runnable test script for a committed
+ * change. Validates with zod, retries once with a stricter instruction, then
+ * throws AIFormatError (route → 422). Nothing is persisted here.
+ */
+export async function generateTests(
+  input: TestGenInput,
+  creds: Pick<AICreds, "anthropicApiKey">,
+  stack: StackProfile | null = null,
+): Promise<GeneratedTests> {
+  const client = new Anthropic({ apiKey: creds.anthropicApiKey });
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-5",
+      max_tokens: 8192,
+      messages: [{ role: "user", content: buildTestPrompt(input, stack, attempt > 0) }],
+    });
+    const block = message.content[0];
+    if (block.type !== "text") throw new AIFormatError("Model returned a non-text block.");
+    try {
+      return TestGenSchema.parse(extractJson(block.text));
+    } catch (err) {
+      logger.warn({ attempt, err }, "Test generation parse failed");
+      if (attempt === 1) throw new AIFormatError("The generated tests could not be parsed. Please try again.");
+    }
+  }
+  throw new AIFormatError("The generated tests could not be parsed. Please try again.");
+}
+
 function buildSynthesisPrompt(suggestions: CodeSuggestion[], stack: StackProfile): string {
   const suggestionDocs = suggestions
     .map(
