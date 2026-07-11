@@ -1,5 +1,6 @@
 import type { DevCopilotTask, PLMAdapter } from "../../../../shared/types/task.js";
 import { logger } from "../lib/logger.js";
+import { normalizeJiraDomain } from "../services/plmProjects.js";
 
 type JiraIssue = {
   id: string;
@@ -110,7 +111,7 @@ export class JiraAdapter implements PLMAdapter {
   private acFieldId: string | null = null;
 
   constructor(creds?: { domain?: string; email?: string; apiToken?: string }) {
-    this.domain = (creds?.domain ?? "").replace(/\/$/, "");
+    this.domain = creds?.domain ? normalizeJiraDomain(creds.domain) : "";
     this.email = creds?.email ?? "";
     this.apiToken = creds?.apiToken ?? "";
     this.authHeader = `Basic ${Buffer.from(`${this.email}:${this.apiToken}`).toString("base64")}`;
