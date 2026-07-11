@@ -1,5 +1,5 @@
 import { getConfigs } from "./configService.js";
-import { PlmError } from "./plmProjects.js";
+import { PlmError, normalizeJiraDomain } from "./plmProjects.js";
 import { logger } from "../lib/logger.js";
 
 /**
@@ -77,7 +77,7 @@ async function jiraRequest<T>(
   path: string,
   init: RequestInit,
 ): Promise<T> {
-  const domain = creds.domain.replace(/\/$/, "");
+  const domain = normalizeJiraDomain(creds.domain);
   const auth = `Basic ${Buffer.from(`${creds.email}:${creds.token}`).toString("base64")}`;
   const res = await fetch(`${domain}/rest/api/3${path}`, {
     ...init,
@@ -103,7 +103,7 @@ async function createJiraItem(
   projectKey: string,
   input: PlmCreateInput,
 ): Promise<PlmCreateResult> {
-  const domain = creds.domain.replace(/\/$/, "");
+  const domain = normalizeJiraDomain(creds.domain);
   const body = composeBody(input.description, input.acceptanceCriteria);
   const fields: Record<string, unknown> = {
     project: { key: projectKey },
@@ -226,7 +226,7 @@ async function createJiraTestCase(
   projectKey: string,
   input: PlmTestCaseInput,
 ): Promise<PlmCreateResult> {
-  const domain = creds.domain.replace(/\/$/, "");
+  const domain = normalizeJiraDomain(creds.domain);
   const body = testCaseBody(input);
   const fields: Record<string, unknown> = {
     project: { key: projectKey },

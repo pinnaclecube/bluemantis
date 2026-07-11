@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db, projectsTable, tasksTable, runsTable } from "@workspace/db";
 import { getConfigs } from "./configService.js";
-import { PlmError } from "./plmProjects.js";
+import { PlmError, normalizeJiraDomain } from "./plmProjects.js";
 import { logger } from "../lib/logger.js";
 
 /**
@@ -108,7 +108,7 @@ async function fetchJiraItems(
   creds: { domain: string; email: string; token: string },
   projectKey: string,
 ): Promise<SyncedItem[]> {
-  const domain = creds.domain.replace(/\/$/, "");
+  const domain = normalizeJiraDomain(creds.domain);
   const auth = `Basic ${Buffer.from(`${creds.email}:${creds.token}`).toString("base64")}`;
   const jql = `project = "${projectKey.replace(/"/g, '\\"')}" ORDER BY updated DESC`;
   const fields = "summary,description,issuetype,priority,parent,status,updated";

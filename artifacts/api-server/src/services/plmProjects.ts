@@ -24,6 +24,22 @@ export class PlmError extends Error {
   }
 }
 
+/**
+ * Normalize a stored Jira domain into an absolute origin `fetch()` accepts.
+ * Users enter it as `acme.atlassian.net` (no scheme, sometimes a trailing
+ * slash or a stray path); WHATWG fetch requires an absolute URL, so default to
+ * https and strip everything after the host.
+ */
+export function normalizeJiraDomain(raw: string): string {
+  let d = raw.trim();
+  if (!/^https?:\/\//i.test(d)) d = `https://${d}`;
+  try {
+    return new URL(d).origin;
+  } catch {
+    return d.replace(/\/+$/, "");
+  }
+}
+
 export async function listPlmProjects(
   userId: string,
   provider: PlmProvider,
@@ -33,7 +49,7 @@ export async function listPlmProjects(
     if (!c.JIRA_DOMAIN || !c.JIRA_EMAIL || !c.JIRA_API_TOKEN) {
       throw new PlmError("Jira is not connected. Add your Jira credentials in Integrations.", "not_connected");
     }
-    const domain = c.JIRA_DOMAIN.replace(/\/$/, "");
+    const domain = normalizeJiraDomain(c.JIRA_DOMAIN);
     const auth = `Basic ${Buffer.from(`${c.JIRA_EMAIL}:${c.JIRA_API_TOKEN}`).toString("base64")}`;
     const res = await fetch(`${domain}/rest/api/3/project/search?maxResults=100`, {
       headers: { Authorization: auth, Accept: "application/json" },
