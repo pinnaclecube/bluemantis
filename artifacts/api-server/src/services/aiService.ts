@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
+import { z } from "zod/v4";
 import { buildPrompt } from "../stack/prompts.js";
 import { logger } from "../lib/logger.js";
 import type { DevCopilotTask } from "../../../../shared/types/task.js";
@@ -259,6 +260,96 @@ export class SynthesisEngine {
 // ---------------------------------------------------------------------------
 // Synthesis prompt builder
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// AI work-item breakdown (spec §3.2 POST /work-items/:id/breakdown)
+// ---------------------------------------------------------------------------
+
+/** Thrown when the model's breakdown JSON can't be validated (route → 422). */
+export class AIFormatError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AIFormatError";
+  }
+}
+
+const BreakdownChildSchema = z.object({
+  itemType: z.enum(["story", "task", "bug"]),
+  title: z.string().min(1).max(200),
+  description: z.string().default(""),
+  acceptanceCriteria: z.array(z.string()).default([]),
+});
+const BreakdownSchema = z.object({
+  children: z.array(BreakdownChildSchema).min(1).max(15),
+});
+export type BreakdownChild = z.infer<typeof BreakdownChildSchema>;
+
+export interface BreakdownInput {
+  itemType: string;
+  title: string;
+  description: string;
+  acceptanceCriteria: string[];
+}
+
+function buildBreakdownPrompt(item: BreakdownInput, stack: StackProfile | null, strict: boolean): string {
+  const childType = item.itemType === "epic" ? "stories" : "tasks";
+  const stackLine = stack
+    ? `The codebase stack is ${stack.frontend}/${stack.backend} (${stack.language}). Keep the breakdown grounded in that stack.`
+    : "";
+  return `You are a senior engineering lead decomposing a ${item.itemType} into concrete, independently deliverable ${childType}.
+
+## Parent ${item.itemType}
+Title: ${item.title}
+Description: ${item.description || "(none)"}
+Acceptance criteria:
+${item.acceptanceCriteria.length ? item.acceptanceCriteria.map((c) => `- ${c}`).join("\n") : "(none)"}
+
+${stackLine}
+
+## Task
+Propose 3–8 child work items that together deliver the parent. Each child must be small enough for one engineer to complete, with a clear title and 1–4 acceptance criteria. Use itemType "story" for sizeable sub-features, "task" for implementation work, "bug" only for defects.
+
+## Output format
+Respond with ONLY a JSON object, no prose, no markdown fences:
+{
+  "children": [
+    { "itemType": "task", "title": "...", "description": "...", "acceptanceCriteria": ["...", "..."] }
+  ]
+}
+${strict ? "\nIMPORTANT: Your previous response was not valid JSON matching this schema. Return ONLY the raw JSON object with the exact keys shown." : ""}`;
+}
+
+/**
+ * Ask Claude to decompose a work item into child proposals. Validates with zod,
+ * retries once with a stricter instruction, then throws AIFormatError.
+ * Proposals are NOT persisted — the caller reviews/edits/approves first.
+ */
+export async function generateBreakdown(
+  item: BreakdownInput,
+  creds: Pick<AICreds, "anthropicApiKey">,
+  stack: StackProfile | null = null,
+): Promise<BreakdownChild[]> {
+  const client = new Anthropic({ apiKey: creds.anthropicApiKey });
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-5",
+      max_tokens: 4096,
+      messages: [{ role: "user", content: buildBreakdownPrompt(item, stack, attempt > 0) }],
+    });
+    const block = message.content[0];
+    if (block.type !== "text") throw new AIFormatError("Model returned a non-text block.");
+
+    try {
+      const parsed = BreakdownSchema.parse(extractJson(block.text));
+      return parsed.children;
+    } catch (err) {
+      logger.warn({ attempt, err }, "Breakdown parse failed");
+      if (attempt === 1) throw new AIFormatError("The AI breakdown could not be parsed. Please try again.");
+    }
+  }
+  throw new AIFormatError("The AI breakdown could not be parsed. Please try again.");
+}
 
 function buildSynthesisPrompt(suggestions: CodeSuggestion[], stack: StackProfile): string {
   const suggestionDocs = suggestions
