@@ -202,6 +202,140 @@ async function createAdoItem(
   };
 }
 
+// ---- Test cases (Phase 5) ---------------------------------------------------
+
+export interface PlmTestCaseInput {
+  title: string;
+  given?: string;
+  when?: string;
+  then?: string;
+  /** External id/key of the story/work item this case tests. */
+  parentExternalId: string;
+}
+
+function testCaseBody(input: PlmTestCaseInput): string {
+  const parts: string[] = [];
+  if (input.given?.trim()) parts.push(`Given: ${input.given.trim()}`);
+  if (input.when?.trim()) parts.push(`When: ${input.when.trim()}`);
+  if (input.then?.trim()) parts.push(`Then: ${input.then.trim()}`);
+  return parts.join("\n");
+}
+
+async function createJiraTestCase(
+  creds: { domain: string; email: string; token: string },
+  projectKey: string,
+  input: PlmTestCaseInput,
+): Promise<PlmCreateResult> {
+  const domain = creds.domain.replace(/\/$/, "");
+  const body = testCaseBody(input);
+  const fields: Record<string, unknown> = {
+    project: { key: projectKey },
+    summary: input.title.slice(0, 254),
+    issuetype: { name: "Task" }, // Xray/Zephyr out of scope for v1 — labeled Task.
+    labels: ["test-case"],
+  };
+  if (body) fields.description = textToAdf(body);
+
+  const created = await jiraRequest<{ id: string; key: string }>(creds, "/issue", {
+    method: "POST",
+    body: JSON.stringify({ fields }),
+  });
+
+  // Best-effort "Relates" link to the parent story.
+  try {
+    await jiraRequest(creds, "/issueLink", {
+      method: "POST",
+      body: JSON.stringify({
+        type: { name: "Relates" },
+        inwardIssue: { key: created.key },
+        outwardIssue: { key: input.parentExternalId },
+      }),
+    });
+  } catch (err) {
+    logger.warn({ err }, "Jira test-case link to parent failed (item still created)");
+  }
+
+  return { externalId: created.key, plmUrl: `${domain}/browse/${created.key}`, plmStatus: null };
+}
+
+async function createAdoTestCase(
+  creds: { org: string; pat: string },
+  projectKey: string,
+  input: PlmTestCaseInput,
+): Promise<PlmCreateResult> {
+  const auth = `Basic ${Buffer.from(`:${creds.pat}`).toString("base64")}`;
+  const orgUrl = `https://dev.azure.com/${creds.org}`;
+  const url = `${orgUrl}/${encodeURIComponent(projectKey)}/_apis/wit/workitems/$${encodeURIComponent("Test Case")}?api-version=7.1`;
+
+  const body = testCaseBody(input);
+  const patch: object[] = [{ op: "add", path: "/fields/System.Title", value: input.title.slice(0, 254) }];
+  if (body) patch.push({ op: "add", path: "/fields/System.Description", value: body.replace(/\n/g, "<br/>") });
+  // "Tests" relation to the story (test case tests the story).
+  patch.push({
+    op: "add",
+    path: "/relations/-",
+    value: {
+      rel: "Microsoft.VSTS.Common.TestedBy-Reverse",
+      url: `${orgUrl}/_apis/wit/workItems/${input.parentExternalId}`,
+    },
+  });
+
+  const doRequest = async (doc: object[]) => {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: auth, "Content-Type": "application/json-patch+json" },
+      body: JSON.stringify(doc),
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new PlmError(`Azure DevOps responded ${res.status} while creating the test case: ${t.slice(0, 300)}`);
+    }
+    return (await res.json()) as { id: number };
+  };
+
+  let created: { id: number };
+  try {
+    created = await doRequest(patch);
+  } catch (err) {
+    logger.warn({ err }, "ADO test-case create with relation failed — retrying without link");
+    created = await doRequest(patch.filter((p) => (p as { path?: string }).path !== "/relations/-"));
+  }
+
+  return {
+    externalId: String(created.id),
+    plmUrl: `${orgUrl}/${encodeURIComponent(projectKey)}/_workitems/edit/${created.id}`,
+    plmStatus: null,
+  };
+}
+
+/** Create a test case in the project's PLM, linked to the parent story. */
+export async function createPlmTestCase(
+  userId: string,
+  project: { plmProvider: PlmProvider; plmProjectKey: string | null },
+  input: PlmTestCaseInput,
+): Promise<PlmCreateResult> {
+  if (!project.plmProjectKey) {
+    throw new PlmError("This project has no PLM project bound.", "not_connected");
+  }
+  if (project.plmProvider === "jira") {
+    const c = await getConfigs(userId, ["JIRA_DOMAIN", "JIRA_EMAIL", "JIRA_API_TOKEN"]);
+    if (!c.JIRA_DOMAIN || !c.JIRA_EMAIL || !c.JIRA_API_TOKEN) {
+      throw new PlmError("Jira is not connected. Add your Jira credentials in Integrations.", "not_connected");
+    }
+    return createJiraTestCase(
+      { domain: c.JIRA_DOMAIN, email: c.JIRA_EMAIL, token: c.JIRA_API_TOKEN },
+      project.plmProjectKey,
+      input,
+    );
+  }
+  const c = await getConfigs(userId, ["AZURE_DEVOPS_ORG", "AZURE_DEVOPS_PAT"]);
+  if (!c.AZURE_DEVOPS_ORG || !c.AZURE_DEVOPS_PAT) {
+    throw new PlmError("Azure DevOps is not connected. Add your Azure DevOps credentials in Integrations.", "not_connected");
+  }
+  return createAdoTestCase({ org: c.AZURE_DEVOPS_ORG, pat: c.AZURE_DEVOPS_PAT }, project.plmProjectKey, input);
+}
+
 // ---- Public entry -----------------------------------------------------------
 
 /**

@@ -48,6 +48,7 @@ interface GitProviderClient {
   fetchFileContent(path: string): Promise<string>;
   createBranch(branchName: string, fromRef: string): Promise<void>;
   getDefaultBranchSha(): Promise<string>;
+  getBranchSha(branchName: string): Promise<string>;
   commitChanges(params: CommitParams): Promise<string>;
   createPullRequest(params: PullRequestParams): Promise<string>;
 }
@@ -56,6 +57,13 @@ export interface CommitParams {
   branchName: string;
   message: string;
   files: Array<{ path: string; content: string }>;
+  /**
+   * Base commit the new commit is built on. Defaults to the default branch's
+   * HEAD (single-commit-per-branch, the original behavior). Pass the branch's
+   * own HEAD to stack a second commit ON the branch (e.g. adding a test script
+   * to the existing implementation PR) instead of overwriting it.
+   */
+  baseSha?: string;
 }
 
 export interface PullRequestParams {
@@ -137,8 +145,17 @@ class GitHubClient implements GitProviderClient {
     });
   }
 
+  async getBranchSha(branchName: string): Promise<string> {
+    const { data } = await this.octokit.git.getRef({
+      owner: this.owner,
+      repo: this.repo,
+      ref: `heads/${branchName}`,
+    });
+    return data.object.sha;
+  }
+
   async commitChanges(params: CommitParams): Promise<string> {
-    const baseRef = await this.getDefaultBranchSha();
+    const baseRef = params.baseSha ?? (await this.getDefaultBranchSha());
 
     const blobs = await Promise.all(
       params.files.map((f) =>
@@ -284,8 +301,17 @@ class AzureReposClient implements GitProviderClient {
     });
   }
 
+  async getBranchSha(branchName: string): Promise<string> {
+    const data = await this.request<{ value: Array<{ objectId: string }> }>(
+      `/refs?filter=heads/${branchName}&api-version=7.1`,
+    );
+    const ref = data.value?.[0];
+    if (!ref) throw new Error(`Azure Repos: ref heads/${branchName} not found`);
+    return ref.objectId;
+  }
+
   async commitChanges(params: CommitParams): Promise<string> {
-    const baseSha = await this.getDefaultBranchSha();
+    const baseSha = params.baseSha ?? (await this.getDefaultBranchSha());
 
     const body = {
       refUpdates: [{ name: `refs/heads/${params.branchName}`, oldObjectId: baseSha }],
@@ -434,6 +460,11 @@ export class GitService {
     const sha = await this.client.commitChanges(params);
     logger.info({ sha, branch: params.branchName, repoId: this.repo.id }, "Changes committed");
     return sha;
+  }
+
+  /** Current HEAD sha of an existing branch (for stacking a follow-up commit). */
+  async branchHeadSha(branchName: string): Promise<string> {
+    return this.client.getBranchSha(branchName);
   }
 
   async createPullRequest(params: PullRequestParams): Promise<string> {

@@ -38,6 +38,11 @@ export const runsTable = pgTable(
     error: text("error"),
     prUrl: text("pr_url"),
     commitHash: text("commit_hash"),
+    // The suggestion that was committed (auto or manual). Plain pointer, no FK
+    // constraint — declaring one here would create a runs<->suggestions import
+    // cycle in the schema. Consumers null-check it. Used by test generation to
+    // recover the chosen suggestion's code.
+    committedSuggestionId: integer("committed_suggestion_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

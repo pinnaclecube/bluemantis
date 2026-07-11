@@ -340,3 +340,53 @@ export function breakdownWorkItem(workItemId: number): Promise<{ parentId: numbe
     method: 'POST',
   });
 }
+
+/* ---- Test generation & push-back (Phase 5) ---- */
+
+export interface TestCase {
+  title: string;
+  given: string;
+  when: string;
+  then: string;
+}
+
+export interface TestScript {
+  filePath: string;
+  code: string;
+  framework: string;
+}
+
+export interface GeneratedTests {
+  testCases: TestCase[];
+  testScript: TestScript;
+}
+
+export function generateTests(workItemId: number): Promise<GeneratedTests> {
+  return request<GeneratedTests>(`/api/work-items/${workItemId}/tests/generate`, { method: 'POST' });
+}
+
+export function commitTestScript(
+  workItemId: number,
+  filePath: string,
+  code: string,
+): Promise<{ commitHash: string; prUrl: string | null }> {
+  return request<{ commitHash: string; prUrl: string | null }>(`/api/work-items/${workItemId}/tests/commit-script`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filePath, code }),
+  });
+}
+
+export function pushTestCases(
+  workItemId: number,
+  testCases: TestCase[],
+): Promise<{ created: { externalId: string; plmUrl: string; title: string }[] }> {
+  return request<{ created: { externalId: string; plmUrl: string; title: string }[] }>(
+    `/api/work-items/${workItemId}/tests/push`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ testCases }),
+    },
+  );
+}
