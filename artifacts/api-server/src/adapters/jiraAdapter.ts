@@ -10,9 +10,8 @@ type JiraIssue = {
 
 type JiraSearchResponse = {
   issues: JiraIssue[];
-  total: number;
-  startAt: number;
-  maxResults: number;
+  nextPageToken?: string;
+  isLast?: boolean;
 };
 
 type JiraField = {
@@ -192,18 +191,19 @@ export class JiraAdapter implements PLMAdapter {
     ];
 
     const allIssues: JiraIssue[] = [];
-    let startAt = 0;
-    const maxResults = 100;
+    let nextPageToken: string | undefined;
 
-    while (true) {
-      const result = await this.request<JiraSearchResponse>(
-        `/search?jql=${encodeURIComponent(jql)}&startAt=${startAt}&maxResults=${maxResults}&fields=${fieldsToFetch.join(",")}`,
-      );
+    // Jira Cloud removed the classic GET /rest/api/3/search (410 Gone). Use the
+    // enhanced JQL search with nextPageToken/isLast pagination.
+    for (let page = 0; page < 100; page++) {
+      const params = new URLSearchParams({ jql, maxResults: "100", fields: fieldsToFetch.join(",") });
+      if (nextPageToken) params.set("nextPageToken", nextPageToken);
+      const result = await this.request<JiraSearchResponse>(`/search/jql?${params.toString()}`);
 
-      allIssues.push(...result.issues);
+      allIssues.push(...(result.issues ?? []));
 
-      if (allIssues.length >= result.total || result.issues.length < maxResults) break;
-      startAt += maxResults;
+      if (result.isLast || !result.nextPageToken || (result.issues ?? []).length === 0) break;
+      nextPageToken = result.nextPageToken;
     }
 
     return allIssues.map((issue) => this.mapToTask(issue, acFieldId));

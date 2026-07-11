@@ -114,21 +114,23 @@ async function fetchJiraItems(
   const fields = "summary,description,issuetype,priority,parent,status,updated";
 
   const issues: JiraIssue[] = [];
-  let startAt = 0;
-  const maxResults = 100;
-  // Guard against runaway pagination.
+  let nextPageToken: string | undefined;
+  // Jira Cloud removed the classic GET /rest/api/3/search (410 Gone, May 2025).
+  // Use the enhanced JQL search, which paginates by nextPageToken/isLast
+  // instead of startAt/total. Guard against runaway pagination.
   for (let page = 0; page < 100; page++) {
-    const url = `${domain}/rest/api/3/search?jql=${encodeURIComponent(jql)}&startAt=${startAt}&maxResults=${maxResults}&fields=${fields}`;
-    const res = await fetch(url, {
+    const params = new URLSearchParams({ jql, maxResults: "100", fields });
+    if (nextPageToken) params.set("nextPageToken", nextPageToken);
+    const res = await fetch(`${domain}/rest/api/3/search/jql?${params.toString()}`, {
       headers: { Authorization: auth, Accept: "application/json" },
       signal: AbortSignal.timeout(20000),
     });
     if (!res.ok) throw new PlmError(`Jira responded ${res.status} while syncing.`);
-    const data = (await res.json()) as { issues?: JiraIssue[]; total?: number };
+    const data = (await res.json()) as { issues?: JiraIssue[]; nextPageToken?: string; isLast?: boolean };
     const batch = data.issues ?? [];
     issues.push(...batch);
-    if (issues.length >= (data.total ?? 0) || batch.length < maxResults) break;
-    startAt += maxResults;
+    if (data.isLast || !data.nextPageToken || batch.length === 0) break;
+    nextPageToken = data.nextPageToken;
   }
 
   return issues.map((issue) => {
