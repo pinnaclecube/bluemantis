@@ -287,3 +287,56 @@ export function commitRunSuggestion(
     body: JSON.stringify(commitMessage ? { suggestionId, commitMessage } : { suggestionId }),
   });
 }
+
+/* ---- Two-way work item creation (Phase 4) ---- */
+
+export type CreatableItemType = 'epic' | 'story' | 'task' | 'bug';
+
+export interface CreateWorkItemInput {
+  itemType: CreatableItemType;
+  title: string;
+  description?: string;
+  acceptanceCriteria?: string;
+  parentId?: number;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  pushToPlm?: boolean;
+}
+
+export function createWorkItem(projectId: number, input: CreateWorkItemInput): Promise<WorkItem> {
+  return request<WorkItem>(`/api/projects/${projectId}/work-items`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateWorkItem(
+  workItemId: number,
+  patch: Partial<{
+    title: string;
+    description: string;
+    acceptanceCriteria: string;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    status: string;
+    itemType: WorkItem['itemType'];
+  }>,
+): Promise<WorkItem> {
+  return request<WorkItem>(`/api/work-items/${workItemId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  });
+}
+
+export interface BreakdownChild {
+  itemType: 'story' | 'task' | 'bug';
+  title: string;
+  description: string;
+  acceptanceCriteria: string[];
+}
+
+export function breakdownWorkItem(workItemId: number): Promise<{ parentId: number; children: BreakdownChild[] }> {
+  return request<{ parentId: number; children: BreakdownChild[] }>(`/api/work-items/${workItemId}/breakdown`, {
+    method: 'POST',
+  });
+}

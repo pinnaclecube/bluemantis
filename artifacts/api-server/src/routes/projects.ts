@@ -4,6 +4,7 @@ import { db, projectsTable, repositoriesTable, tasksTable, runsTable } from "@wo
 import { z } from "zod/v4";
 import { listPlmProjects, validatePlmProject, PlmError } from "../services/plmProjects.js";
 import { syncProject } from "../services/syncService.js";
+import { createPlmWorkItem } from "../services/plmWrite.js";
 
 const router: IRouter = Router();
 
@@ -339,6 +340,110 @@ router.get("/projects/:id/work-items", async (req, res): Promise<void> => {
     .where(and(eq(tasksTable.projectId, params.data.id), eq(tasksTable.userId, req.userId)))
     .orderBy(tasksTable.createdAt);
   res.json(items);
+});
+
+// --- Create a work item (Phase 4) -------------------------------------------
+// pushToPlm=true creates it in Jira/ADO first, then stores the returned
+// key/URL locally. pushToPlm=false is a local-only ("manual") item.
+const CreateWorkItemBody = z.object({
+  itemType: z.enum(["epic", "story", "task", "bug"]),
+  title: z.string().min(1).max(200),
+  description: z.string().max(20000).optional(),
+  acceptanceCriteria: z.string().max(20000).optional(),
+  parentId: z.coerce.number().int().positive().optional(),
+  priority: z.enum(["low", "medium", "high", "critical"]).optional().default("medium"),
+  pushToPlm: z.boolean().optional().default(false),
+});
+
+router.post("/projects/:id/work-items", async (req, res): Promise<void> => {
+  const params = IdParam.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid project id" });
+    return;
+  }
+  const parsed = CreateWorkItemBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid submission" });
+    return;
+  }
+  const [project] = await db
+    .select()
+    .from(projectsTable)
+    .where(and(eq(projectsTable.id, params.data.id), eq(projectsTable.userId, req.userId)));
+  if (!project) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
+
+  const { itemType, title, description, acceptanceCriteria, parentId, priority, pushToPlm } = parsed.data;
+
+  // Resolve the parent (must belong to the same project) for hierarchy linkage.
+  let parent: typeof tasksTable.$inferSelect | undefined;
+  if (parentId != null) {
+    [parent] = await db
+      .select()
+      .from(tasksTable)
+      .where(
+        and(
+          eq(tasksTable.id, parentId),
+          eq(tasksTable.userId, req.userId),
+          eq(tasksTable.projectId, project.id),
+        ),
+      );
+    if (!parent) {
+      res.status(422).json({ error: "Parent work item not found in this project." });
+      return;
+    }
+  }
+
+  let externalId: string | null = null;
+  let plmUrl: string | null = null;
+  let plmStatus: string | null = null;
+  let source = "manual";
+
+  if (pushToPlm) {
+    try {
+      const result = await createPlmWorkItem(
+        req.userId,
+        { plmProvider: project.plmProvider, plmProjectKey: project.plmProjectKey },
+        { itemType, title, description, acceptanceCriteria, parentExternalId: parent?.externalId ?? null },
+      );
+      externalId = result.externalId;
+      plmUrl = result.plmUrl;
+      plmStatus = result.plmStatus;
+      source = project.plmProvider;
+    } catch (err) {
+      if (err instanceof PlmError) {
+        res.status(err.code === "not_connected" ? 424 : 502).json({ error: err.message });
+        return;
+      }
+      throw err;
+    }
+  }
+
+  const [item] = await db
+    .insert(tasksTable)
+    .values({
+      userId: req.userId,
+      projectId: project.id,
+      repositoryId: project.repositoryId,
+      externalId,
+      source,
+      type: itemType,
+      itemType,
+      title,
+      description: description ?? null,
+      acceptanceCriteria: acceptanceCriteria ?? null,
+      priority,
+      status: "open",
+      parentId: parent?.id ?? null,
+      plmUrl,
+      plmStatus,
+    })
+    .returning();
+
+  req.log.info({ workItemId: item.id, projectId: project.id, pushToPlm }, "Work item created");
+  res.status(201).json(item);
 });
 
 export default router;

@@ -3,8 +3,10 @@ import { useParams, Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, ExternalLink, Plus, Play, History, Clock } from "lucide-react";
+import { RefreshCw, ExternalLink, Plus, Play, History, Clock, Sparkles } from "lucide-react";
 import { RunPanel } from "@/components/runs/RunPanel";
+import { NewItemDialog } from "@/components/workitems/NewItemDialog";
+import { BreakdownDialog } from "@/components/workitems/BreakdownDialog";
 import {
   fetchProject,
   fetchProjectWorkItems,
@@ -42,6 +44,8 @@ export default function ProjectBoard() {
   const [syncing, setSyncing] = useState(false);
   const [epicFilter, setEpicFilter] = useState<number | null>(null);
   const [runPanelItem, setRunPanelItem] = useState<WorkItem | null>(null);
+  const [newItemOpen, setNewItemOpen] = useState(false);
+  const [breakdownItem, setBreakdownItem] = useState<WorkItem | null>(null);
   // Work item ids that currently have a scheduled (not-yet-run) run.
   const [scheduledItems, setScheduledItems] = useState<Set<number>>(new Set());
 
@@ -169,7 +173,7 @@ export default function ProjectBoard() {
             <RefreshCw className={`mr-2 h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
             {syncing ? "Syncing…" : "Sync"}
           </Button>
-          <Button size="sm" disabled title="Create arrives in a later phase">
+          <Button size="sm" onClick={() => setNewItemOpen(true)}>
             <Plus className="mr-2 h-3.5 w-3.5" />
             New item
           </Button>
@@ -216,6 +220,7 @@ export default function ProjectBoard() {
                       item={it}
                       scheduled={scheduledItems.has(it.id)}
                       onRun={() => setRunPanelItem(it)}
+                      onBreakdown={() => setBreakdownItem(it)}
                     />
                   ))}
                 </div>
@@ -233,6 +238,24 @@ export default function ProjectBoard() {
         }}
         onScheduled={loadScheduled}
       />
+
+      <NewItemDialog
+        project={project}
+        parents={all}
+        open={newItemOpen}
+        onOpenChange={setNewItemOpen}
+        onCreated={load}
+      />
+
+      <BreakdownDialog
+        project={project}
+        parent={breakdownItem}
+        open={breakdownItem !== null}
+        onOpenChange={(o) => {
+          if (!o) setBreakdownItem(null);
+        }}
+        onCreated={load}
+      />
     </div>
   );
 }
@@ -241,13 +264,16 @@ function WorkItemCard({
   item,
   scheduled,
   onRun,
+  onBreakdown,
 }: {
   item: WorkItem;
   scheduled: boolean;
   onRun: () => void;
+  onBreakdown: () => void;
 }) {
-  // Epics group their children — they aren't run directly.
+  // Epics group their children — they aren't run directly, but can be broken down.
   const runnable = item.itemType !== "epic";
+  const breakable = item.itemType === "epic" || item.itemType === "story";
   return (
     <div className="group rounded-md border border-border bg-background p-3">
       <div className="flex items-center justify-between gap-2">
@@ -274,6 +300,18 @@ function WorkItemCard({
             <a href={item.plmUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
               <ExternalLink className="h-3 w-3" />
             </a>
+          )}
+          {breakable && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-[11px] opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+              onClick={onBreakdown}
+              title="AI breakdown"
+            >
+              <Sparkles className="mr-1 h-3 w-3" />
+              Break down
+            </Button>
           )}
           {runnable && (
             <Button
