@@ -125,22 +125,24 @@ export class AIOrchestrator {
       stack,
     );
 
-    const [claudeResult, openaiResult, antigravityResult, copilotResult] =
-      await Promise.allSettled([
-        this.callClaude(prompt),
-        this.callOpenAI(prompt),
-        Promise.resolve(mockAntiGravity(stack)),
-        Promise.resolve(mockCopilot(stack)),
-      ]);
+    // Real agents. The AntiGravity/Copilot mocks return canned code, so they
+    // are gated behind ENABLE_DEMO_AGENTS (default OFF) — persisted runs must
+    // not let users commit canned suggestions (decision §10.3).
+    const jobs: Array<[Promise<ModelOutput>, CodeSuggestion["agent"]]> = [
+      [this.callClaude(prompt), "claude"],
+      [this.callOpenAI(prompt), "openai"],
+    ];
+    if (process.env.ENABLE_DEMO_AGENTS === "true") {
+      jobs.push([Promise.resolve(mockAntiGravity(stack)), "antigravity"]);
+      jobs.push([Promise.resolve(mockCopilot(stack)), "copilot"]);
+    }
 
+    const results = await Promise.allSettled(jobs.map(([p]) => p));
     const suggestions: CodeSuggestion[] = [];
 
-    const mapped: Array<[typeof claudeResult, CodeSuggestion["agent"]]> = [
-      [claudeResult, "claude"],
-      [openaiResult, "openai"],
-      [antigravityResult, "antigravity"],
-      [copilotResult, "copilot"],
-    ];
+    const mapped: Array<[(typeof results)[number], CodeSuggestion["agent"]]> = results.map(
+      (result, i) => [result, jobs[i][1]],
+    );
 
     for (const [result, agent] of mapped) {
       if (result.status === "fulfilled") {

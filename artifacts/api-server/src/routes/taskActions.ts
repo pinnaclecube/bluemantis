@@ -43,7 +43,7 @@ const STOPWORDS = new Set([
   "that", "api", "the", "not", "add", "new", "via",
 ]);
 
-function extractKeywords(title: string, description?: string | null): string[] {
+export function extractKeywords(title: string, description?: string | null): string[] {
   const text = [title, description].filter(Boolean).join(" ");
   return [
     ...new Set(
@@ -56,7 +56,7 @@ function extractKeywords(title: string, description?: string | null): string[] {
   ];
 }
 
-function dbTaskToDevCopilotTask(task: typeof tasksTable.$inferSelect): DevCopilotTask {
+export function dbTaskToDevCopilotTask(task: typeof tasksTable.$inferSelect): DevCopilotTask {
   const sourceMap: Record<string, DevCopilotTask["source"]> = {
     "azure-devops": "azure-devops",
     jira: "jira",

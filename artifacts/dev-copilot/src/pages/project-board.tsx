@@ -3,10 +3,12 @@ import { useParams, Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, ExternalLink, Plus } from "lucide-react";
+import { RefreshCw, ExternalLink, Plus, Play, History, Clock } from "lucide-react";
+import { RunPanel } from "@/components/runs/RunPanel";
 import {
   fetchProject,
   fetchProjectWorkItems,
+  fetchRuns,
   syncProject,
   ApiError,
   type Project,
@@ -39,6 +41,18 @@ export default function ProjectBoard() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [epicFilter, setEpicFilter] = useState<number | null>(null);
+  const [runPanelItem, setRunPanelItem] = useState<WorkItem | null>(null);
+  // Work item ids that currently have a scheduled (not-yet-run) run.
+  const [scheduledItems, setScheduledItems] = useState<Set<number>>(new Set());
+
+  const loadScheduled = useCallback(() => {
+    if (!Number.isFinite(projectId)) return;
+    fetchRuns({ projectId, status: "scheduled" })
+      .then((rs) => setScheduledItems(new Set(rs.map((r) => r.workItemId))))
+      .catch(() => {
+        /* badge is best-effort */
+      });
+  }, [projectId]);
 
   const load = useCallback(() => {
     if (!Number.isFinite(projectId)) return;
@@ -55,7 +69,8 @@ export default function ProjectBoard() {
 
   useEffect(() => {
     load();
-  }, [load]);
+    loadScheduled();
+  }, [load, loadScheduled]);
 
   const onSync = useCallback(async () => {
     setSyncing(true);
@@ -144,6 +159,12 @@ export default function ProjectBoard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Link href={`/p/${projectId}/runs`}>
+            <Button variant="outline" size="sm">
+              <History className="mr-2 h-3.5 w-3.5" />
+              Runs
+            </Button>
+          </Link>
           <Button variant="outline" size="sm" onClick={onSync} disabled={syncing}>
             <RefreshCw className={`mr-2 h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
             {syncing ? "Syncing…" : "Sync"}
@@ -190,7 +211,12 @@ export default function ProjectBoard() {
                 </div>
                 <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-2">
                   {colItems.map((it) => (
-                    <WorkItemCard key={it.id} item={it} />
+                    <WorkItemCard
+                      key={it.id}
+                      item={it}
+                      scheduled={scheduledItems.has(it.id)}
+                      onRun={() => setRunPanelItem(it)}
+                    />
                   ))}
                 </div>
               </div>
@@ -198,13 +224,32 @@ export default function ProjectBoard() {
           })}
         </div>
       )}
+
+      <RunPanel
+        item={runPanelItem}
+        open={runPanelItem !== null}
+        onOpenChange={(o) => {
+          if (!o) setRunPanelItem(null);
+        }}
+        onScheduled={loadScheduled}
+      />
     </div>
   );
 }
 
-function WorkItemCard({ item }: { item: WorkItem }) {
+function WorkItemCard({
+  item,
+  scheduled,
+  onRun,
+}: {
+  item: WorkItem;
+  scheduled: boolean;
+  onRun: () => void;
+}) {
+  // Epics group their children — they aren't run directly.
+  const runnable = item.itemType !== "epic";
   return (
-    <div className="rounded-md border border-border bg-background p-3">
+    <div className="group rounded-md border border-border bg-background p-3">
       <div className="flex items-center justify-between gap-2">
         <span className={`rounded border px-1.5 py-0.5 text-[10px] font-medium uppercase ${TYPE_STYLE[item.itemType] ?? "text-muted-foreground border-border"}`}>
           {item.itemType.replace("_", " ")}
@@ -215,12 +260,33 @@ function WorkItemCard({ item }: { item: WorkItem }) {
       </div>
       <p className="mt-2 text-sm leading-snug">{item.title}</p>
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-[10px] text-muted-foreground">{item.plmStatus ?? item.status}</span>
-        {item.plmUrl && (
-          <a href={item.plmUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground">{item.plmStatus ?? item.status}</span>
+          {scheduled && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/40 px-1.5 py-0.5 text-[10px] text-amber-400">
+              <Clock className="h-2.5 w-2.5" />
+              scheduled
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5">
+          {item.plmUrl && (
+            <a href={item.plmUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+          {runnable && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-[11px] opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+              onClick={onRun}
+            >
+              <Play className="mr-1 h-3 w-3" />
+              Run
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

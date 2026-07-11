@@ -196,3 +196,94 @@ export interface SyncSummary {
 export function syncProject(projectId: number): Promise<SyncSummary> {
   return request<SyncSummary>(`/api/projects/${projectId}/sync`, { method: 'POST' });
 }
+
+/* ---- Runs / scheduling (Phase 3) ---- */
+
+export type RunStatus =
+  | 'scheduled'
+  | 'queued'
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'canceled';
+
+export interface Run {
+  id: number;
+  userId: string;
+  projectId: number;
+  workItemId: number;
+  status: RunStatus;
+  trigger: 'manual' | 'scheduled';
+  refinePrompt: string | null;
+  autoCommit: boolean;
+  scheduledAt: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  error: string | null;
+  prUrl: string | null;
+  commitHash: string | null;
+  createdAt: string;
+}
+
+export interface RunSuggestion {
+  id: number;
+  runId: number;
+  agent: 'claude' | 'openai' | 'copilot' | 'antigravity';
+  code: string;
+  explanation: string;
+  filePath: string;
+  language: string;
+  score: number | null;
+  recommendation: string | null;
+  createdAt: string;
+}
+
+export interface RunDetail {
+  run: Run;
+  suggestions: RunSuggestion[];
+}
+
+/**
+ * Start a run for a work item. Omit `scheduledAt` to run inline (resolves once
+ * the pipeline finishes, returning the completed run + suggestions). Pass an ISO
+ * UTC `scheduledAt` to schedule it — the response is a `scheduled` run with no
+ * suggestions yet.
+ */
+export function createRun(
+  workItemId: number,
+  opts: { refinePrompt?: string; autoCommit?: boolean; scheduledAt?: string } = {},
+): Promise<RunDetail | Run> {
+  return request<RunDetail | Run>(`/api/work-items/${workItemId}/runs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(opts),
+  });
+}
+
+export function fetchRuns(params: { projectId?: number; status?: RunStatus } = {}): Promise<Run[]> {
+  const q = new URLSearchParams();
+  if (params.projectId != null) q.set('projectId', String(params.projectId));
+  if (params.status) q.set('status', params.status);
+  const qs = q.toString();
+  return request<Run[]>(`/api/runs${qs ? `?${qs}` : ''}`);
+}
+
+export function fetchRun(runId: number): Promise<RunDetail> {
+  return request<RunDetail>(`/api/runs/${runId}`);
+}
+
+export function cancelRun(runId: number): Promise<Run> {
+  return request<Run>(`/api/runs/${runId}/cancel`, { method: 'POST' });
+}
+
+export function commitRunSuggestion(
+  runId: number,
+  suggestionId: number,
+  commitMessage?: string,
+): Promise<{ commitHash: string; prUrl: string }> {
+  return request<{ commitHash: string; prUrl: string }>(`/api/runs/${runId}/commit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(commitMessage ? { suggestionId, commitMessage } : { suggestionId }),
+  });
+}
